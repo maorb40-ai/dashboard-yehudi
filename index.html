@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>דשבורד יומי - V11 (מניינים, ברכה אחרונה, מזג אוויר לשבת, שיוך משימות, נוכחות, עדיפויות)</title>
+  <title>דשבורד יומי - V12 (תיקון חפיפת מבזקים עם טבלת הזמנים במסכים נמוכים)</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -586,7 +586,7 @@
   <!-- SETTINGS MODAL -->
 
   <dialog id="settingsModal">
-    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V11)</h2><button class="close-btn" onclick="closeSettings()">✖</button></div>
+    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V12)</h2><button class="close-btn" onclick="closeSettings()">✖</button></div>
 
     <div class="setting-group"><label>מקור חדשות</label>
       <select id="newsSourceSelect" style="width:100%; padding: 0.5vh; border-radius: 0.5vw; background: #333; color: white; margin-top:0.5vh;">
@@ -922,6 +922,13 @@
       // so the main-content grid also needs to collapse to a single column when it's off.
       const mainContent = document.querySelector('.main-content');
       if(mainContent) mainContent.style.gridTemplateColumns = appSettings.hiddenComponents.includes('sidebar') ? '1fr' : '';
+      // V12 BUGFIX: the clock-fit baseline was cached only by viewport size (width x height), but
+      // showing/hiding header buttons (e.g. via the profile-cycle button) can change whether the header
+      // wraps to a second row WITHOUT the viewport size changing at all. A stale baseline measured with
+      // a different header height led the clock to over-scale and its content to spill down into the
+      // ticker bar - which is what looked like "the ticker hides the zmanim". Forcing a fresh baseline
+      // measurement here (component visibility can affect header height) fixes it at the source.
+      clockBaseline = null;
       scaleClockToFit();
     }
 
