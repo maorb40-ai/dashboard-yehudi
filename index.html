@@ -16,6 +16,8 @@
       --dark-bg: #0a0a0a; --card-bg: rgba(20, 20, 20, 0.75);
       --card-border: rgba(255, 255, 255, 0.15); --theme-color: #1a365d;
       --text-color: #fff; --dialog-bg: #1a1a1a; --header-bg: rgba(0,0,0,0.3); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #111; --input-border: #333; --input-text: #fff; --muted-text: #94a3b8;
+      --btn-hover-bg: rgba(255,255,255,0.1); --btn-hover-text: #fff;
     }
 
     /* V15: light mode - overrides the core surface/text variables everything else already reads
@@ -28,6 +30,8 @@
       --dark-bg: #eef2f7; --card-bg: rgba(255,255,255,0.85); --card-border: rgba(0,0,0,0.12);
       --theme-color: #cbd5e1; --text-color: #1e293b; --dialog-bg: #ffffff; --header-bg: rgba(255,255,255,0.6);
       --btn-bg: rgba(255,255,255,0.7);
+      --input-bg: #f8fafc; --input-border: #cbd5e1; --input-text: #1e293b; --muted-text: #64748b;
+      --btn-hover-bg: rgba(0,0,0,0.08); --btn-hover-text: #0f172a;
     }
     body.light-mode .btn { color: #1e293b; }
 
@@ -90,7 +94,7 @@
     .greeting-weather { display: flex; align-items: center; gap: 1.5vw; }
     .greeting { font-size: 2vw; font-weight: 800; color: var(--cyan); text-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
     .edah-badge { background: rgba(245, 158, 11, 0.2); border: 1px solid var(--gold); color: var(--gold); padding: 0.3vh 0.8vw; border-radius: 1vw; font-size: 1vw; font-weight: 700; }
-    .weather-info { font-size: 1.2vw; color: #e2e8f0; display: flex; align-items: center; gap: 0.5vw; }
+    .weather-info { font-size: 1.2vw; color: var(--text-color); display: flex; align-items: center; gap: 0.5vw; }
     .api-loader { font-size: 1vw; color: var(--gold); display: none; animation: pulse 1s infinite; }
 
     /* V15: undo-snackbar for deletions (tasks/notes/shopping items) - gives a few seconds to reverse
@@ -118,7 +122,7 @@
 
     .header-actions { display: flex; flex-wrap: wrap; gap: 0.6vw; row-gap: 0.8vh; align-items: center; justify-content: flex-end; }
     .btn { background: var(--btn-bg); border: 1px solid var(--card-border); color: #888; font-family: 'Assistant', sans-serif; font-size: 1vw; font-weight: 700; padding: 0.8vh 1.5vw; border-radius: 1.5vw; cursor: pointer; transition: all 0.3s ease; }
-    .btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn:hover { background: var(--btn-hover-bg); color: var(--btn-hover-text); }
     .btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
     .btn-settings { background: rgba(245, 158, 11, 0.2); border-color: var(--gold); color: var(--gold); }
     .btn-settings:hover { background: var(--gold); color: #000; }
@@ -138,11 +142,11 @@
 
     /* Tab 1: Tasks & Notes */
     .task-input-container { display: flex; gap: 0.5vw; }
-    .task-input { flex: 1; padding: 0.8vh; border-radius: 0.5vw; border: 1px solid var(--card-border); background: rgba(0,0,0,0.5); color: #fff; font-family: 'Assistant', sans-serif; }
-    .task-time-input { width: 5.5vw; padding: 0.8vh; border-radius: 0.5vw; border: 1px solid var(--card-border); background: rgba(0,0,0,0.5); color: #fff; font-family: 'Assistant', sans-serif; }
+    .task-input { flex: 1; padding: 0.8vh; border-radius: 0.5vw; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--input-text); font-family: 'Assistant', sans-serif; }
+    .task-time-input { width: 5.5vw; padding: 0.8vh; border-radius: 0.5vw; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--input-text); font-family: 'Assistant', sans-serif; }
     .add-btn { background: var(--cyan); color: #000; border: none; border-radius: 0.5vw; padding: 0 1vw; font-weight: bold; cursor: pointer; }
     .tasks-list, .notes-list { list-style: none; display: flex; flex-direction: column; gap: 0.8vh; }
-    .task-item { background: rgba(255,255,255,0.05); padding: 1vh; border-radius: 0.5vw; display: flex; align-items: center; gap: 0.5vw; border-right: 4px solid transparent; }
+    .task-item { background: var(--card-bg); padding: 1vh; border-radius: 0.5vw; display: flex; align-items: center; gap: 0.5vw; border-right: 4px solid transparent; }
     /* V15: compact density option - shrinks row spacing/padding in the sidebar lists so more items
        fit on screen without scrolling, for anyone who prefers density over the default comfortable
        spacing. */
@@ -201,12 +205,12 @@
     /* DATES & INFO PANELS */
     .dates-container { text-align: center; }
     .date-hebrew-text { font-size: 2.2vw; font-weight: 900; color: var(--gold); margin-bottom: 0.2vh; }
-    .date-gregorian-text { font-size: 1vw; color: #e2e8f0; font-weight: 600; }
+    .date-gregorian-text { font-size: 1vw; color: var(--text-color); font-weight: 600; }
 
     .info-ribbon { display: flex; gap: 1vw; background: var(--card-bg); border: 1px solid var(--gold); border-radius: 1vw; padding: 1.2vh 2vw; width: 100%; justify-content: space-around; box-shadow: 0 0 15px rgba(245, 158, 11, 0.15); backdrop-filter: blur(10px); }
     .info-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .info-item .label { font-size: 0.85vw; color: #94a3b8; font-weight: 600; }
-    .info-item .value { font-size: 1.2vw; font-weight: 800; color: #fff; text-decoration: none; }
+    .info-item .label { font-size: 0.85vw; color: var(--muted-text); font-weight: 600; }
+    .info-item .value { font-size: 1.2vw; font-weight: 800; color: var(--text-color); text-decoration: none; }
     .link-val { color: var(--cyan) !important; cursor: pointer; transition: 0.2s; }
     .link-val:hover { text-shadow: 0 0 10px var(--cyan); }
     .tachanun-no { color: #2ed573 !important; }
@@ -219,8 +223,8 @@
     /* V15: soonest-upcoming zman gets a gentle pulse so it stands out without a screenshot-style diff. */
     .zman-card.next-zman { border-color: var(--cyan); box-shadow: 0 0 1.2vw rgba(0,229,255,0.5); animation: nextZmanPulse 2.5s ease-in-out infinite; }
     @keyframes nextZmanPulse { 0%,100% { box-shadow: 0 0 0.6vw rgba(0,229,255,0.3); } 50% { box-shadow: 0 0 1.5vw rgba(0,229,255,0.7); } }
-    .zman-title { font-size: 0.85vw; font-weight: 700; color: #94a3b8; margin-bottom: 0.3vh; text-align: center; line-height: 1.1; }
-    .zman-time { font-size: 1.4vw; font-weight: 900; color: #fff; font-family: 'Bebas Neue', 'Heebo', sans-serif; direction: ltr; }
+    .zman-title { font-size: 0.85vw; font-weight: 700; color: var(--muted-text); margin-bottom: 0.3vh; text-align: center; line-height: 1.1; }
+    .zman-time { font-size: 1.4vw; font-weight: 900; color: var(--text-color); font-family: 'Bebas Neue', 'Heebo', sans-serif; direction: ltr; }
     .api-error { grid-column: 1 / -1; text-align: center; color: #888; font-size: 1vw; padding: 1vh; }
 
     @keyframes pulseAlert { 0% { border-color: var(--alert); box-shadow: 0 0 0 0 rgba(255,71,87,0.7); } 70% { box-shadow: 0 0 0 15px rgba(255,71,87,0); } 100% { border-color: var(--alert); box-shadow: 0 0 0 0 rgba(255,71,87,0); } }
@@ -239,15 +243,33 @@
     dialog { margin: auto; padding: 2vw; background: var(--dialog-bg); color: var(--text-color); border: 1px solid var(--cyan); border-radius: 1vw; width: 50vw; max-width: 800px; font-family: 'Assistant', sans-serif; }
     dialog::backdrop { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
     .modal-header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 1vh; margin-bottom: 2vh; }
-    .close-btn { background: none; border: none; color: #fff; font-size: 1.5vw; cursor: pointer; }
-    .setting-group { margin-bottom: 2vh; background: rgba(255,255,255,0.05); padding: 1.5vh; border-radius: 0.5vw; }
+    .close-btn { background: none; border: none; color: var(--text-color); font-size: 1.5vw; cursor: pointer; }
+    .setting-group { margin-bottom: 1.6vh; }
+    .setting-group:last-child { margin-bottom: 0; }
+    .setting-group > label { display: block; font-weight: 700; color: var(--gold); margin-bottom: 0.6vh; font-size: 0.95vw; }
     .toggle-switch { display: flex; align-items: center; gap: 1vw; font-size: 1.1vw; margin-bottom: 1vh; }
     .toggle-switch input { transform: scale(1.5); cursor: pointer; }
     .event-inputs { display: flex; gap: 0.5vw; margin-bottom: 1vh; align-items: center; }
-    .event-inputs input { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 0.5vh; }
-    .event-inputs button { background: var(--cyan); border: none; padding: 0.5vh 1vw; cursor: pointer; font-weight: bold; }
+    .event-inputs input, .event-inputs select { flex: 1; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--input-text); padding: 0.5vh; border-radius: 0.3vw; }
+    .event-inputs button { background: var(--cyan); border: none; padding: 0.5vh 1vw; cursor: pointer; font-weight: bold; border-radius: 0.3vw; }
     .events-table { width: 100%; border-collapse: collapse; }
-    .events-table th, .events-table td { border: 1px solid #333; padding: 0.5vh; text-align: right; }
+    .events-table th, .events-table td { border: 1px solid var(--card-border); padding: 0.5vh; text-align: right; }
+    .settings-hint { font-size: 0.8vw; color: var(--muted-text); margin-top: 0.4vh; }
+    /* V15: settings redesigned as a collapsible accordion (grouped by topic) instead of one long
+       scroll of 18+ sections - the "wall of settings" was flagged as cluttered/unpolished. Every form
+       control below reads its colors from theme variables (--input-bg/--input-border/--input-text,
+       set in :root and overridden under body.light-mode) instead of hardcoded dark colors, which is
+       also the fix for light-mode controls that were invisible (white-on-white) before. */
+    .settings-section { border: 1px solid var(--card-border); border-radius: 0.6vw; margin-bottom: 1.2vh; overflow: hidden; }
+    .settings-section summary { cursor: pointer; padding: 1.2vh 1.5vw; font-weight: 800; font-size: 1.05vw; background: rgba(0,229,255,0.08); color: var(--cyan); list-style: none; display: flex; align-items: center; gap: 0.6vw; user-select: none; }
+    .settings-section summary::-webkit-details-marker { display: none; }
+    .settings-section summary::after { content: '▾'; margin-right: auto; transition: transform 0.2s ease; opacity: 0.7; }
+    .settings-section[open] summary::after { transform: rotate(180deg); }
+    .settings-section .settings-body { padding: 1.6vh 1.5vw; border-top: 1px solid var(--card-border); }
+    .settings-body input[type="text"], .settings-body input[type="number"], .settings-body input[type="date"],
+    .settings-body input[type="time"], .settings-body select, .settings-body textarea {
+      background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 0.4vw; padding: 0.6vh 0.8vw; font-family: inherit;
+    }
 
     .bg-holiday-icon { position: absolute; font-size: 5vw; opacity: 0; pointer-events: none; transition: 2s; z-index: 0; animation: floatIcon 20s linear infinite; }
     @keyframes floatIcon { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0.1; } 50% { opacity: 0.3; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
@@ -364,24 +386,24 @@
             <button class="add-btn" onclick="addTask()">+</button>
           </div>
           <div class="task-input-container" style="margin-top:0.5vh;">
-            <select id="newTaskAssignee" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;"><option value="">ללא שיוך</option></select>
-            <select id="newTaskPriority" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;">
+            <select id="newTaskAssignee" style="flex:1; padding:0.6vh; background:var(--input-bg); color:var(--input-text); border:1px solid var(--card-border); border-radius:0.5vw;"><option value="">ללא שיוך</option></select>
+            <select id="newTaskPriority" style="flex:1; padding:0.6vh; background:var(--input-bg); color:var(--input-text); border:1px solid var(--card-border); border-radius:0.5vw;">
               <option value="normal">רגיל</option>
               <option value="urgent">דחוף</option>
               <option value="low">אפשר לדחות</option>
             </select>
-            <select id="newTaskRepeat" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;" title="חזרה">
+            <select id="newTaskRepeat" style="flex:1; padding:0.6vh; background:var(--input-bg); color:var(--input-text); border:1px solid var(--card-border); border-radius:0.5vw;" title="חזרה">
               <option value="daily">מתאפסת יומית</option>
               <option value="weekly">מתאפסת שבועית (א')</option>
               <option value="once">חד-פעמית</option>
             </select>
           </div>
           <div class="task-input-container" style="margin-top:0.5vh;">
-            <input type="text" id="newTaskTag" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;" placeholder="תגית (אופציונלי, למשל: בית)">
+            <input type="text" id="newTaskTag" style="flex:1; padding:0.6vh; background:var(--input-bg); color:var(--input-text); border:1px solid var(--card-border); border-radius:0.5vw;" placeholder="תגית (אופציונלי, למשל: בית)">
           </div>
           <div class="task-input-container" style="margin-top:0.5vh;">
             <input type="text" id="taskSearchInput" class="task-input" placeholder="🔎 חפש במשימות (כולל תגיות)..." oninput="renderTasks()">
-            <select id="taskFilterAssignee" onchange="renderTasks()" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;"><option value="">הצג הכל</option></select>
+            <select id="taskFilterAssignee" onchange="renderTasks()" style="flex:1; padding:0.6vh; background:var(--input-bg); color:var(--input-text); border:1px solid var(--card-border); border-radius:0.5vw;"><option value="">הצג הכל</option></select>
           </div>
           <div class="task-input-container" style="margin-top:0.5vh;">
             <button class="btn" style="width:100%; background:#555; color:#fff; font-size:0.85vw;" onclick="exportTasksNotesText()">📄 ייצוא משימות ופתקים כטקסט</button>
@@ -413,7 +435,7 @@
         <div id="tab-shopping" class="tab-content">
           <div class="panel-title">רשימת קניות</div>
           <div class="task-input-container" style="display:flex; gap:0.5vw; margin-bottom:0.8vh;">
-            <select id="shoppingListSelect" onchange="switchShoppingList(this.value)" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;"></select>
+            <select id="shoppingListSelect" onchange="switchShoppingList(this.value)" style="flex:1; padding:0.6vh; background:var(--input-bg); color:var(--input-text); border:1px solid var(--card-border); border-radius:0.5vw;"></select>
             <button class="add-btn" onclick="addShoppingList()" title="רשימה חדשה">➕</button>
             <button class="add-btn" style="background:var(--alert);" onclick="deleteShoppingList()" title="מחק רשימה">🗑️</button>
           </div>
@@ -461,7 +483,7 @@
             <span class="label">דף יומי</span>
             <a class="value link-val" id="dafYomiVal" target="_blank">טוען...</a>
             <span style="font-size:0.7vw; color:var(--gold); cursor:pointer;" id="dafYomiStreakLabel" onclick="markDafYomiLearned()"></span>
-            <span style="font-size:0.7vw; color:#94a3b8; cursor:pointer; margin-right:0.3vw;" onclick="openDafYomiHeatmapModal()" title="היסטוריית לימוד">📊</span>
+            <span style="font-size:0.7vw; color:var(--muted-text); cursor:pointer; margin-right:0.3vw;" onclick="openDafYomiHeatmapModal()" title="היסטוריית לימוד">📊</span>
           </div>
           <div class="info-item" id="ribbonItem-selichot"><span class="label">סליחות</span><span class="value" id="selichotVal">טוען...</span></div>
           <div class="info-item" id="ribbonItem-tachanun"><span class="label">תחנון</span><span class="value" id="tachanunVal">טוען...</span></div>
@@ -590,7 +612,7 @@
     <div class="modal-header"><h2>⏱️ טיימר</h2><button class="close-btn" onclick="document.getElementById('timerModal').close()">✖</button></div>
     <div id="timerDisplay" style="font-size:3vw; font-weight:900; margin:1.5vh 0;">00:00</div>
     <div id="timerSetup" style="display:flex; gap:0.5vw; justify-content:center; align-items:center; margin-bottom:1.5vh;">
-      <input type="number" id="timerMinutesInput" min="1" max="180" value="10" style="width:5vw; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; text-align:center;">
+      <input type="number" id="timerMinutesInput" min="1" max="180" value="10" style="width:5vw; padding:0.7vh; background:var(--input-bg); border:1px solid var(--input-border); color:var(--input-text); text-align:center;">
       <span>דקות</span>
     </div>
     <div style="display:flex; gap:1vw; justify-content:center;">
@@ -619,7 +641,7 @@
        non-empty line as a separate item. -->
   <dialog id="shoppingImportModal" style="width:auto; max-width:450px;">
     <div class="modal-header"><h2>📋 ייבוא רשימה מהדבקה</h2><button class="close-btn" onclick="document.getElementById('shoppingImportModal').close()">✖</button></div>
-    <textarea id="shoppingImportTextarea" rows="8" placeholder="הדבק כאן רשימה - כל שורה תהפוך לפריט נפרד" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; resize:vertical;"></textarea>
+    <textarea id="shoppingImportTextarea" rows="8" placeholder="הדבק כאן רשימה - כל שורה תהפוך לפריט נפרד" style="width:100%; padding:0.7vh; background:var(--input-bg); border:1px solid var(--input-border); color:var(--input-text); resize:vertical;"></textarea>
     <button onclick="importShoppingListText()" style="margin-top:1vh; width:100%; background:var(--cyan); border:none; padding:0.8vh; border-radius:0.5vw; cursor:pointer; font-weight:bold;">ייבא</button>
   </dialog>
 
@@ -629,7 +651,7 @@
   <dialog id="shoppingQrModal" style="width:auto; max-width:400px; text-align:center;">
     <div class="modal-header"><h2>📱 שיתוף רשימת קניות</h2><button class="close-btn" onclick="document.getElementById('shoppingQrModal').close()">✖</button></div>
     <img id="shoppingQrImage" src="" alt="QR code" style="width:250px; height:250px; background:#fff; padding:1vh; border-radius:0.5vw;">
-    <div style="margin-top:1.5vh; color:#94a3b8; font-size:0.85vw;">תמונת מצב של הרשימה כרגע - לא מתעדכן בזמן אמת אם תשנה משהו אחרי הסריקה.</div>
+    <div style="margin-top:1.5vh; color:var(--muted-text); font-size:0.85vw;">תמונת מצב של הרשימה כרגע - לא מתעדכן בזמן אמת אם תשנה משהו אחרי הסריקה.</div>
   </dialog>
 
   <!-- ARCHIVE MODAL - V15: completed tasks move here instead of being deleted outright, so they
@@ -645,7 +667,7 @@
   <dialog id="qrModal" style="width:auto; max-width:400px; text-align:center;">
     <div class="modal-header"><h2>📱 פתח בנייד</h2><button class="close-btn" onclick="document.getElementById('qrModal').close()">✖</button></div>
     <img id="qrImage" src="" alt="QR code" style="width:250px; height:250px; background:#fff; padding:1vh; border-radius:0.5vw;">
-    <div style="margin-top:1.5vh; color:#94a3b8; font-size:0.9vw; word-break:break-all;" id="qrUrlText"></div>
+    <div style="margin-top:1.5vh; color:var(--muted-text); font-size:0.9vw; word-break:break-all;" id="qrUrlText"></div>
   </dialog>
 
   <!-- SHABBAT TIMES MODAL - new in V8: dedicated, printable candle-lighting/havdalah table for the
@@ -664,7 +686,7 @@
   <dialog id="datePickerModal" style="width:55vw; max-width:750px;">
     <div class="modal-header"><h2>📆 זמנים לתאריך אחר</h2><button class="close-btn" onclick="document.getElementById('datePickerModal').close()">✖</button></div>
     <div style="display:flex; gap:1vw; margin-bottom:1.5vh; align-items:center;">
-      <input type="date" id="zmanimDateInput" style="flex:1; padding:0.7vh; background:#000; border:1px solid #333; color:#fff;">
+      <input type="date" id="zmanimDateInput" style="flex:1; padding:0.7vh; background:var(--input-bg); border:1px solid var(--input-border); color:var(--input-text);">
       <button onclick="loadZmanimForDate()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">הצג</button>
       <button onclick="showTomorrowZmanim()" style="background:var(--gold); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">🌙 מחר</button>
     </div>
@@ -690,7 +712,7 @@
        elsewhere in this app - a wrong word in a real blessing is worse than not providing it at all). -->
   <dialog id="brachaModal" style="width:auto; max-width:450px; text-align:center;">
     <div class="modal-header"><h2>🙏 ברכה אחרונה</h2><button class="close-btn" onclick="document.getElementById('brachaModal').close()">✖</button></div>
-    <div style="margin-bottom:1.5vh; font-size:0.9vw; color:#94a3b8;">בחר את סוג המאכל שאכלת כדי לפתוח את נוסח הברכה המתאים באתר ספריא:</div>
+    <div style="margin-bottom:1.5vh; font-size:0.9vw; color:var(--muted-text);">בחר את סוג המאכל שאכלת כדי לפתוח את נוסח הברכה המתאים באתר ספריא:</div>
     <div style="display:flex; flex-direction:column; gap:0.8vw;">
       <a class="btn" target="_blank" href="https://www.sefaria.org.il/search?q=%D7%91%D7%95%D7%A8%D7%90%20%D7%A0%D7%A4%D7%A9%D7%95%D7%AA" style="background:var(--cyan); color:#000; text-decoration:none;">🍬 מזון אחר (בורא נפשות)</a>
       <a class="btn" target="_blank" href="https://www.sefaria.org.il/search?q=%D7%A2%D7%9C%20%D7%94%D7%9E%D7%97%D7%99%D7%94" style="background:var(--cyan); color:#000; text-decoration:none;">🍞 מזונות (על המחיה)</a>
@@ -756,10 +778,10 @@
     <div style="max-height:75vh; overflow-y:auto; padding:0 0.5vw;">
       <div class="panel-title">קופת צדקה דיגיטלית</div>
       <div class="tzedakah-widget">
-        <div style="font-size: 1vw; color: #e2e8f0;">סך הכל נתרם החודש:</div>
+        <div style="font-size: 1vw; color: var(--text-color);">סך הכל נתרם החודש:</div>
         <div class="tzedakah-total" id="tzedakahTotal">₪0</div>
 
-        <div style="font-size: 0.9vw; color: #ccc; margin-bottom: 0.5vh;">בחר סכום להכנסה:</div>
+        <div style="font-size: 0.9vw; color: var(--muted-text); margin-bottom: 0.5vh;">בחר סכום להכנסה:</div>
         <div class="coin-selector">
           <button class="coin-val" onclick="selectCoin(0.1, this)">10 אג'</button>
           <button class="coin-val" onclick="selectCoin(0.5, this)">₪0.5</button>
@@ -776,7 +798,7 @@
       <div id="emergencyContactsWidget" style="display:flex; flex-direction:column; gap:0.6vh;"></div>
 
       <div class="panel-title" style="margin-top: 2vh;">חובות הלבבות - שער הבטחון (יומי)</div>
-      <div class="chovot-widget" id="chovotWidget" style="background: rgba(245,158,11,0.1); border: 1px solid var(--gold); padding: 1.5vh; border-radius: 1vw; font-size: 1.1vw; line-height: 1.6; text-align: justify; color: #fff;">
+      <div class="chovot-widget" id="chovotWidget" style="background: rgba(245,158,11,0.1); border: 1px solid var(--gold); padding: 1.5vh; border-radius: 1vw; font-size: 1.1vw; line-height: 1.6; text-align: justify; color: var(--text-color);">
         <script>
             const bitachonQuotes = [
               "<b>הַבִּטָּחוֹן הַשָּׁלֵם בָּאֱלֹהִים</b><br>הוּא מְנוּחַת נֶפֶשׁ הַבּוֹטֵחַ וְשֶׁיִּהְיֶה לִבּוֹ סָמוּךְ עַל מִי שֶׁבָּטַח עָלָיו, שֶׁיַּעֲשֶׂה הַטּוֹב וְהַנָּכוֹן לוֹ בָּעִנְיָן אֲשֶׁר יִבְטַח עָלָיו.",
@@ -800,167 +822,206 @@
   <dialog id="settingsModal">
     <div class="modal-header"><h2>⚙️ הגדרות המערכת (V15)</h2><button class="close-btn" onclick="closeSettings(); document.getElementById('settingsModal').close();">✖</button></div>
 
-    <div class="setting-group"><label>מקור חדשות</label>
-      <select id="newsSourceSelect" style="width:100%; padding: 0.5vh; border-radius: 0.5vw; background: #333; color: white; margin-top:0.5vh;">
-          <option value="rotter">רוטר - סקופים</option>
-          <option value="jdn">JDN - חדשות חרדים</option>
-          <option value="arutz7">ערוץ 7 - מבזקים</option>
-          <option value="kikar">כיכר השבת</option>
-      </select>
-    </div>
-    <div class="setting-group"><label>רקע - תמונות משפחה מתחלפות</label>
-      <input type="file" id="bgUpload" accept="image/*" multiple style="width:100%; color: white; margin-top:0.5vh;">
-      <div style="font-size:0.8vw; color:#888; margin-top:0.5vh;">אפשר לבחור כמה תמונות יחד (Ctrl+לחיצה). אם תבחר יותר מתמונה אחת, הרקע יתחלף ביניהן כל דקה.</div>
-      <div id="bgThumbs" style="display:flex; gap:0.5vw; flex-wrap:wrap; margin-top:1vh;"></div>
-      <button onclick="resetBg()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לרקע המקורי</button>
-    </div>
+    <!-- V15: reorganized from ~19 stacked boxes into a collapsible accordion by topic - much less
+         overwhelming to scan, and every control here reads its colors from the shared theme variables
+         (--input-bg/--input-text/--input-border/--muted-text) so light mode never leaves anything
+         unreadable. -->
 
+    <details class="settings-section" open>
+      <summary>🎨 עיצוב ותצוגה</summary>
+      <div class="settings-body">
+        <div class="setting-group"><label>ערכת נושא וצבע</label>
+          <div style="display:flex; align-items:center; gap:1vw; margin-bottom:1vh; flex-wrap:wrap;">
+            <span>ערכת נושא:</span>
+            <select id="themeModeSelect" onchange="applyThemeMode(this.value)">
+              <option value="dark">כהה (קבוע)</option>
+              <option value="light">בהיר (קבוע)</option>
+              <option value="auto">אוטומטי לפי שעה (יום=בהיר, לילה=כהה)</option>
+            </select>
+            <span>צבע ראשי:</span>
+            <input type="color" id="accentColorInput" value="#00e5ff" onchange="applyAccentColor(this.value)" style="width:3vw; height:3vh; border:none; cursor:pointer; background:transparent;">
+            <button onclick="applyAccentColor('#00e5ff'); document.getElementById('accentColorInput').value='#00e5ff';" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">איפוס</button>
+          </div>
+        </div>
+        <div class="setting-group"><label>נגישות וצפיפות</label>
+          <div style="display:flex; align-items:center; gap:1vw;">
+            <span>הגדלת תצוגה:</span>
+            <input type="range" id="accessibilitySlider" min="100" max="130" step="5" value="100" oninput="applyAccessibilityScale(this.value); document.getElementById('accessibilitySliderVal').textContent = this.value + '%';" style="flex:1;">
+            <span id="accessibilitySliderVal" style="min-width:3.5vw;">100%</span>
+          </div>
+          <div class="settings-hint">מגדיל את תוכן הדשבורד (לא את פס הכותרת, שנשאר תמיד נגיש) ומעלה ניגודיות בכל ערך מעל 100%.</div>
+          <div class="toggle-switch" style="margin-top:1vh;"><input type="checkbox" id="densityCompactToggle" onchange="appSettings.densityCompact=this.checked; document.body.classList.toggle('density-compact', this.checked); saveSettings();"><span>תצוגה צפופה בסיידבר (יותר שורות במסך אחד)</span></div>
+        </div>
+        <div class="setting-group"><label>רקע - תמונות משפחה מתחלפות</label>
+          <input type="file" id="bgUpload" accept="image/*" multiple style="width:100%; margin-top:0.5vh;">
+          <div class="settings-hint">אפשר לבחור כמה תמונות יחד (Ctrl+לחיצה). אם תבחר יותר מתמונה אחת, הרקע יתחלף ביניהן כל דקה.</div>
+          <div id="bgThumbs" style="display:flex; gap:0.5vw; flex-wrap:wrap; margin-top:1vh;"></div>
+          <button onclick="resetBg()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לרקע המקורי</button>
+        </div>
+        <div class="setting-group"><label>מקור חדשות</label>
+          <select id="newsSourceSelect" style="width:100%; margin-top:0.5vh;">
+              <option value="rotter">רוטר - סקופים</option>
+              <option value="jdn">JDN - חדשות חרדים</option>
+              <option value="arutz7">ערוץ 7 - מבזקים</option>
+              <option value="kikar">כיכר השבת</option>
+          </select>
+        </div>
+        <div class="setting-group" id="autoStartSetting" style="display:none;"><label>הפעלה אוטומטית (Windows)</label>
+          <div class="toggle-switch"><input type="checkbox" id="autoStartToggle" onchange="toggleAutoStart()"><span>הפעל את הדשבורד אוטומטית כשהמחשב נדלק</span></div>
+        </div>
+      </div>
+    </details>
 
-    <div class="setting-group" id="autoStartSetting" style="display:none;"><label>הפעלה אוטומטית (Windows)</label>
-      <div class="toggle-switch"><input type="checkbox" id="autoStartToggle" onchange="toggleAutoStart()"><span>הפעל את הדשבורד אוטומטית כשהמחשב נדלק</span></div>
-    </div>
+    <details class="settings-section">
+      <summary>🔔 אוטומציה, התראות ונוסח</summary>
+      <div class="settings-body">
+        <div class="setting-group"><label>אוטומציה והתראות</label>
+          <div class="toggle-switch"><input type="checkbox" id="shabbatModeToggle"><span>הפעל "מצב שבת/חג" אוטומטי (כולל ימים טובים)</span></div>
+          <div class="toggle-switch"><input type="checkbox" id="audioModeToggle"><span>הפעל צלצול/הקראה קולית (15 דקות לפני סוזק"ש וכניסת שבת)</span></div>
+          <div class="toggle-switch"><input type="checkbox" id="screensaverToggle"><span>הפעל עמעום מסך אוטומטי (אחרי 5 דק' חוסר פעילות) - כבוי כברירת מחדל</span></div>
+          <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh; flex-wrap:wrap;">
+            <span>צליל התראה:</span>
+            <select id="chimeSoundSelect" onchange="appSettings.chimeSound=this.value; saveSettings();">
+              <option value="bell">פעמון</option>
+              <option value="gentle">עדין</option>
+              <option value="double">ביפ כפול</option>
+            </select>
+            <button onclick="previewChime(document.getElementById('chimeSoundSelect').value)" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">▶ נגן לדוגמה</button>
+          </div>
+        </div>
+        <div class="setting-group"><label>נוסח/מנהג</label>
+          <select id="nusachSelect" style="width:100%;">
+            <option value="sephardi">עדות המזרח / ספרד</option>
+            <option value="ashkenazi">אשכנז</option>
+            <option value="teimani">תימן</option>
+          </select>
+          <div class="settings-hint">משנה את תג המנהג בכותרת ואת ייחוס "סוזק"ש" בטבלת הזמנים (הגר"א לאשכנזים, עובדיה לספרדים). שאר חישובי הזמנים זהים לכל הנוסחים.</div>
+        </div>
+        <div class="setting-group"><label>פסוק/משפט עליון</label>
+          <div class="settings-hint" style="margin-bottom:0.5vh;">אפשר להכניס כמה פסוקים, כל אחד בשורה נפרדת - יוצג פסוק אחר בכל יום (מתחלף לפי תאריך, לא אקראי).</div>
+          <textarea id="pasukTextInput" rows="3" style="width:100%; resize:vertical;" placeholder="&quot;וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ&quot;"></textarea>
+          <button onclick="resetPasukText()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לפסוק המקורי</button>
+        </div>
+        <div class="setting-group"><label>זמני הדלקת נרות</label>
+          <div class="event-inputs"><span>הדלקת נרות כמה דקות לפני השקיעה: </span><input type="number" id="candleOffsetInput" min="10" max="60" style="width:80px;" placeholder="20"></div>
+        </div>
+      </div>
+    </details>
 
-    <div class="setting-group"><label>אוטומציה והתראות</label>
-      <div class="toggle-switch"><input type="checkbox" id="shabbatModeToggle"><span>הפעל "מצב שבת/חג" אוטומטי (כולל ימים טובים)</span></div>
-      <div class="toggle-switch"><input type="checkbox" id="audioModeToggle"><span>הפעל צלצול/הקראה קולית (15 דקות לפני סוזק"ש וכניסת שבת)</span></div>
-      <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh;">
-        <span>צליל התראה:</span>
-        <select id="chimeSoundSelect" onchange="appSettings.chimeSound=this.value; saveSettings();" style="padding:0.5vh; background:#333; color:#fff; border-radius:0.5vw;">
-          <option value="bell">פעמון</option>
-          <option value="gentle">עדין</option>
-          <option value="double">ביפ כפול</option>
-        </select>
-        <button onclick="previewChime(document.getElementById('chimeSoundSelect').value)" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">▶ נגן לדוגמה</button>
+    <details class="settings-section">
+      <summary>👨‍👩‍👧 משפחה, אנשים ותאריכים</summary>
+      <div class="settings-body">
+        <div class="setting-group"><label>בני משפחה (לשיוך משימות ולתור אחראי יומי)</label>
+          <div class="event-inputs"><input type="text" id="famMemberName" placeholder="שם"><button onclick="addFamilyMember()">הוסף</button></div>
+          <table class="events-table"><thead><tr><th>שם</th><th>פעולה</th></tr></thead><tbody id="familyMembersTbody"></tbody></table>
+        </div>
+        <div class="setting-group"><label>אנשי קשר לשעת חירום</label>
+          <div class="event-inputs"><input type="text" id="ecName" placeholder="שם (למשל: הרב, שכן)"><input type="text" id="ecPhone" placeholder="טלפון"><button onclick="addEmergencyContact()">הוסף</button></div>
+          <table class="events-table"><thead><tr><th>שם</th><th>טלפון</th><th>פעולה</th></tr></thead><tbody id="emergencyContactsTbody"></tbody></table>
+        </div>
+        <div class="setting-group"><label>זמני מניינים בבית הכנסת</label>
+          <div class="event-inputs"><input type="text" id="minyanName" placeholder="שם (למשל: שחרית)"><input type="text" id="minyanTime" placeholder="שעה (למשל: 07:00)"><button onclick="addMinyanTime()">הוסף</button></div>
+          <table class="events-table"><thead><tr><th>תפילה</th><th>שעה</th><th>פעולה</th></tr></thead><tbody id="minyanTimesTbody"></tbody></table>
+        </div>
+        <div class="setting-group"><label>תאריכים אישיים (אזכרות וימי הולדת)</label>
+          <div class="event-inputs"><span>התראה מוקדמת (כמה ימים לפני, 0=רק ביום עצמו): </span><input type="number" id="reminderDaysAheadInput" min="0" max="14" style="width:60px;" placeholder="2"></div>
+          <div class="settings-hint" style="margin-bottom:1vh;">שים לב: התראה מוקדמת עובדת במדויק לתאריכים לועזיים. לתאריכים עבריים היא עובדת רק בתוך אותו חודש עברי (לא חוצה חודשים).</div>
+          <div class="event-inputs">
+            <input type="text" id="evName" placeholder="שם">
+            <input type="text" id="evType" placeholder="סוג (אזכרה/יום הולדת)">
+            <select id="evDateType" onchange="toggleEventDateInputs()" style="flex:0.7;">
+              <option value="hebrew">תאריך עברי</option>
+              <option value="gregorian">תאריך לועזי</option>
+            </select>
+          </div>
+          <div class="event-inputs" id="evHebrewInputs">
+            <input type="text" id="evDay" placeholder="יום עברי">
+            <input type="text" id="evMonth" placeholder="חודש עברי (למשל: תשרי)">
+          </div>
+          <div class="event-inputs" id="evGregorianInputs" style="display:none;">
+            <input type="number" id="evGDay" placeholder="יום" min="1" max="31" style="flex:0.5;">
+            <select id="evGMonth">
+              <option value="1">ינואר</option><option value="2">פברואר</option><option value="3">מרץ</option><option value="4">אפריל</option>
+              <option value="5">מאי</option><option value="6">יוני</option><option value="7">יולי</option><option value="8">אוגוסט</option>
+              <option value="9">ספטמבר</option><option value="10">אוקטובר</option><option value="11">נובמבר</option><option value="12">דצמבר</option>
+            </select>
+          </div>
+          <div style="text-align:left; margin-bottom:1vh;"><button onclick="addPersonalEvent()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold;">הוסף</button></div>
+          <table class="events-table"><thead><tr><th>שם</th><th>סוג</th><th>תאריך</th><th>פעולה</th></tr></thead><tbody id="eventsTbody"></tbody></table>
+          <button onclick="exportPersonalEventsICS()" style="margin-top:1vh; background:#555; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer;">📅 ייצוא כקובץ ICS ליומן</button>
+        </div>
+        <div class="setting-group"><label>שעון עולם (לקרובי משפחה בחו"ל)</label>
+          <div class="event-inputs">
+            <input type="text" id="worldClockLabel" placeholder="שם המקום (למשל: ניו יורק)">
+            <select id="worldClockTz">
+              <option value="">כבוי</option>
+              <option value="America/New_York">ניו יורק (מזרח ארה"ב)</option>
+              <option value="America/Los_Angeles">לוס אנג'לס (מערב ארה"ב)</option>
+              <option value="America/Chicago">שיקגו (מרכז ארה"ב)</option>
+              <option value="Europe/London">לונדון</option>
+              <option value="Europe/Paris">פריז</option>
+              <option value="Australia/Sydney">סידני</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-group"><label>ספירה לחופש הקרוב (בית ספר)</label>
+          <div class="settings-hint" style="margin-bottom:0.5vh;">אין מקור מידע חינמי אמין ללוח חופשות משרד החינוך, אז זה ידני - הכנס תאריך בעצמך.</div>
+          <div class="event-inputs">
+            <input type="text" id="vacationLabel" placeholder="שם החופש (למשל: חנוכה)">
+            <input type="date" id="vacationDate">
+          </div>
+        </div>
+        <div class="setting-group"><label>פרטים אישיים</label>
+          <div class="event-inputs"><span>הכנס גיל נוכחי (לצורך תהילים): </span><input type="number" id="ageInput" min="1" max="120" style="width:80px;" placeholder="גיל"></div>
+        </div>
       </div>
-      <div class="toggle-switch"><input type="checkbox" id="screensaverToggle"><span>הפעל עמעום מסך אוטומטי (אחרי 5 דק' חוסר פעילות) - כבוי כברירת מחדל</span></div>
-    </div>
-    <div class="setting-group"><label>נגישות ותצוגה</label>
-      <div style="display:flex; align-items:center; gap:1vw; margin-bottom:1vh;">
-        <span>ערכת נושא:</span>
-        <select id="themeModeSelect" onchange="applyThemeMode(this.value)" style="padding:0.5vh; background:#333; color:#fff; border-radius:0.5vw;">
-          <option value="dark">כהה (קבוע)</option>
-          <option value="light">בהיר (קבוע)</option>
-          <option value="auto">אוטומטי לפי שעה (יום=בהיר, לילה=כהה)</option>
-        </select>
+    </details>
+
+    <details class="settings-section">
+      <summary>🛒 רשימת קניות</summary>
+      <div class="settings-body">
+        <div class="setting-group"><label>מוצרי יסוד לרשימת קניות</label>
+          <div class="settings-hint" style="margin-bottom:0.5vh;">כל מוצר בשורה נפרדת. כפתור "הוסף מוצרי יסוד" ברשימת הקניות יוסיף את כל אלה בלחיצה אחת (ולא יכפיל מה שכבר ברשימה).</div>
+          <textarea id="staplesListInput" rows="4" style="width:100%; resize:vertical;" placeholder="חלב&#10;ביצים&#10;לחם"></textarea>
+        </div>
       </div>
-      <div style="display:flex; align-items:center; gap:1vw;">
-        <span>הגדלת תצוגה:</span>
-        <input type="range" id="accessibilitySlider" min="100" max="130" step="5" value="100" oninput="applyAccessibilityScale(this.value); document.getElementById('accessibilitySliderVal').textContent = this.value + '%';" style="flex:1;">
-        <span id="accessibilitySliderVal" style="min-width:3.5vw;">100%</span>
+    </details>
+
+    <details class="settings-section">
+      <summary>🧩 הצגה/הסתרה של רכיבים</summary>
+      <div class="settings-body">
+        <div class="setting-group">
+          <div class="settings-hint" style="margin-bottom:1vh;">בטל סימון כדי להסתיר רכיב מהמסך; אפשר להחזיר בכל רגע. או השתמש בפרופיל מוכן:</div>
+          <div style="display:flex; gap:0.8vw; margin-bottom:1.5vh; flex-wrap:wrap;">
+            <button onclick="applyDisplayProfile('full')" style="background:var(--cyan); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🖥️ קיוסק מלא</button>
+            <button onclick="applyDisplayProfile('minimal')" style="background:#64748b; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🔹 מינימלי</button>
+            <button onclick="applyDisplayProfile('guest')" style="background:var(--gold); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">👋 מצב אורח</button>
+            <button onclick="applyDisplayProfile('kids')" style="background:#ec4899; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🧒 מצב ילדים</button>
+          </div>
+          <div id="componentTogglesContainer"></div>
+        </div>
       </div>
-      <div style="font-size:0.8vw; color:#888;">מגדיל את תוכן הדשבורד (לא את פס הכותרת, שנשאר תמיד נגיש) ומעלה ניגודיות בכל ערך מעל 100%.</div>
-      <div class="toggle-switch" style="margin-top:1vh;"><input type="checkbox" id="densityCompactToggle" onchange="appSettings.densityCompact=this.checked; document.body.classList.toggle('density-compact', this.checked); saveSettings();"><span>תצוגה צפופה בסיידבר (יותר שורות במסך אחד)</span></div>
-      <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh;">
-        <span>צבע ראשי:</span>
-        <input type="color" id="accentColorInput" value="#00e5ff" onchange="applyAccentColor(this.value)" style="width:3vw; height:3vh; border:none; cursor:pointer; background:transparent;">
-        <button onclick="applyAccentColor('#00e5ff'); document.getElementById('accentColorInput').value='#00e5ff';" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">איפוס</button>
+    </details>
+
+    <details class="settings-section">
+      <summary>💾 גיבוי ומתקדם</summary>
+      <div class="settings-body">
+        <div class="setting-group"><label>גיבוי ושחזור נתונים</label>
+          <div style="display:flex; gap:1vw; flex-wrap:wrap;">
+            <button onclick="exportBackup()" style="background:var(--cyan); color:#000; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">💾 ייצוא גיבוי</button>
+            <button onclick="document.getElementById('importBackupInput').click()" style="background:var(--gold); color:#000; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">📂 ייבוא גיבוי</button>
+            <input type="file" id="importBackupInput" accept="application/json" style="display:none;" onchange="if(this.files[0]) importBackup(this.files[0])">
+          </div>
+          <div class="settings-hint" style="margin-top:1vh;">הגיבוי כולל: משימות, פתקים, הכנות לשבת, קופת צדקה, תאריכים אישיים והגדרות. שומר קובץ JSON שאפשר לשמור במקום בטוח ולשחזר ממנו במחשב אחר.</div>
+        </div>
+        <div class="setting-group"><label>הגדרות מתקדמות</label>
+          <div style="display:flex; gap:1vw; flex-wrap:wrap;">
+            <button onclick="resetTzedakah()" style="background:var(--alert); color:#fff; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">איפוס קופת צדקה חודשית</button>
+            <button onclick="printDashboardSnapshot()" style="background:#555; color:#fff; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">🖨️ הדפס דשבורד</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="setting-group"><label>נוסח/מנהג</label>
-      <select id="nusachSelect" style="width:100%; padding: 0.5vh; border-radius: 0.5vw; background: #333; color: white;">
-        <option value="sephardi">עדות המזרח / ספרד</option>
-        <option value="ashkenazi">אשכנז</option>
-        <option value="teimani">תימן</option>
-      </select>
-      <div style="font-size:0.8vw; color:#888; margin-top:0.5vh;">משנה את תג המנהג בכותרת ואת ייחוס "סוזק"ש" בטבלת הזמנים (הגר"א לאשכנזים, עובדיה לספרדים). שאר חישובי הזמנים זהים לכל הנוסחים.</div>
-    </div>
-    <div class="setting-group"><label>פסוק/משפט עליון</label>
-      <div style="font-size:0.8vw; color:#888; margin-bottom:0.5vh;">אפשר להכניס כמה פסוקים, כל אחד בשורה נפרדת - יוצג פסוק אחר בכל יום (מתחלף לפי תאריך, לא אקראי).</div>
-      <textarea id="pasukTextInput" rows="3" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; resize:vertical;" placeholder="&quot;וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ&quot;"></textarea>
-      <button onclick="resetPasukText()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לפסוק המקורי</button>
-    </div>
-    <div class="setting-group"><label>זמני הדלקת נרות</label>
-      <div class="event-inputs"><span>הדלקת נרות כמה דקות לפני השקיעה: </span><input type="number" id="candleOffsetInput" min="10" max="60" style="width:80px;" placeholder="20"></div>
-    </div>
-    <div class="setting-group"><label>ספירה לחופש הקרוב (בית ספר)</label>
-      <div style="font-size:0.8vw; color:#888; margin-bottom:0.5vh;">אין מקור מידע חינמי אמין ללוח חופשות משרד החינוך, אז זה ידני - הכנס תאריך בעצמך.</div>
-      <div class="event-inputs">
-        <input type="text" id="vacationLabel" placeholder="שם החופש (למשל: חנוכה)">
-        <input type="date" id="vacationDate">
-      </div>
-    </div>
-    <div class="setting-group"><label>שעון עולם (לקרובי משפחה בחו"ל)</label>
-      <div class="event-inputs">
-        <input type="text" id="worldClockLabel" placeholder="שם המקום (למשל: ניו יורק)">
-        <select id="worldClockTz" style="background:#000; color:#fff; border:1px solid #333;">
-          <option value="">כבוי</option>
-          <option value="America/New_York">ניו יורק (מזרח ארה"ב)</option>
-          <option value="America/Los_Angeles">לוס אנג'לס (מערב ארה"ב)</option>
-          <option value="America/Chicago">שיקגו (מרכז ארה"ב)</option>
-          <option value="Europe/London">לונדון</option>
-          <option value="Europe/Paris">פריז</option>
-          <option value="Australia/Sydney">סידני</option>
-        </select>
-      </div>
-    </div>
-    <div class="setting-group"><label>פרטים אישיים</label>
-      <div class="event-inputs"><span>הכנס גיל נוכחי (לצורך תהילים): </span><input type="number" id="ageInput" min="1" max="120" style="width:80px;" placeholder="גיל"></div>
-    </div>
-    <div class="setting-group"><label>תאריכים אישיים (אזכרות וימי הולדת)</label>
-      <div class="event-inputs"><span>התראה מוקדמת (כמה ימים לפני, 0=רק ביום עצמו): </span><input type="number" id="reminderDaysAheadInput" min="0" max="14" style="width:60px;" placeholder="2"></div>
-      <div style="font-size:0.8vw; color:#888; margin-bottom:1vh;">שים לב: התראה מוקדמת עובדת במדויק לתאריכים לועזיים. לתאריכים עבריים היא עובדת רק בתוך אותו חודש עברי (לא חוצה חודשים).</div>
-      <div class="event-inputs">
-        <input type="text" id="evName" placeholder="שם">
-        <input type="text" id="evType" placeholder="סוג (אזכרה/יום הולדת)">
-        <select id="evDateType" onchange="toggleEventDateInputs()" style="flex:0.7; background:#000; color:#fff; border:1px solid #333;">
-          <option value="hebrew">תאריך עברי</option>
-          <option value="gregorian">תאריך לועזי</option>
-        </select>
-      </div>
-      <div class="event-inputs" id="evHebrewInputs">
-        <input type="text" id="evDay" placeholder="יום עברי">
-        <input type="text" id="evMonth" placeholder="חודש עברי (למשל: תשרי)">
-      </div>
-      <div class="event-inputs" id="evGregorianInputs" style="display:none;">
-        <input type="number" id="evGDay" placeholder="יום" min="1" max="31" style="flex:0.5;">
-        <select id="evGMonth" style="background:#000; color:#fff; border:1px solid #333;">
-          <option value="1">ינואר</option><option value="2">פברואר</option><option value="3">מרץ</option><option value="4">אפריל</option>
-          <option value="5">מאי</option><option value="6">יוני</option><option value="7">יולי</option><option value="8">אוגוסט</option>
-          <option value="9">ספטמבר</option><option value="10">אוקטובר</option><option value="11">נובמבר</option><option value="12">דצמבר</option>
-        </select>
-      </div>
-      <div style="text-align:left; margin-bottom:1vh;"><button onclick="addPersonalEvent()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold;">הוסף</button></div>
-      <table class="events-table"><thead><tr><th>שם</th><th>סוג</th><th>תאריך</th><th>פעולה</th></tr></thead><tbody id="eventsTbody"></tbody></table>
-      <button onclick="exportPersonalEventsICS()" style="margin-top:1vh; background:#555; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer;">📅 ייצוא כקובץ ICS ליומן</button>
-    </div>
-    <div class="setting-group"><label>אנשי קשר לשעת חירום</label>
-      <div class="event-inputs"><input type="text" id="ecName" placeholder="שם (למשל: הרב, שכן)"><input type="text" id="ecPhone" placeholder="טלפון"><button onclick="addEmergencyContact()">הוסף</button></div>
-      <table class="events-table"><thead><tr><th>שם</th><th>טלפון</th><th>פעולה</th></tr></thead><tbody id="emergencyContactsTbody"></tbody></table>
-    </div>
-    <div class="setting-group"><label>מוצרי יסוד לרשימת קניות</label>
-      <div style="font-size:0.8vw; color:#888; margin-bottom:0.5vh;">כל מוצר בשורה נפרדת. כפתור "הוסף מוצרי יסוד" ברשימת הקניות יוסיף את כל אלה בלחיצה אחת (ולא יכפיל מה שכבר ברשימה).</div>
-      <textarea id="staplesListInput" rows="4" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; resize:vertical;" placeholder="חלב&#10;ביצים&#10;לחם"></textarea>
-    </div>
-    <div class="setting-group"><label>בני משפחה (לשיוך משימות)</label>
-      <div class="event-inputs"><input type="text" id="famMemberName" placeholder="שם"><button onclick="addFamilyMember()">הוסף</button></div>
-      <table class="events-table"><thead><tr><th>שם</th><th>פעולה</th></tr></thead><tbody id="familyMembersTbody"></tbody></table>
-    </div>
-    <div class="setting-group"><label>זמני מניינים בבית הכנסת</label>
-      <div class="event-inputs"><input type="text" id="minyanName" placeholder="שם (למשל: שחרית)"><input type="text" id="minyanTime" placeholder="שעה (למשל: 07:00)"><button onclick="addMinyanTime()">הוסף</button></div>
-      <table class="events-table"><thead><tr><th>תפילה</th><th>שעה</th><th>פעולה</th></tr></thead><tbody id="minyanTimesTbody"></tbody></table>
-    </div>
-    <div class="setting-group"><label>הצגה/הסתרה של רכיבים</label>
-      <div style="font-size:0.85vw; color:#aaa; margin-bottom:1vh;">בטל סימון כדי להסתיר רכיב מהמסך; אפשר להחזיר בכל רגע. או השתמש בפרופיל מוכן:</div>
-      <div style="display:flex; gap:0.8vw; margin-bottom:1.5vh;">
-        <button onclick="applyDisplayProfile('full')" style="background:var(--cyan); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🖥️ קיוסק מלא</button>
-        <button onclick="applyDisplayProfile('minimal')" style="background:#64748b; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🔹 מינימלי</button>
-        <button onclick="applyDisplayProfile('guest')" style="background:var(--gold); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">👋 מצב אורח</button>
-        <button onclick="applyDisplayProfile('kids')" style="background:#ec4899; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🧒 מצב ילדים</button>
-      </div>
-      <div id="componentTogglesContainer"></div>
-    </div>
-    <div class="setting-group"><label>גיבוי ושחזור נתונים</label>
-      <div style="display:flex; gap:1vw;">
-        <button onclick="exportBackup()" style="background:var(--cyan); color:#000; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">💾 ייצוא גיבוי</button>
-        <button onclick="document.getElementById('importBackupInput').click()" style="background:var(--gold); color:#000; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">📂 ייבוא גיבוי</button>
-        <input type="file" id="importBackupInput" accept="application/json" style="display:none;" onchange="if(this.files[0]) importBackup(this.files[0])">
-      </div>
-      <div style="font-size:0.85vw; color:#aaa; margin-top:1vh;">הגיבוי כולל: משימות, פתקים, הכנות לשבת, קופת צדקה, תאריכים אישיים והגדרות. שומר קובץ JSON שאפשר לשמור במקום בטוח ולשחזר ממנו במחשב אחר.</div>
-    </div>
-    <div class="setting-group"><label>הגדרות מתקדמות</label>
-      <button onclick="resetTzedakah()" style="background:var(--alert); color:#fff; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">איפוס קופת צדקה חודשית</button>
-      <button onclick="printDashboardSnapshot()" style="background:#555; color:#fff; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw; margin-right:1vw;">🖨️ הדפס דשבורד</button>
-    </div>
+    </details>
   </dialog>
 
   <script>
@@ -1052,7 +1113,7 @@
       }
       html += '</div>';
       const total = [...history].length;
-      html += `<div style="text-align:center; margin-top:1.5vh; color:#94a3b8;">סה"כ ${total} ימים נלמדו מאז שהתחלת לסמן</div>`;
+      html += `<div style="text-align:center; margin-top:1.5vh; color:var(--muted-text);">סה"כ ${total} ימים נלמדו מאז שהתחלת לסמן</div>`;
       document.getElementById('dafYomiHeatmapContent').innerHTML = html;
       document.getElementById('dafYomiHeatmapModal').showModal();
     }
@@ -1063,7 +1124,7 @@
       const widget = document.getElementById('emergencyContactsWidget');
       if(!widget) return;
       widget.innerHTML = appSettings.emergencyContacts.map(c => `
-        <a href="tel:${c.phone.replace(/[^0-9+]/g,'')}" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:1vh; border-radius:0.5vw; color:#fff; text-decoration:none;">
+        <a href="tel:${c.phone.replace(/[^0-9+]/g,'')}" style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:1vh; border-radius:0.5vw; color:var(--text-color); text-decoration:none;">
           <span>📞 ${c.name}</span><span style="color:var(--cyan); font-weight:800; direction:ltr;">${c.phone}</span>
         </a>`).join('');
     }
@@ -1385,6 +1446,10 @@
         const el = document.getElementById('batteryStatus');
         if(!el) return;
         const render = () => {
+          // V15 BUGFIX: battery.level came back non-numeric on some desktops/monitors with no real
+          // battery to report on, which rendered as a literal "NaN%" - now hidden instead whenever the
+          // value isn't a usable number, rather than showing garbage.
+          if(typeof battery.level !== 'number' || !isFinite(battery.level)) { el.style.display = 'none'; return; }
           const pct = Math.round(battery.level * 100);
           const icon = battery.charging ? '🔌' : (pct <= 20 ? '🪫' : '🔋');
           el.style.display = 'flex';
@@ -1902,7 +1967,7 @@
     function openArchiveModal() { renderArchiveModal(); document.getElementById('archiveModal').showModal(); }
     function renderArchiveModal() {
       const list = document.getElementById('archiveModalContent');
-      if(!archivedTasks.length) { list.innerHTML = '<p style="text-align:center; color:#94a3b8;">הארכיון ריק.</p>'; return; }
+      if(!archivedTasks.length) { list.innerHTML = '<p style="text-align:center; color:var(--muted-text);">הארכיון ריק.</p>'; return; }
       list.innerHTML = archivedTasks.map((t, i) => `<div style="display:flex; justify-content:space-between; align-items:center; padding:1vh 0.5vw; border-bottom:1px solid var(--card-border);">
         <span>${t.text}</span>
         <span><button onclick="restoreArchivedTask(${i})" style="background:var(--cyan); border:none; padding:0.4vh 1vw; border-radius:0.5vw; cursor:pointer; margin-left:0.5vw;">↩ שחזר</button>
@@ -2008,13 +2073,13 @@
       const content = document.getElementById('shabbatTimesContent');
       document.getElementById('shabbatTimesModal').showModal();
       if (!shabbatIntervals || !shabbatIntervals.length) {
-        content.innerHTML = '<p style="text-align:center; color:#94a3b8;">אין נתונים זמינים כרגע. נסה לרענן בעוד רגע.</p>';
+        content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">אין נתונים זמינים כרגע. נסה לרענן בעוד רגע.</p>';
         return;
       }
       const now = new Date();
       const upcoming = shabbatIntervals.filter(iv => iv.end > now);
       if (!upcoming.length) {
-        content.innerHTML = '<p style="text-align:center; color:#94a3b8;">אין זמנים קרובים זמינים.</p>';
+        content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">אין זמנים קרובים זמינים.</p>';
         return;
       }
       const fmtDate = d => d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' });
@@ -2098,12 +2163,12 @@
     function openCalendarModal() {
       const content = document.getElementById('calendarModalContent');
       document.getElementById('calendarModal').showModal();
-      if(!lastEventItems.length) { content.innerHTML = '<p style="text-align:center; color:#94a3b8;">אין נתונים זמינים כרגע. נסה לרענן בעוד רגע.</p>'; return; }
+      if(!lastEventItems.length) { content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">אין נתונים זמינים כרגע. נסה לרענן בעוד רגע.</p>'; return; }
       const todayStr = new Date().toISOString().split('T')[0];
       const upcoming = lastEventItems
         .filter(i => i.date >= todayStr && !CALENDAR_EXCLUDED_CATEGORIES.includes(i.category))
         .sort((a,b) => a.date.localeCompare(b.date));
-      if(!upcoming.length) { content.innerHTML = '<p style="text-align:center; color:#94a3b8;">אין אירועים קרובים.</p>'; return; }
+      if(!upcoming.length) { content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">אין אירועים קרובים.</p>'; return; }
       content.innerHTML = upcoming.map(i => {
         const icon = CALENDAR_ICONS[i.category] || '📆';
         const dateObj = new Date(i.date);
@@ -2271,7 +2336,7 @@
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.92); display:flex; align-items:center; justify-content:center; padding:3vh;';
         overlay.innerHTML = `<div style="background:#1e293b; border:1px solid var(--card-border); border-radius:1vw; padding:2vh 2vw; max-width:500px; width:100%; max-height:80vh; overflow:auto;">
-          <h2 style="color:var(--cyan); margin-bottom:1vh;">🛒 ${data.name} <span style="font-size:0.7em; color:#94a3b8;">(תמונת מצב משותפת)</span></h2>
+          <h2 style="color:var(--cyan); margin-bottom:1vh;">🛒 ${data.name} <span style="font-size:0.7em; color:var(--muted-text);">(תמונת מצב משותפת)</span></h2>
           <ul style="list-style:none; padding:0;">${(data.items||[]).map(i => `<li style="padding:0.5vh 0; border-bottom:1px solid #333; ${i.done?'text-decoration:line-through; color:#666;':''}">${i.done?'☑':'☐'} ${i.text}</li>`).join('')}</ul>
           <button onclick="this.closest('div').parentElement.remove()" style="margin-top:1.5vh; width:100%; background:var(--cyan); color:#000; border:none; padding:1vh; border-radius:0.5vw; cursor:pointer; font-weight:bold;">סגור וראה את הדשבורד המלא</button>
         </div>`;
@@ -2575,7 +2640,7 @@
     async function loadCityCompare() {
       const selected = [...document.querySelectorAll('.city-compare-check:checked')].map(cb => COMPARE_CITIES[cb.value]);
       const content = document.getElementById('cityCompareContent');
-      if(!selected.length) { content.innerHTML = '<p style="text-align:center; color:#94a3b8;">בחר לפחות עיר אחת.</p>'; return; }
+      if(!selected.length) { content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">בחר לפחות עיר אחת.</p>'; return; }
       content.innerHTML = 'טוען...';
       const todayStr = new Date().toISOString().split('T')[0];
       try {
@@ -2613,8 +2678,8 @@
           return `<div style="text-align:center; flex:1;">
             <div style="font-weight:bold; margin-bottom:0.5vh;">${dayNames[date.getDay()]}</div>
             <div style="font-size:1.8vw;">${info[0]}</div>
-            <div style="font-size:0.85vw; color:#94a3b8; margin:0.3vh 0;">${info[1]}</div>
-            <div style="font-weight:bold;">${max}°<span style="color:#94a3b8; font-weight:normal;">/${min}°</span></div>
+            <div style="font-size:0.85vw; color:var(--muted-text); margin:0.3vh 0;">${info[1]}</div>
+            <div style="font-weight:bold;">${max}°<span style="color:var(--muted-text); font-weight:normal;">/${min}°</span></div>
           </div>`;
         }).join('');
       } catch(e) { content.textContent = 'שגיאה בטעינת התחזית.'; }
@@ -2894,7 +2959,7 @@
     // rather than faking a cross-month countdown that isn't actually computed anywhere in this app).
     function openPersonalDatesModal() {
       const content = document.getElementById('personalDatesModalContent');
-      if(!appSettings.personalEvents.length) { content.innerHTML = '<p style="text-align:center; color:#94a3b8;">לא הוגדרו תאריכים אישיים עדיין. אפשר להוסיף בהגדרות.</p>'; document.getElementById('personalDatesModal').showModal(); return; }
+      if(!appSettings.personalEvents.length) { content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">לא הוגדרו תאריכים אישיים עדיין. אפשר להוסיף בהגדרות.</p>'; document.getElementById('personalDatesModal').showModal(); return; }
       const rows = appSettings.personalEvents.map(e => {
         let daysLeft = null, dateLabel;
         if(e.dateType === 'gregorian') {
