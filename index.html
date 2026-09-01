@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>דשבורד יומי - V12 (תיקון חפיפת מבזקים עם טבלת הזמנים במסכים נמוכים)</title>
+  <title>דשבורד יומי - V15 (20 שדרוגים: קול עברי מובטח, חיפוש, ארכיון, חוזרות, ועוד)</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,13 +15,55 @@
       --cyan: #00e5ff; --gold: #f59e0b; --alert: #ff4757;
       --dark-bg: #0a0a0a; --card-bg: rgba(20, 20, 20, 0.75);
       --card-border: rgba(255, 255, 255, 0.15); --theme-color: #1a365d;
+      --text-color: #fff; --dialog-bg: #1a1a1a; --header-bg: rgba(0,0,0,0.3); --btn-bg: rgba(0,0,0,0.5);
     }
+
+    /* V15: light mode - overrides the core surface/text variables everything else already reads
+       from (--card-bg, --card-border, --dark-bg, --theme-color, --text-color, --dialog-bg, --header-bg,
+       --btn-bg), so it reaches the sidebar, zman cards, info-ribbon, dialogs and header without having
+       to touch every individual rule. A few things (photos, emoji, glow effects tuned for dark) will
+       still look "dark-app-on-light-bg" rather than a from-scratch light design - a real limitation of
+       retrofitting rather than a redesign, not hidden here. */
+    body.light-mode {
+      --dark-bg: #eef2f7; --card-bg: rgba(255,255,255,0.85); --card-border: rgba(0,0,0,0.12);
+      --theme-color: #cbd5e1; --text-color: #1e293b; --dialog-bg: #ffffff; --header-bg: rgba(255,255,255,0.6);
+      --btn-bg: rgba(255,255,255,0.7);
+    }
+    body.light-mode .btn { color: #1e293b; }
 
     body {
       background: radial-gradient(circle at center, var(--theme-color) 0%, var(--dark-bg) 100%);
-      color: #fff; font-family: 'Assistant', 'Heebo', sans-serif;
+      color: var(--text-color); font-family: 'Assistant', 'Heebo', sans-serif;
       height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column;
       transition: background 2s ease, --theme-color 2s ease;
+    }
+
+    /* V14: force a landscape layout everywhere, on any device/window, per project requirement -
+       this dashboard is designed for landscape and should never render in a squeezed portrait layout.
+       When the real viewport is portrait (phone held upright, a narrow browser window, a tablet in
+       portrait), the whole page is rotated 90deg so it always RENDERS landscape regardless of the
+       physical orientation. This is a pure-CSS technique that works on every platform without relying
+       on the Screen Orientation API (unsupported on iOS Safari, and only usable in fullscreen on
+       Android) - manifest.json's "orientation": "landscape" only affects an installed PWA anyway, not
+       a page opened in a normal browser tab, so this CSS fallback is what actually covers that case. */
+    @media screen and (orientation: portrait) {
+      html {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 100vh;
+        height: 100vw;
+        /* Centering an element with top:50%/left:50% + translate(-50%,-50%) is self-correcting
+           regardless of the element's exact size (percentage translate is relative to the element's
+           OWN box), which sidesteps needing exact pixel/anchor math for the rotation offset - that
+           math turned out fragile to get right (verified empirically, not just derived on paper). */
+        transform: translate(-50%, -50%) rotate(90deg);
+        overflow: hidden;
+      }
+      /* body's own width/height were declared in vw/vh against the UNROTATED viewport, so without
+         this override it stays sized to the narrow portrait dimensions inside the now-rotated html,
+         rendering as a small box instead of filling the screen. */
+      body { width: 100vh; height: 100vw; }
     }
 
     .bg-texture {
@@ -33,22 +75,49 @@
        them (the location-toggle buttons visibly overflowed their own pill shape). The header row can
        now grow if buttons wrap to a second line, instead of clipping/squishing them. */
     .app-layout { position: relative; z-index: 1; display: grid; grid-template-rows: minmax(8vh, auto) 1fr 5vh; height: 92vh; width: 100vw; transition: all 1s ease; }
+    /* V15: the ticker + bottom equalizer dock are shown only in real fullscreen (kiosk) mode -
+       outside fullscreen their reserved rows/strip are dropped so the zmanim grid reclaims the
+       space instead of leaving an empty gap (same root cause as the old V12 ticker-overlap bug,
+       fixed here by not reserving the space at all when those elements aren't shown). */
+    body.no-fs-extras .app-layout { grid-template-rows: minmax(8vh, auto) 1fr; height: 100vh; }
 
     /* SCREENSAVER */
     body.screensaver-active .app-layout, body.screensaver-active .bg-texture { opacity: 0.1; transition: opacity 4s ease; }
     body:not(.screensaver-active) .app-layout { transition: opacity 1s ease; }
 
     /* HEADER */
-    .header-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 1vh 3vw; gap: 1vh; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--card-border); }
+    .header-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 1vh 3vw; gap: 1vh; background: var(--header-bg); border-bottom: 1px solid var(--card-border); }
     .greeting-weather { display: flex; align-items: center; gap: 1.5vw; }
     .greeting { font-size: 2vw; font-weight: 800; color: var(--cyan); text-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
     .edah-badge { background: rgba(245, 158, 11, 0.2); border: 1px solid var(--gold); color: var(--gold); padding: 0.3vh 0.8vw; border-radius: 1vw; font-size: 1vw; font-weight: 700; }
     .weather-info { font-size: 1.2vw; color: #e2e8f0; display: flex; align-items: center; gap: 0.5vw; }
     .api-loader { font-size: 1vw; color: var(--gold); display: none; animation: pulse 1s infinite; }
+
+    /* V15: undo-snackbar for deletions (tasks/notes/shopping items) - gives a few seconds to reverse
+       an accidental delete instead of it being instantly permanent. */
+    .undo-toast { position: fixed; bottom: 3vh; left: 50%; transform: translateX(-50%) translateY(200%); z-index: 999; background: #1e293b; border: 1px solid var(--card-border); border-radius: 0.6vw; padding: 1.2vh 1.5vw; display: flex; align-items: center; gap: 1vw; box-shadow: 0 0.5vh 2vh rgba(0,0,0,0.5); transition: transform 0.3s ease; font-size: 0.95vw; }
+    .undo-toast.visible { transform: translateX(-50%) translateY(0); }
+    .undo-toast button { background: var(--cyan); border: none; padding: 0.4vh 1vw; border-radius: 0.4vw; cursor: pointer; font-weight: bold; }
+
+    /* V15: gentle nudge to export a backup periodically - the app has no server, so localStorage
+       (and therefore all data) is only as safe as this one browser/device. */
+    .backup-reminder { position: fixed; top: 1.5vh; left: 1.5vw; z-index: 998; display: none; background: #1e293b; border: 1px solid var(--gold); border-radius: 0.6vw; padding: 1vh 1.2vw; box-shadow: 0 0.5vh 2vh rgba(0,0,0,0.5); font-size: 0.9vw; max-width: 22vw; }
+    .backup-reminder button { border: none; padding: 0.4vh 1vw; border-radius: 0.4vw; cursor: pointer; font-weight: bold; margin-top: 0.8vh; margin-left: 0.5vw; }
+
+    /* V15: accessibility mode - most of this app's sizing is in vw/vh (scales with viewport, not with
+       a body font-size), so a real visible "bigger everything" needs a render-time transform rather
+       than a font-size bump. Scoped to .main-content (sidebar + dashboard-area) rather than the whole
+       .app-layout: scaling the header too pushed the settings/header buttons past the edge of the
+       viewport (clipped by overflow-x:hidden and made unreachable) - the header stays untouched so
+       it's never possible to lock yourself out of turning this back off. Gradual (a slider, not just
+       on/off) via a CSS variable so any value from 100%-130% works with one rule. */
+    :root { --a11y-scale: 1; --a11y-contrast: 1; --a11y-brightness: 1; }
+    .main-content { transform: scale(var(--a11y-scale)); transform-origin: top center; }
+    body { filter: contrast(var(--a11y-contrast)) brightness(var(--a11y-brightness)); }
     @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
     .header-actions { display: flex; flex-wrap: wrap; gap: 0.6vw; row-gap: 0.8vh; align-items: center; justify-content: flex-end; }
-    .btn { background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); color: #888; font-family: 'Assistant', sans-serif; font-size: 1vw; font-weight: 700; padding: 0.8vh 1.5vw; border-radius: 1.5vw; cursor: pointer; transition: all 0.3s ease; }
+    .btn { background: var(--btn-bg); border: 1px solid var(--card-border); color: #888; font-family: 'Assistant', sans-serif; font-size: 1vw; font-weight: 700; padding: 0.8vh 1.5vw; border-radius: 1.5vw; cursor: pointer; transition: all 0.3s ease; }
     .btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
     .btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
     .btn-settings { background: rgba(245, 158, 11, 0.2); border-color: var(--gold); color: var(--gold); }
@@ -74,11 +143,15 @@
     .add-btn { background: var(--cyan); color: #000; border: none; border-radius: 0.5vw; padding: 0 1vw; font-weight: bold; cursor: pointer; }
     .tasks-list, .notes-list { list-style: none; display: flex; flex-direction: column; gap: 0.8vh; }
     .task-item { background: rgba(255,255,255,0.05); padding: 1vh; border-radius: 0.5vw; display: flex; align-items: center; gap: 0.5vw; border-right: 4px solid transparent; }
+    /* V15: compact density option - shrinks row spacing/padding in the sidebar lists so more items
+       fit on screen without scrolling, for anyone who prefers density over the default comfortable
+       spacing. */
+    body.density-compact .tasks-list, body.density-compact .notes-list { gap: 0.3vh; }
+    body.density-compact .task-item { padding: 0.4vh 0.8vh; font-size: 0.85vw; }
+    body.density-compact .note-item { padding: 0.6vh 1vh; font-size: 0.9vw; }
     .task-item.priority-urgent { border-right-color: var(--alert); }
     .task-item.priority-low { border-right-color: #64748b; }
     .task-assignee-tag { font-size: 0.75vw; background: rgba(0,229,255,0.15); color: var(--cyan); padding: 0.1vh 0.5vw; border-radius: 1vw; white-space: nowrap; }
-    .presence-chip { padding: 0.6vh 1vw; border-radius: 1vw; cursor: pointer; font-size: 0.9vw; font-weight: 700; border: 1px solid var(--card-border); background: rgba(255,255,255,0.05); color: #888; }
-    .presence-chip.home { background: rgba(46,213,115,0.2); border-color: #2ed573; color: #2ed573; }
     .task-item.completed span { text-decoration: line-through; color: #888; }
     .task-item span { flex: 1; font-size: 1vw; }
     .task-time { font-size: 0.8vw; color: var(--gold); font-weight: 700; white-space: nowrap; }
@@ -143,6 +216,9 @@
     /* ZMANIM GRID */
     .zmanim-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8vw; width: 100%; transition: opacity 0.5s ease; }
     .zman-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0.8vw; padding: 1vh 0.2vw; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    /* V15: soonest-upcoming zman gets a gentle pulse so it stands out without a screenshot-style diff. */
+    .zman-card.next-zman { border-color: var(--cyan); box-shadow: 0 0 1.2vw rgba(0,229,255,0.5); animation: nextZmanPulse 2.5s ease-in-out infinite; }
+    @keyframes nextZmanPulse { 0%,100% { box-shadow: 0 0 0.6vw rgba(0,229,255,0.3); } 50% { box-shadow: 0 0 1.5vw rgba(0,229,255,0.7); } }
     .zman-title { font-size: 0.85vw; font-weight: 700; color: #94a3b8; margin-bottom: 0.3vh; text-align: center; line-height: 1.1; }
     .zman-time { font-size: 1.4vw; font-weight: 900; color: #fff; font-family: 'Bebas Neue', 'Heebo', sans-serif; direction: ltr; }
     .api-error { grid-column: 1 / -1; text-align: center; color: #888; font-size: 1vw; padding: 1vh; }
@@ -160,7 +236,7 @@
     #equalizerCanvas { width: 100%; height: 100%; }
 
     /* SETTINGS MODAL */
-    dialog { margin: auto; padding: 2vw; background: #1a1a1a; color: #fff; border: 1px solid var(--cyan); border-radius: 1vw; width: 50vw; max-width: 800px; font-family: 'Assistant', sans-serif; }
+    dialog { margin: auto; padding: 2vw; background: var(--dialog-bg); color: var(--text-color); border: 1px solid var(--cyan); border-radius: 1vw; width: 50vw; max-width: 800px; font-family: 'Assistant', sans-serif; }
     dialog::backdrop { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
     .modal-header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 1vh; margin-bottom: 2vh; }
     .close-btn { background: none; border: none; color: #fff; font-size: 1.5vw; cursor: pointer; }
@@ -232,9 +308,11 @@
       <div class="greeting-weather">
         <div class="greeting" id="greetingText">בוקר טוב</div>
         <div class="edah-badge" id="edahBadge">מנהג עדות המזרח</div>
-        <div class="weather-info" id="weatherInfo">טוען מזג אוויר...</div>
+        <div class="weather-info" id="weatherInfo" onclick="openWeatherModal()" style="cursor:pointer;" title="לחץ לתחזית שבועית">טוען מזג אוויר...</div>
         <div class="weather-info" id="worldClockInfo" style="display:none;"></div>
         <div class="api-loader" id="apiLoader">מרענן נתונים...</div>
+        <div class="weather-info" id="connectionStatus" style="display:none;"></div>
+        <div class="weather-info" id="batteryStatus" style="display:none;"></div>
       </div>
       <div class="header-actions">
         <div class="location-toggle" id="locationToggleWrap">
@@ -246,34 +324,42 @@
 
         <button class="btn" id="btnSiddur" style="background: linear-gradient(45deg, #4f46e5, #3b82f6); color: white; margin-left:1vw;" onclick="document.getElementById('siddurModal').showModal()">📖 סידורון</button>
         <button class="btn" id="btnCalendar" style="background: linear-gradient(45deg, #059669, #10b981); color: white; margin-left:1vw;" onclick="openCalendarModal()">📅 לוח שנה</button>
+        <button class="btn" id="btnPersonalDates" style="background: linear-gradient(45deg, #be185d, #db2777); color: white; margin-left:1vw;" onclick="openPersonalDatesModal()">📋 תאריכים אישיים</button>
         <button class="btn" id="btnFullscreen" style="background: linear-gradient(45deg, #334155, #1e293b); color: white; margin-left:1vw;" onclick="toggleFullscreen()">⛶ מסך מלא</button>
         <button class="btn" id="btnInstallPWA" style="background: linear-gradient(45deg, #7c3aed, #a855f7); color: white; margin-left:1vw; display:none;" onclick="installPWA()">📲 התקן אפליקציה</button>
         <button class="btn" id="btnQR" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; margin-left:1vw;" onclick="openQrModal()">📱 QR</button>
         <button class="btn" id="btnShabbatTimes" style="background: linear-gradient(45deg, #b45309, #d97706); color: white; margin-left:1vw;" onclick="openShabbatTimesModal()">🕯️ זמני שבת</button>
         <button class="btn" id="btnDatePicker" style="background: linear-gradient(45deg, #4338ca, #6366f1); color: white; margin-left:1vw;" onclick="openDatePickerModal()">📆 זמנים לתאריך</button>
+        <button class="btn" id="btnCityCompare" style="background: linear-gradient(45deg, #0d9488, #0f766e); color: white; margin-left:1vw;" onclick="openCityCompareModal()">🌍 השוואת ערים</button>
+        <button class="btn" id="btnTimer" style="background: linear-gradient(45deg, #7c3aed, #6d28d9); color: white; margin-left:1vw;" onclick="openTimerModal()">⏱️ טיימר</button>
         <button class="btn" id="btnDisplayProfileCycle" style="background: linear-gradient(45deg, #0f766e, #14b8a6); color: white; margin-left:1vw;" onclick="cycleDisplayProfile()">🔄 מצב: קיוסק מלא</button>
         <button class="btn" id="btnDnd" style="background: linear-gradient(45deg, #7c2d12, #9a3412); color: white; margin-left:1vw;" onclick="updateDndStatusText(); document.getElementById('dndModal').showModal()">🔕 שקט</button>
+        <button class="btn" id="btnTorah" style="background: linear-gradient(45deg, #0891b2, #0e7490); color: white; margin-left:1vw;" onclick="document.getElementById('torahModal').showModal()">📖 תורה והלכה</button>
+        <button class="btn" id="btnHome" style="background: linear-gradient(45deg, #ca8a04, #a16207); color: white; margin-left:1vw;" onclick="document.getElementById('homeModal').showModal()">🏠 בית חכם</button>
         <button class="btn btn-settings" onclick="openSettings()">⚙️ הגדרות</button>
       </div>
     </div>
 
     <div class="main-content">
 
-      <!-- TABBED SIDEBAR -->
+      <!-- TABBED SIDEBAR - V13/V14: redesigned. "תורה והלכה" and "בית חכם" open in a floating dialog
+           (torahModal/homeModal below), triggered from buttons in the top HEADER bar (not here in the
+           sidebar - moved there per correction). The old "יומיום ומשפחה" tab is split into four real
+           tabs here: tasks, notes, shabbat prep, and shopping list each get their own tab. The old
+           "מי בבית" presence widget is removed per request. -->
       <div class="sidebar" id="sidebarWrap">
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchTab('tab-tasks', this)">יומיום ומשפחה</button>
-          <button class="tab-btn" onclick="switchTab('tab-torah', this)">תורה והלכה</button>
-          <button class="tab-btn" onclick="switchTab('tab-home', this)">בית חכם</button>
+          <button class="tab-btn active" onclick="switchTab('tab-tasks', this)">משימות</button>
+          <button class="tab-btn" onclick="switchTab('tab-notes', this)">פתקים</button>
+          <button class="tab-btn" onclick="switchTab('tab-prep', this)">הכנות לשבת</button>
+          <button class="tab-btn" onclick="switchTab('tab-shopping', this)">רשימת קניות</button>
         </div>
 
         <div id="tab-tasks" class="tab-content active">
-          <div class="panel-title">מי בבית?</div>
-          <div id="presenceWidget" style="display:flex; flex-wrap:wrap; gap:0.5vw; margin-bottom:1vh;"></div>
-
           <div class="panel-title">משימות אישיות</div>
           <div class="task-input-container">
             <input type="text" id="newTaskInput" class="task-input" placeholder="הוסף משימה..." onkeypress="if(event.key==='Enter') addTask()">
+            <button id="taskMicBtn" class="add-btn" style="display:none; background:var(--gold);" onclick="startVoiceInput('newTaskInput')" title="הכתבה קולית">🎤</button>
             <input type="time" id="newTaskTime" class="task-time-input" title="שעת תזכורת (אופציונלי)">
             <button class="add-btn" onclick="addTask()">+</button>
           </div>
@@ -284,118 +370,64 @@
               <option value="urgent">דחוף</option>
               <option value="low">אפשר לדחות</option>
             </select>
+            <select id="newTaskRepeat" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;" title="חזרה">
+              <option value="daily">מתאפסת יומית</option>
+              <option value="weekly">מתאפסת שבועית (א')</option>
+              <option value="once">חד-פעמית</option>
+            </select>
           </div>
-          <div style="margin-top:0.5vh;">
-            <select id="taskFilterAssignee" onchange="renderTasks()" style="width:100%; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;"><option value="">הצג הכל</option></select>
+          <div class="task-input-container" style="margin-top:0.5vh;">
+            <input type="text" id="newTaskTag" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;" placeholder="תגית (אופציונלי, למשל: בית)">
+          </div>
+          <div class="task-input-container" style="margin-top:0.5vh;">
+            <input type="text" id="taskSearchInput" class="task-input" placeholder="🔎 חפש במשימות (כולל תגיות)..." oninput="renderTasks()">
+            <select id="taskFilterAssignee" onchange="renderTasks()" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;"><option value="">הצג הכל</option></select>
+          </div>
+          <div class="task-input-container" style="margin-top:0.5vh;">
+            <button class="btn" style="width:100%; background:#555; color:#fff; font-size:0.85vw;" onclick="exportTasksNotesText()">📄 ייצוא משימות ופתקים כטקסט</button>
           </div>
           <ul class="tasks-list" id="tasksList"></ul>
+          <button class="btn" style="width:100%; margin-top:1vh; background:#555;" onclick="openArchiveModal()">🗄️ ארכיון משימות שהושלמו</button>
+        </div>
 
-          <div class="panel-title" style="margin-top: 2vh;">פתקיות למשפחה</div>
+        <div id="tab-notes" class="tab-content">
+          <div class="panel-title">פתקיות למשפחה</div>
           <div class="task-input-container">
             <input type="text" id="newNoteInput" class="task-input" placeholder="השאר פתק על המסך..." onkeypress="if(event.key==='Enter') addNote()" style="background: rgba(245,158,11,0.2);">
             <button class="add-btn" onclick="addNote()" style="background: var(--gold);">📝</button>
           </div>
           <ul class="notes-list" id="notesList"></ul>
-          <div class="panel-title" style="margin-top: 3vh;">הכנות לשבת (מתאפס בראשון)</div>
+
+          <div id="vacationCountdownWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.9vw; color: #e2e8f0; margin-top: 2vh; text-align:center;"></div>
+        </div>
+
+        <div id="tab-prep" class="tab-content">
+          <div class="panel-title">הכנות לשבת (מתאפס בראשון)</div>
           <div class="task-input-container" style="display:flex; gap:0.5vw; margin-bottom:1vh;">
             <input type="text" id="newShabTaskInput" placeholder="הוסף הכנה לשבת..." onkeydown="if(event.key==='Enter') addShabbatTask()" style="flex:1;">
             <button class="add-btn" onclick="addShabbatTask()">➕</button>
           </div>
           <ul class="tasks-list" id="shabbatTasksList"></ul>
+        </div>
 
-          <div class="panel-title" style="margin-top: 3vh;">רשימת קניות</div>
+        <div id="tab-shopping" class="tab-content">
+          <div class="panel-title">רשימת קניות</div>
+          <div class="task-input-container" style="display:flex; gap:0.5vw; margin-bottom:0.8vh;">
+            <select id="shoppingListSelect" onchange="switchShoppingList(this.value)" style="flex:1; padding:0.6vh; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--card-border); border-radius:0.5vw;"></select>
+            <button class="add-btn" onclick="addShoppingList()" title="רשימה חדשה">➕</button>
+            <button class="add-btn" style="background:var(--alert);" onclick="deleteShoppingList()" title="מחק רשימה">🗑️</button>
+          </div>
           <div class="task-input-container" style="display:flex; gap:0.5vw; margin-bottom:1vh;">
             <input type="text" id="newShoppingInput" placeholder="הוסף פריט לקניות..." onkeydown="if(event.key==='Enter') addShoppingItem()" style="flex:1;">
             <button class="add-btn" onclick="addShoppingItem()">🛒</button>
           </div>
           <ul class="tasks-list" id="shoppingList"></ul>
-
-          <div id="vacationCountdownWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.9vw; color: #e2e8f0; margin-top: 2vh; text-align:center;"></div>
-        </div>
-
-        <div id="tab-torah" class="tab-content">
-          <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; padding: 0 1vw;">
-            <span>חיזוק יומי</span>
-            <button onclick="refreshHalacha()" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-size:1vw; transition:0.2s;" title="רענן הלכה">🔄</button>
-            <button onclick="speakHebrew(document.getElementById('halachaText').textContent)" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-size:1vw; transition:0.2s; margin-right:0.5vw;" title="הקרא הלכה">🔊</button>
+          <div style="display:flex; gap:0.5vw; margin-top:1vh;">
+            <button class="btn" style="flex:1; background:#555; color:#fff;" onclick="exportShoppingListText()">📄 ייצוא כטקסט</button>
+            <button class="btn" style="flex:1; background:#0891b2; color:#fff;" onclick="openShoppingImportModal()">📋 ייבוא מהדבקה</button>
+            <button class="btn" style="flex:1; background:#0891b2; color:#fff;" onclick="openShoppingQrModal()">📱 QR</button>
           </div>
-          <div class="halacha-text" id="halachaText">טוען...</div>
-
-          <div class="omer-widget" id="omerWidget"></div>
-          <button id="omerCountBtn" style="display:none; margin-top:0.5vh; background:var(--gold); color:#000; border:none; padding:0.8vh; border-radius:0.5vw; font-weight:bold; cursor:pointer;" onclick="countOmerToday()">✅ ספרתי היום</button>
-
-          <div id="kiddushLevanaWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.9vw; color: #e2e8f0; margin-top: 1vh;">
-            <div style="font-weight:800; color:var(--gold);">🌙 קידוש לבנה</div>
-            <div id="kiddushLevanaText"></div>
-          </div>
-
-          <div id="talUmatarWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.9vw; color: #e2e8f0; margin-top: 1vh;">
-            <div style="font-weight:800; color:var(--gold);">🌧️ נוסח תפילה (משיב הרוח / טל ומטר)</div>
-            <div id="talUmatarText"></div>
-          </div>
-
-          <div class="panel-title" style="margin-top: 2vh;">פרשת השבוע</div>
-          <div id="parashaDetails" style="background: rgba(0,0,0,0.3); padding: 1.2vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0; display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div id="parashaDetailsName" style="font-weight:800; color:var(--gold);"></div>
-              <button onclick="speakHebrew(document.getElementById('parashaDetailsName').textContent + '. קריאת התורה: ' + document.getElementById('parashaTorahRange').textContent + '. הפטרה: ' + document.getElementById('parashaHaftarahRange').textContent)" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-size:1vw;" title="הקרא">🔊</button>
-            </div>
-            <div>קריאת התורה: <span id="parashaTorahRange"></span></div>
-            <div>הפטרה: <span id="parashaHaftarahRange"></span></div>
-            <a id="parashaReadLink" href="#" target="_blank" style="color:var(--cyan); display:block; margin-top:0.5vh;">קרא בספריא ⇱</a>
-          </div>
-
-          <button class="btn" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; width:100%; margin-top:2vh;" onclick="document.getElementById('brachaModal').showModal()">🙏 ברכה אחרונה</button>
-
-          <div class="panel-title" style="margin-top: 2vh;">זמני מניינים</div>
-          <div id="minyanTimesWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0;"></div>
-
-          <div class="panel-title" style="margin-top: 2vh;">תהילים ומצפן</div>
-          <a id="tehillimLink" href="#" target="_blank" class="tehillim-btn">קרא פרק אישי בתהילים</a>
-          <div class="compass-container" style="margin-top: 1vh;">
-            <div class="compass-ring"><div class="compass-arrow" id="compassArrow"></div></div>
-            <div class="compass-label" id="compassLabel">טוען כיוון ירושלים...</div>
-          </div>
-        </div>
-
-        <div id="tab-home" class="tab-content">
-          <div class="panel-title">קופת צדקה דיגיטלית</div>
-          <div class="tzedakah-widget">
-            <div style="font-size: 1vw; color: #e2e8f0;">סך הכל נתרם החודש:</div>
-            <div class="tzedakah-total" id="tzedakahTotal">₪0</div>
-
-            <div style="font-size: 0.9vw; color: #ccc; margin-bottom: 0.5vh;">בחר סכום להכנסה:</div>
-            <div class="coin-selector">
-              <button class="coin-val" onclick="selectCoin(0.1, this)">10 אג'</button>
-              <button class="coin-val" onclick="selectCoin(0.5, this)">₪0.5</button>
-              <button class="coin-val active" onclick="selectCoin(1, this)">₪1</button>
-              <button class="coin-val" onclick="selectCoin(5, this)">₪5</button>
-              <button class="coin-val" onclick="selectCoin(10, this)">₪10</button>
-            </div>
-
-            <button class="coin-btn" onclick="addTzedakah()">🪙</button>
-            <div style="font-size: 0.8vw; color: #aaa;">(לחץ על המטבע הגדול לאישור)</div>
-          </div>
-
-          <div class="panel-title" style="margin-top: 2vh;">אנשי קשר לשעת חירום</div>
-          <div id="emergencyContactsWidget" style="display:flex; flex-direction:column; gap:0.6vh;"></div>
-
-          <div class="panel-title" style="margin-top: 2vh;">חובות הלבבות - שער הבטחון (יומי)</div>
-      <div class="chovot-widget" id="chovotWidget" style="background: rgba(245,158,11,0.1); border: 1px solid var(--gold); padding: 1.5vh; border-radius: 1vw; font-size: 1.1vw; line-height: 1.6; text-align: justify; color: #fff;">
-        <script>
-            const bitachonQuotes = [
-              "<b>הַבִּטָּחוֹן הַשָּׁלֵם בָּאֱלֹהִים</b><br>הוּא מְנוּחַת נֶפֶשׁ הַבּוֹטֵחַ וְשֶׁיִּהְיֶה לִבּוֹ סָמוּךְ עַל מִי שֶׁבָּטַח עָלָיו, שֶׁיַּעֲשֶׂה הַטּוֹב וְהַנָּכוֹן לוֹ בָּעִנְיָן אֲשֶׁר יִבְטַח עָלָיו.",
-              "<b>עֲשִׂיַּת הַהִשְׁתַּדְּלוּת</b><br>וְאֵין הַבִּטָּחוֹן שֶׁיִּהְיֶה הָאָדָם בָּטֵל מִמְּלַאכְתּוֹ וּמְבַקֵּשׁ טַרְפּוֹ, אֶלָּא שֶׁיִּהְיֶה עוֹשֶׂה אֶת הַסִּבּוֹת וְלִבּוֹ סָמוּךְ עַל סִבַּת כָּל הַסִּבּוֹת.",
-              "<b>הֲסָרַת הַדְּאָגָה</b><br>מִי שֶׁבּוֹטֵחַ בַּה' מִסְתַּלֶּקֶת מִדַּאֲגָתוֹ דַּאֲגַת הָעוֹלָם, וְיִשָּׁאֵר שַׁלְו וּבוֹטֵחַ, כִּי יָדַע שֶׁהַבּוֹרֵא לֹא יַעֲזֹב אוֹתוֹ וְלֹא יִטְּשֵׁהוּ.",
-              "<b>הַכֹּל בִּידֵי שָׁמַיִם</b><br>אַל יַחְשֹׁב הָאָדָם כִּי יַשִּׂיג מַה שֶּׁלֹּא נִגְזַר לוֹ בְּחָכְמָתוֹ אוֹ בְּהִשְׁתַּדְּלוּתוֹ, כִּי הַכֹּל כַּאֲשֶׁר גָּזַר הַבּוֹרֵא לְפִי מַה שֶּׁהוּא טוֹב לָאָדָם.",
-              "<b>חֵרוּת מֵהַבְּרִיּוֹת</b><br>הַבּוֹטֵחַ בַּה' לֹא יְפַחֵד מִשּׁוּם אָדָם וְלֹא יִקְוֶה לְשׁוּם בְּנֵי אָדָם, אֶלָּא יִהְיֶה חָפְשִׁי מֵהָעֲבָדוּת לַנִּבְרָאִים.",
-              "<b>שַׁלְוָה וְשִׂמְחָה</b><br>כְּשֶׁיִּבְטַח הָאָדָם בָּאֱלֹהִים בֶּאֱמֶת, יַרְגִּישׁ שִׂמְחָה וְרוֹגַע כִּי חַיָּיו נִמְצָאִים בְּיָדַיִם רַחְמָנִיּוֹת וְאוֹהֲבוֹת מֵאֵין כְּמוֹתָן."
-            ];
-            const d = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-            document.write(bitachonQuotes[d % bitachonQuotes.length]);
-        </script>
-      </div>
-      <button class="btn" style="background: linear-gradient(45deg, #4f46e5, #3b82f6); color: white; margin-top: 1vh; width: 100%;" onclick="openBitachonModal()">📖 לימוד יומי מלא - שער הבטחון</button>
+          <button class="btn" style="margin-top:0.5vh; width:100%; background:var(--gold); color:#000;" onclick="addStaplesToShoppingList()">⭐ הוסף מוצרי יסוד</button>
         </div>
       </div>
 
@@ -429,12 +461,14 @@
             <span class="label">דף יומי</span>
             <a class="value link-val" id="dafYomiVal" target="_blank">טוען...</a>
             <span style="font-size:0.7vw; color:var(--gold); cursor:pointer;" id="dafYomiStreakLabel" onclick="markDafYomiLearned()"></span>
+            <span style="font-size:0.7vw; color:#94a3b8; cursor:pointer; margin-right:0.3vw;" onclick="openDafYomiHeatmapModal()" title="היסטוריית לימוד">📊</span>
           </div>
           <div class="info-item" id="ribbonItem-selichot"><span class="label">סליחות</span><span class="value" id="selichotVal">טוען...</span></div>
           <div class="info-item" id="ribbonItem-tachanun"><span class="label">תחנון</span><span class="value" id="tachanunVal">טוען...</span></div>
           <div class="info-item" id="ribbonItem-nextholiday"><span class="label">מועד קרוב</span><span class="value" id="nextHolidayVal">טוען...</span></div>
           <div class="info-item" id="ribbonItem-parasha"><span class="label">שניים מקרא ופרשה</span><a class="value link-val" id="parashaVal" target="_blank">טוען...</a></div>
           <div class="info-item" id="ribbonItem-shabbatentrance"><span class="label">כניסת שבת</span><span class="value" id="shabbatEntranceVal">--</span><span class="value" id="shabbatWeatherVal" style="font-size:0.8vw; font-weight:600;"></span></div>
+          <div class="info-item" id="ribbonItem-duty" style="display:none;"><span class="label">אחראי היום</span><span class="value" id="dutyVal">--</span></div>
         </div>
 
         <div class="zmanim-grid" id="zmanimGrid"></div>
@@ -449,6 +483,20 @@
   </div>
 
   <div class="bottom-dock" id="bottomDock"><canvas id="equalizerCanvas"></canvas></div>
+
+  <div class="undo-toast" id="undoToast"><span id="undoToastMessage"></span><button id="undoToastBtn">↩ בטל</button></div>
+
+  <div class="backup-reminder" id="prepReminderBanner" style="top:auto; bottom:10vh; right:1.5vw; left:auto; border-color:var(--cyan);">
+    <div>🕯️ יום חמישי - זמן טוב להתחיל להתארגן לשבת.</div>
+    <button onclick="goToPrepTab()" style="background:var(--cyan); color:#000;">להכנות לשבת</button>
+    <button onclick="dismissPrepReminder()" style="background:#555; color:#fff;">הסתר להיום</button>
+  </div>
+
+  <div class="backup-reminder" id="backupReminderBanner">
+    <div>💾 עברו כמה שבועות מאז הגיבוי האחרון. שווה לייצא גיבוי עדכני.</div>
+    <button onclick="exportBackup(); document.getElementById('backupReminderBanner').style.display='none';" style="background:var(--cyan); color:#000;">גבה עכשיו</button>
+    <button onclick="dismissBackupReminder()" style="background:#555; color:#fff;">הסתר להיום</button>
+  </div>
 
 
   <!-- SIDDUR MODAL -->
@@ -523,6 +571,74 @@
     <div id="calendarModalContent" style="height:60vh; overflow-y:auto; padding:0 0.5vw;">טוען...</div>
   </dialog>
 
+  <!-- PERSONAL DATES MODAL - V15: read-only, sorted overview of all personal dates (yahrzeits,
+       birthdays, etc). Editing them still happens in Settings - this is just a clean at-a-glance view. -->
+  <dialog id="personalDatesModal" style="width:50vw; max-width:700px;">
+    <div class="modal-header"><h2>📋 תאריכים אישיים</h2><button class="close-btn" onclick="document.getElementById('personalDatesModal').close()">✖</button></div>
+    <div id="personalDatesModalContent" style="max-height:60vh; overflow-y:auto; padding:0 0.5vw;"></div>
+  </dialog>
+
+  <!-- DAF YOMI HEATMAP MODAL - V15: visual history of learned days (last 10 weeks). -->
+  <dialog id="dafYomiHeatmapModal" style="width:auto; max-width:600px;">
+    <div class="modal-header"><h2>📊 היסטוריית דף יומי</h2><button class="close-btn" onclick="document.getElementById('dafYomiHeatmapModal').close()">✖</button></div>
+    <div id="dafYomiHeatmapContent"></div>
+  </dialog>
+
+  <!-- TIMER MODAL - V15: short countdown timer (cooking, learning session, etc), rings via the same
+       Web Audio chime already used for zman alerts. -->
+  <dialog id="timerModal" style="width:auto; max-width:400px; text-align:center;">
+    <div class="modal-header"><h2>⏱️ טיימר</h2><button class="close-btn" onclick="document.getElementById('timerModal').close()">✖</button></div>
+    <div id="timerDisplay" style="font-size:3vw; font-weight:900; margin:1.5vh 0;">00:00</div>
+    <div id="timerSetup" style="display:flex; gap:0.5vw; justify-content:center; align-items:center; margin-bottom:1.5vh;">
+      <input type="number" id="timerMinutesInput" min="1" max="180" value="10" style="width:5vw; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; text-align:center;">
+      <span>דקות</span>
+    </div>
+    <div style="display:flex; gap:1vw; justify-content:center;">
+      <button id="timerStartBtn" onclick="startTimer()" style="background:var(--cyan); color:#000; border:none; padding:0.8vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold;">▶ התחל</button>
+      <button id="timerStopBtn" onclick="stopTimer()" style="display:none; background:var(--alert); color:#fff; border:none; padding:0.8vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold;">⏹ עצור</button>
+    </div>
+  </dialog>
+
+  <!-- CITY COMPARE MODAL - V15: zmanim for several fixed cities side by side, using the same Hebcal
+       zmanim endpoint already used everywhere else in this app. -->
+  <dialog id="cityCompareModal" style="width:60vw; max-width:900px;">
+    <div class="modal-header"><h2>🌍 השוואת זמנים בין ערים</h2><button class="close-btn" onclick="document.getElementById('cityCompareModal').close()">✖</button></div>
+    <div style="display:flex; flex-wrap:wrap; gap:0.8vw; margin-bottom:1.5vh;" id="cityCompareChecks"></div>
+    <div style="text-align:left; margin-bottom:1vh;"><button onclick="loadCityCompare()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">השווה</button></div>
+    <div id="cityCompareContent" style="max-height:50vh; overflow:auto;"></div>
+  </dialog>
+
+  <!-- WEATHER MODAL - V15: weekly forecast, reusing the same free Open-Meteo API (daily endpoint)
+       already used elsewhere in this app for the current/hourly weather. -->
+  <dialog id="weatherModal" style="width:45vw; max-width:650px;">
+    <div class="modal-header"><h2>🌤️ תחזית שבועית</h2><button class="close-btn" onclick="document.getElementById('weatherModal').close()">✖</button></div>
+    <div id="weatherModalContent" style="display:flex; gap:0.8vw; justify-content:space-between; padding:1vh 0.5vw;">טוען...</div>
+  </dialog>
+
+  <!-- SHOPPING IMPORT MODAL - V15: paste a multi-line list (e.g. from WhatsApp) and add every
+       non-empty line as a separate item. -->
+  <dialog id="shoppingImportModal" style="width:auto; max-width:450px;">
+    <div class="modal-header"><h2>📋 ייבוא רשימה מהדבקה</h2><button class="close-btn" onclick="document.getElementById('shoppingImportModal').close()">✖</button></div>
+    <textarea id="shoppingImportTextarea" rows="8" placeholder="הדבק כאן רשימה - כל שורה תהפוך לפריט נפרד" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; resize:vertical;"></textarea>
+    <button onclick="importShoppingListText()" style="margin-top:1vh; width:100%; background:var(--cyan); border:none; padding:0.8vh; border-radius:0.5vw; cursor:pointer; font-weight:bold;">ייבא</button>
+  </dialog>
+
+  <!-- SHOPPING QR MODAL - V15: shares a READ-ONLY snapshot of the current list via a link/QR encoded
+       entirely in the URL itself (no server/sync involved - it's a one-time snapshot at share time,
+       not a live-updating shared list, and is labeled as such). -->
+  <dialog id="shoppingQrModal" style="width:auto; max-width:400px; text-align:center;">
+    <div class="modal-header"><h2>📱 שיתוף רשימת קניות</h2><button class="close-btn" onclick="document.getElementById('shoppingQrModal').close()">✖</button></div>
+    <img id="shoppingQrImage" src="" alt="QR code" style="width:250px; height:250px; background:#fff; padding:1vh; border-radius:0.5vw;">
+    <div style="margin-top:1.5vh; color:#94a3b8; font-size:0.85vw;">תמונת מצב של הרשימה כרגע - לא מתעדכן בזמן אמת אם תשנה משהו אחרי הסריקה.</div>
+  </dialog>
+
+  <!-- ARCHIVE MODAL - V15: completed tasks move here instead of being deleted outright, so they
+       can be restored or purged deliberately later. -->
+  <dialog id="archiveModal" style="width:50vw; max-width:700px;">
+    <div class="modal-header"><h2>🗄️ ארכיון משימות שהושלמו</h2><button class="close-btn" onclick="document.getElementById('archiveModal').close()">✖</button></div>
+    <div id="archiveModalContent" style="height:55vh; overflow-y:auto; padding:0 0.5vw;"></div>
+  </dialog>
+
   <!-- QR MODAL - new in V8: quick way to open the same live dashboard on a phone. Uses the free,
        no-key qrserver.com image API (same pattern as the other free API calls already in this app -
        no library, no dependency). -->
@@ -550,6 +666,7 @@
     <div style="display:flex; gap:1vw; margin-bottom:1.5vh; align-items:center;">
       <input type="date" id="zmanimDateInput" style="flex:1; padding:0.7vh; background:#000; border:1px solid #333; color:#fff;">
       <button onclick="loadZmanimForDate()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">הצג</button>
+      <button onclick="showTomorrowZmanim()" style="background:var(--gold); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">🌙 מחר</button>
     </div>
     <div id="zmanimDateContent" class="zmanim-grid" style="width:100%;"></div>
   </dialog>
@@ -582,11 +699,106 @@
     </div>
   </dialog>
 
+  <!-- V13: "תורה והלכה" moved here from an inline sidebar tab into its own floating window, opened by
+       its sidebar button. All content below is unchanged - only the container changed. -->
+  <dialog id="torahModal" style="width:45vw; max-width:600px;">
+    <div class="modal-header"><h2>📖 תורה והלכה</h2><button class="close-btn" onclick="document.getElementById('torahModal').close()">✖</button></div>
+    <div style="max-height:75vh; overflow-y:auto; padding:0 0.5vw;">
+      <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; padding: 0 1vw;">
+        <span>חיזוק יומי</span>
+        <button onclick="refreshHalacha()" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-size:1vw; transition:0.2s;" title="רענן הלכה">🔄</button>
+        <button onclick="speakHebrew(document.getElementById('halachaText').textContent)" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-size:1vw; transition:0.2s; margin-right:0.5vw;" title="הקרא הלכה">🔊</button>
+      </div>
+      <div class="halacha-text" id="halachaText">טוען...</div>
+
+      <div class="omer-widget" id="omerWidget"></div>
+      <button id="omerCountBtn" style="display:none; margin-top:0.5vh; background:var(--gold); color:#000; border:none; padding:0.8vh; border-radius:0.5vw; font-weight:bold; cursor:pointer;" onclick="countOmerToday()">✅ ספרתי היום</button>
+
+      <div id="kiddushLevanaWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.9vw; color: #e2e8f0; margin-top: 1vh;">
+        <div style="font-weight:800; color:var(--gold);">🌙 קידוש לבנה</div>
+        <div id="kiddushLevanaText"></div>
+      </div>
+
+      <div id="talUmatarWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.9vw; color: #e2e8f0; margin-top: 1vh;">
+        <div style="font-weight:800; color:var(--gold);">🌧️ נוסח תפילה (משיב הרוח / טל ומטר)</div>
+        <div id="talUmatarText"></div>
+      </div>
+
+      <div class="panel-title" style="margin-top: 2vh;">פרשת השבוע</div>
+      <div id="parashaDetails" style="background: rgba(0,0,0,0.3); padding: 1.2vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div id="parashaDetailsName" style="font-weight:800; color:var(--gold);"></div>
+          <button onclick="speakHebrew(document.getElementById('parashaDetailsName').textContent + '. קריאת התורה: ' + document.getElementById('parashaTorahRange').textContent + '. הפטרה: ' + document.getElementById('parashaHaftarahRange').textContent)" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-size:1vw;" title="הקרא">🔊</button>
+        </div>
+        <div>קריאת התורה: <span id="parashaTorahRange"></span></div>
+        <div>הפטרה: <span id="parashaHaftarahRange"></span></div>
+        <a id="parashaReadLink" href="#" target="_blank" style="color:var(--cyan); display:block; margin-top:0.5vh;">קרא בספריא ⇱</a>
+      </div>
+
+      <button class="btn" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; width:100%; margin-top:2vh;" onclick="document.getElementById('brachaModal').showModal()">🙏 ברכה אחרונה</button>
+
+      <div class="panel-title" style="margin-top: 2vh;">זמני מניינים</div>
+      <div id="minyanTimesWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0;"></div>
+
+      <div class="panel-title" style="margin-top: 2vh;">תהילים ומצפן</div>
+      <a id="tehillimLink" href="#" target="_blank" class="tehillim-btn">קרא פרק אישי בתהילים</a>
+      <div class="compass-container" style="margin-top: 1vh;">
+        <div class="compass-ring"><div class="compass-arrow" id="compassArrow"></div></div>
+        <div class="compass-label" id="compassLabel">טוען כיוון ירושלים...</div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- V13: "בית חכם" moved here from an inline sidebar tab into its own floating window, opened by its
+       sidebar button. All content below is unchanged - only the container changed. -->
+  <dialog id="homeModal" style="width:45vw; max-width:600px;">
+    <div class="modal-header"><h2>🏠 בית חכם</h2><button class="close-btn" onclick="document.getElementById('homeModal').close()">✖</button></div>
+    <div style="max-height:75vh; overflow-y:auto; padding:0 0.5vw;">
+      <div class="panel-title">קופת צדקה דיגיטלית</div>
+      <div class="tzedakah-widget">
+        <div style="font-size: 1vw; color: #e2e8f0;">סך הכל נתרם החודש:</div>
+        <div class="tzedakah-total" id="tzedakahTotal">₪0</div>
+
+        <div style="font-size: 0.9vw; color: #ccc; margin-bottom: 0.5vh;">בחר סכום להכנסה:</div>
+        <div class="coin-selector">
+          <button class="coin-val" onclick="selectCoin(0.1, this)">10 אג'</button>
+          <button class="coin-val" onclick="selectCoin(0.5, this)">₪0.5</button>
+          <button class="coin-val active" onclick="selectCoin(1, this)">₪1</button>
+          <button class="coin-val" onclick="selectCoin(5, this)">₪5</button>
+          <button class="coin-val" onclick="selectCoin(10, this)">₪10</button>
+        </div>
+
+        <button class="coin-btn" onclick="addTzedakah()">🪙</button>
+        <div style="font-size: 0.8vw; color: #aaa;">(לחץ על המטבע הגדול לאישור)</div>
+      </div>
+
+      <div class="panel-title" style="margin-top: 2vh;">אנשי קשר לשעת חירום</div>
+      <div id="emergencyContactsWidget" style="display:flex; flex-direction:column; gap:0.6vh;"></div>
+
+      <div class="panel-title" style="margin-top: 2vh;">חובות הלבבות - שער הבטחון (יומי)</div>
+      <div class="chovot-widget" id="chovotWidget" style="background: rgba(245,158,11,0.1); border: 1px solid var(--gold); padding: 1.5vh; border-radius: 1vw; font-size: 1.1vw; line-height: 1.6; text-align: justify; color: #fff;">
+        <script>
+            const bitachonQuotes = [
+              "<b>הַבִּטָּחוֹן הַשָּׁלֵם בָּאֱלֹהִים</b><br>הוּא מְנוּחַת נֶפֶשׁ הַבּוֹטֵחַ וְשֶׁיִּהְיֶה לִבּוֹ סָמוּךְ עַל מִי שֶׁבָּטַח עָלָיו, שֶׁיַּעֲשֶׂה הַטּוֹב וְהַנָּכוֹן לוֹ בָּעִנְיָן אֲשֶׁר יִבְטַח עָלָיו.",
+              "<b>עֲשִׂיַּת הַהִשְׁתַּדְּלוּת</b><br>וְאֵין הַבִּטָּחוֹן שֶׁיִּהְיֶה הָאָדָם בָּטֵל מִמְּלַאכְתּוֹ וּמְבַקֵּשׁ טַרְפּוֹ, אֶלָּא שֶׁיִּהְיֶה עוֹשֶׂה אֶת הַסִּבּוֹת וְלִבּוֹ סָמוּךְ עַל סִבַּת כָּל הַסִּבּוֹת.",
+              "<b>הֲסָרַת הַדְּאָגָה</b><br>מִי שֶׁבּוֹטֵחַ בַּה' מִסְתַּלֶּקֶת מִדַּאֲגָתוֹ דַּאֲגַת הָעוֹלָם, וְיִשָּׁאֵר שַׁלְו וּבוֹטֵחַ, כִּי יָדַע שֶׁהַבּוֹרֵא לֹא יַעֲזֹב אוֹתוֹ וְלֹא יִטְּשֵׁהוּ.",
+              "<b>הַכֹּל בִּידֵי שָׁמַיִם</b><br>אַל יַחְשֹׁב הָאָדָם כִּי יַשִּׂיג מַה שֶּׁלֹּא נִגְזַר לוֹ בְּחָכְמָתוֹ אוֹ בְּהִשְׁתַּדְּלוּתוֹ, כִּי הַכֹּל כַּאֲשֶׁר גָּזַר הַבּוֹרֵא לְפִי מַה שֶּׁהוּא טוֹב לָאָדָם.",
+              "<b>חֵרוּת מֵהַבְּרִיּוֹת</b><br>הַבּוֹטֵחַ בַּה' לֹא יְפַחֵד מִשּׁוּם אָדָם וְלֹא יִקְוֶה לְשׁוּם בְּנֵי אָדָם, אֶלָּא יִהְיֶה חָפְשִׁי מֵהָעֲבָדוּת לַנִּבְרָאִים.",
+              "<b>שַׁלְוָה וְשִׂמְחָה</b><br>כְּשֶׁיִּבְטַח הָאָדָם בָּאֱלֹהִים בֶּאֱמֶת, יַרְגִּישׁ שִׂמְחָה וְרוֹגַע כִּי חַיָּיו נִמְצָאִים בְּיָדַיִם רַחְמָנִיּוֹת וְאוֹהֲבוֹת מֵאֵין כְּמוֹתָן."
+            ];
+            const d = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+            document.write(bitachonQuotes[d % bitachonQuotes.length]);
+        </script>
+      </div>
+      <button class="btn" style="background: linear-gradient(45deg, #4f46e5, #3b82f6); color: white; margin-top: 1vh; width: 100%;" onclick="openBitachonModal()">📖 לימוד יומי מלא - שער הבטחון</button>
+    </div>
+  </dialog>
+
 
   <!-- SETTINGS MODAL -->
 
   <dialog id="settingsModal">
-    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V12)</h2><button class="close-btn" onclick="closeSettings()">✖</button></div>
+    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V15)</h2><button class="close-btn" onclick="closeSettings(); document.getElementById('settingsModal').close();">✖</button></div>
 
     <div class="setting-group"><label>מקור חדשות</label>
       <select id="newsSourceSelect" style="width:100%; padding: 0.5vh; border-radius: 0.5vw; background: #333; color: white; margin-top:0.5vh;">
@@ -611,7 +823,38 @@
     <div class="setting-group"><label>אוטומציה והתראות</label>
       <div class="toggle-switch"><input type="checkbox" id="shabbatModeToggle"><span>הפעל "מצב שבת/חג" אוטומטי (כולל ימים טובים)</span></div>
       <div class="toggle-switch"><input type="checkbox" id="audioModeToggle"><span>הפעל צלצול/הקראה קולית (15 דקות לפני סוזק"ש וכניסת שבת)</span></div>
-      <div class="toggle-switch"><input type="checkbox" id="screensaverToggle"><span>בטל עמעום מסך אוטומטי (כרגע עומם אחרי 5 דק' חוסר פעילות)</span></div>
+      <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh;">
+        <span>צליל התראה:</span>
+        <select id="chimeSoundSelect" onchange="appSettings.chimeSound=this.value; saveSettings();" style="padding:0.5vh; background:#333; color:#fff; border-radius:0.5vw;">
+          <option value="bell">פעמון</option>
+          <option value="gentle">עדין</option>
+          <option value="double">ביפ כפול</option>
+        </select>
+        <button onclick="previewChime(document.getElementById('chimeSoundSelect').value)" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">▶ נגן לדוגמה</button>
+      </div>
+      <div class="toggle-switch"><input type="checkbox" id="screensaverToggle"><span>הפעל עמעום מסך אוטומטי (אחרי 5 דק' חוסר פעילות) - כבוי כברירת מחדל</span></div>
+    </div>
+    <div class="setting-group"><label>נגישות ותצוגה</label>
+      <div style="display:flex; align-items:center; gap:1vw; margin-bottom:1vh;">
+        <span>ערכת נושא:</span>
+        <select id="themeModeSelect" onchange="applyThemeMode(this.value)" style="padding:0.5vh; background:#333; color:#fff; border-radius:0.5vw;">
+          <option value="dark">כהה (קבוע)</option>
+          <option value="light">בהיר (קבוע)</option>
+          <option value="auto">אוטומטי לפי שעה (יום=בהיר, לילה=כהה)</option>
+        </select>
+      </div>
+      <div style="display:flex; align-items:center; gap:1vw;">
+        <span>הגדלת תצוגה:</span>
+        <input type="range" id="accessibilitySlider" min="100" max="130" step="5" value="100" oninput="applyAccessibilityScale(this.value); document.getElementById('accessibilitySliderVal').textContent = this.value + '%';" style="flex:1;">
+        <span id="accessibilitySliderVal" style="min-width:3.5vw;">100%</span>
+      </div>
+      <div style="font-size:0.8vw; color:#888;">מגדיל את תוכן הדשבורד (לא את פס הכותרת, שנשאר תמיד נגיש) ומעלה ניגודיות בכל ערך מעל 100%.</div>
+      <div class="toggle-switch" style="margin-top:1vh;"><input type="checkbox" id="densityCompactToggle" onchange="appSettings.densityCompact=this.checked; document.body.classList.toggle('density-compact', this.checked); saveSettings();"><span>תצוגה צפופה בסיידבר (יותר שורות במסך אחד)</span></div>
+      <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh;">
+        <span>צבע ראשי:</span>
+        <input type="color" id="accentColorInput" value="#00e5ff" onchange="applyAccentColor(this.value)" style="width:3vw; height:3vh; border:none; cursor:pointer; background:transparent;">
+        <button onclick="applyAccentColor('#00e5ff'); document.getElementById('accentColorInput').value='#00e5ff';" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">איפוס</button>
+      </div>
     </div>
     <div class="setting-group"><label>נוסח/מנהג</label>
       <select id="nusachSelect" style="width:100%; padding: 0.5vh; border-radius: 0.5vw; background: #333; color: white;">
@@ -622,7 +865,8 @@
       <div style="font-size:0.8vw; color:#888; margin-top:0.5vh;">משנה את תג המנהג בכותרת ואת ייחוס "סוזק"ש" בטבלת הזמנים (הגר"א לאשכנזים, עובדיה לספרדים). שאר חישובי הזמנים זהים לכל הנוסחים.</div>
     </div>
     <div class="setting-group"><label>פסוק/משפט עליון</label>
-      <input type="text" id="pasukTextInput" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff;" placeholder="&quot;וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ&quot;">
+      <div style="font-size:0.8vw; color:#888; margin-bottom:0.5vh;">אפשר להכניס כמה פסוקים, כל אחד בשורה נפרדת - יוצג פסוק אחר בכל יום (מתחלף לפי תאריך, לא אקראי).</div>
+      <textarea id="pasukTextInput" rows="3" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; resize:vertical;" placeholder="&quot;וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ&quot;"></textarea>
       <button onclick="resetPasukText()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לפסוק המקורי</button>
     </div>
     <div class="setting-group"><label>זמני הדלקת נרות</label>
@@ -677,12 +921,17 @@
       </div>
       <div style="text-align:left; margin-bottom:1vh;"><button onclick="addPersonalEvent()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold;">הוסף</button></div>
       <table class="events-table"><thead><tr><th>שם</th><th>סוג</th><th>תאריך</th><th>פעולה</th></tr></thead><tbody id="eventsTbody"></tbody></table>
+      <button onclick="exportPersonalEventsICS()" style="margin-top:1vh; background:#555; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer;">📅 ייצוא כקובץ ICS ליומן</button>
     </div>
     <div class="setting-group"><label>אנשי קשר לשעת חירום</label>
       <div class="event-inputs"><input type="text" id="ecName" placeholder="שם (למשל: הרב, שכן)"><input type="text" id="ecPhone" placeholder="טלפון"><button onclick="addEmergencyContact()">הוסף</button></div>
       <table class="events-table"><thead><tr><th>שם</th><th>טלפון</th><th>פעולה</th></tr></thead><tbody id="emergencyContactsTbody"></tbody></table>
     </div>
-    <div class="setting-group"><label>בני משפחה (לשיוך משימות ולנוכחות)</label>
+    <div class="setting-group"><label>מוצרי יסוד לרשימת קניות</label>
+      <div style="font-size:0.8vw; color:#888; margin-bottom:0.5vh;">כל מוצר בשורה נפרדת. כפתור "הוסף מוצרי יסוד" ברשימת הקניות יוסיף את כל אלה בלחיצה אחת (ולא יכפיל מה שכבר ברשימה).</div>
+      <textarea id="staplesListInput" rows="4" style="width:100%; padding:0.7vh; background:#000; border:1px solid #333; color:#fff; resize:vertical;" placeholder="חלב&#10;ביצים&#10;לחם"></textarea>
+    </div>
+    <div class="setting-group"><label>בני משפחה (לשיוך משימות)</label>
       <div class="event-inputs"><input type="text" id="famMemberName" placeholder="שם"><button onclick="addFamilyMember()">הוסף</button></div>
       <table class="events-table"><thead><tr><th>שם</th><th>פעולה</th></tr></thead><tbody id="familyMembersTbody"></tbody></table>
     </div>
@@ -696,6 +945,7 @@
         <button onclick="applyDisplayProfile('full')" style="background:var(--cyan); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🖥️ קיוסק מלא</button>
         <button onclick="applyDisplayProfile('minimal')" style="background:#64748b; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🔹 מינימלי</button>
         <button onclick="applyDisplayProfile('guest')" style="background:var(--gold); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">👋 מצב אורח</button>
+        <button onclick="applyDisplayProfile('kids')" style="background:#ec4899; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🧒 מצב ילדים</button>
       </div>
       <div id="componentTogglesContainer"></div>
     </div>
@@ -709,13 +959,14 @@
     </div>
     <div class="setting-group"><label>הגדרות מתקדמות</label>
       <button onclick="resetTzedakah()" style="background:var(--alert); color:#fff; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw;">איפוס קופת צדקה חודשית</button>
+      <button onclick="printDashboardSnapshot()" style="background:#555; color:#fff; border:none; padding:1vh 2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:1vw; margin-right:1vw;">🖨️ הדפס דשבורד</button>
     </div>
   </dialog>
 
   <script>
     const DEFAULT_PASUK_TEXT = '"וְהַבּוֹטֵחַ בַּה\' חֶסֶד יְסוֹבְבֶנּוּ"';
     const DEFAULT_EMERGENCY_CONTACTS = [ { name: 'מגן דוד אדום', phone: '101' }, { name: 'משטרה', phone: '100' }, { name: 'כבאות והצלה', phone: '102' } ];
-    let appSettings = JSON.parse(localStorage.getItem('dashSettings')) || { autoShabbat: true, audioAlerts: true, personalEvents: [], age: 30, newsSource: 'rotter', candleOffset: 20, disableScreensaver: false, hiddenComponents: [], reminderDaysAhead: 2, pasukText: DEFAULT_PASUK_TEXT, nusach: 'sephardi', emergencyContacts: DEFAULT_EMERGENCY_CONTACTS.slice() };
+    let appSettings = JSON.parse(localStorage.getItem('dashSettings')) || { autoShabbat: true, audioAlerts: true, personalEvents: [], age: 30, newsSource: 'rotter', candleOffset: 20, screensaverEnabled: false, hiddenComponents: [], reminderDaysAhead: 2, pasukText: DEFAULT_PASUK_TEXT, nusach: 'sephardi', emergencyContacts: DEFAULT_EMERGENCY_CONTACTS.slice() };
     if(!appSettings.emergencyContacts) appSettings.emergencyContacts = DEFAULT_EMERGENCY_CONTACTS.slice();
     if(appSettings.worldClockTz === undefined) appSettings.worldClockTz = '';
     if(appSettings.worldClockLabel === undefined) appSettings.worldClockLabel = '';
@@ -727,12 +978,33 @@
     if(!appSettings.dndUntil) appSettings.dndUntil = 0;
     if(!appSettings.newsSource) appSettings.newsSource = 'rotter';
     if(!appSettings.candleOffset) appSettings.candleOffset = 20;
-    if(appSettings.disableScreensaver === undefined) appSettings.disableScreensaver = false;
+    // V13: renamed from disableScreensaver (opt-out, defaulted to dimming ON) to screensaverEnabled
+    // (opt-in, defaults OFF) - clearer polarity, and the user asked for dimming to be off unless they
+    // explicitly turn it on, not on-unless-disabled.
+    if(appSettings.screensaverEnabled === undefined) appSettings.screensaverEnabled = false;
     if(!appSettings.hiddenComponents) appSettings.hiddenComponents = [];
     if(!appSettings.reminderDaysAhead && appSettings.reminderDaysAhead !== 0) appSettings.reminderDaysAhead = 2;
     if(!appSettings.pasukText) appSettings.pasukText = DEFAULT_PASUK_TEXT;
     if(!appSettings.nusach) appSettings.nusach = 'sephardi';
-    document.getElementById('pasukBanner').textContent = appSettings.pasukText;
+    if(!appSettings.accessibilityScale) appSettings.accessibilityScale = 1;
+    if(!appSettings.accentColor) appSettings.accentColor = '#00e5ff';
+    if(!appSettings.staplesList) appSettings.staplesList = [];
+    if(!appSettings.themeMode) appSettings.themeMode = 'dark';
+    if(!appSettings.chimeSound) appSettings.chimeSound = 'bell';
+    if(appSettings.densityCompact === undefined) appSettings.densityCompact = false;
+    document.body.classList.toggle('density-compact', appSettings.densityCompact);
+    updateAutoTheme();
+    applyAccessibilityScale(Math.round(appSettings.accessibilityScale * 100));
+    document.documentElement.style.setProperty('--cyan', appSettings.accentColor);
+    // V15: pasukText can now hold several quotes (one per line) - a different one shows each day,
+    // picked by day-of-year so it's stable through the day and changes daily, not randomly per load.
+    function applyPasukRotation() {
+      const list = appSettings.pasukText.split('\n').map(s => s.trim()).filter(Boolean);
+      if(!list.length) list.push(DEFAULT_PASUK_TEXT);
+      const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+      document.getElementById('pasukBanner').textContent = list[dayOfYear % list.length];
+    }
+    applyPasukRotation();
 
     function resetPasukText() { document.getElementById('pasukTextInput').value = DEFAULT_PASUK_TEXT; }
 
@@ -755,7 +1027,34 @@
       streak = (localStorage.getItem('lastDafYomiLearnedDate') === yesterday) ? streak + 1 : 1;
       localStorage.setItem('dafYomiStreak', streak);
       localStorage.setItem('lastDafYomiLearnedDate', todayStr);
+      // V15: also keep a full history of learned dates (not just the running streak count), so it can
+      // be shown as a calendar heatmap.
+      const history = JSON.parse(localStorage.getItem('dafYomiLearnedDates')) || [];
+      if(!history.includes(todayStr)) { history.push(todayStr); localStorage.setItem('dafYomiLearnedDates', JSON.stringify(history)); }
       updateDafYomiStreakLabel();
+    }
+    // V15: last ~10 weeks as a GitHub-style contribution heatmap - visual sense of consistency over
+    // time, not just today's streak number.
+    function openDafYomiHeatmapModal() {
+      const history = new Set(JSON.parse(localStorage.getItem('dafYomiLearnedDates')) || []);
+      const weeks = 10;
+      const today = new Date();
+      let html = '<div style="display:flex; gap:3px; direction:ltr; justify-content:center;">';
+      for(let w = weeks - 1; w >= 0; w--) {
+        html += '<div style="display:flex; flex-direction:column; gap:3px;">';
+        for(let d = 6; d >= 0; d--) {
+          const date = new Date(today.getTime() - (w * 7 + d) * 86400000);
+          if(date > today) { html += '<div style="width:1.4vw; height:1.4vw;"></div>'; continue; }
+          const learned = history.has(date.toDateString());
+          html += `<div title="${date.toLocaleDateString('he-IL')}" style="width:1.4vw; height:1.4vw; border-radius:0.2vw; background:${learned ? 'var(--cyan)' : 'rgba(255,255,255,0.08)'};"></div>`;
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+      const total = [...history].length;
+      html += `<div style="text-align:center; margin-top:1.5vh; color:#94a3b8;">סה"כ ${total} ימים נלמדו מאז שהתחלת לסמן</div>`;
+      document.getElementById('dafYomiHeatmapContent').innerHTML = html;
+      document.getElementById('dafYomiHeatmapModal').showModal();
     }
 
     // V9: emergency contacts - tel: links work as real quick-dial on a phone/tablet install, and are
@@ -786,7 +1085,7 @@
       saveSettings(); renderEmergencyContactsTable(); renderEmergencyContactsWidget();
     }
 
-    // V11: family members list - shared by task-assignment and the presence ("who's home") widget.
+    // V11: family members list, used for task assignment.
     function renderFamilyMembersTable() {
       const tbody = document.getElementById('familyMembersTbody');
       if(!tbody) return;
@@ -799,11 +1098,11 @@
       if(!name) return;
       appSettings.familyMembers.push(name);
       input.value = '';
-      saveSettings(); renderFamilyMembersTable(); renderTaskAssigneeOptions(); renderPresenceWidget();
+      saveSettings(); renderFamilyMembersTable(); renderTaskAssigneeOptions(); updateDutyWidget();
     }
     function deleteFamilyMember(i) {
       appSettings.familyMembers.splice(i, 1);
-      saveSettings(); renderFamilyMembersTable(); renderTaskAssigneeOptions(); renderPresenceWidget();
+      saveSettings(); renderFamilyMembersTable(); renderTaskAssigneeOptions(); updateDutyWidget();
     }
 
     // V11: local shul minyan times - user-entered, since every shul's schedule is different and there's
@@ -857,13 +1156,18 @@
       { key: 'locationToggle', label: 'כפתורי מיקום (אשקלון / מיקום שלי)', ids: ['locationToggleWrap'] },
       { key: 'siddurBtn', label: 'כפתור סידורון', ids: ['btnSiddur'] },
       { key: 'calendarBtn', label: 'כפתור לוח שנה', ids: ['btnCalendar'] },
+      { key: 'personalDatesBtn', label: 'כפתור תאריכים אישיים', ids: ['btnPersonalDates'] },
       { key: 'fullscreenBtn', label: 'כפתור מסך מלא', ids: ['btnFullscreen'] },
       { key: 'qrBtn', label: 'כפתור QR', ids: ['btnQR'] },
       { key: 'shabbatTimesBtn', label: 'כפתור זמני שבת', ids: ['btnShabbatTimes'] },
       { key: 'datePickerBtn', label: 'כפתור זמנים לתאריך', ids: ['btnDatePicker'] },
+      { key: 'cityCompareBtn', label: 'כפתור השוואת ערים', ids: ['btnCityCompare'] },
+      { key: 'timerBtn', label: 'כפתור טיימר', ids: ['btnTimer'] },
       { key: 'displayProfileCycleBtn', label: 'כפתור מעבר בין מצבי תצוגה', ids: ['btnDisplayProfileCycle'] },
       { key: 'dndBtn', label: 'כפתור מצב שקט', ids: ['btnDnd'] },
-      { key: 'sidebar', label: 'כל הסיידבר (משימות, תורה והלכה, בית חכם)', ids: ['sidebarWrap'] },
+      { key: 'torahBtn', label: 'כפתור תורה והלכה', ids: ['btnTorah'] },
+      { key: 'homeBtn', label: 'כפתור בית חכם', ids: ['btnHome'] },
+      { key: 'sidebar', label: 'כל הסיידבר (משימות, פתקים, הכנות, קניות)', ids: ['sidebarWrap'] },
       { key: 'pasuk', label: 'פסוק יומי', ids: ['pasukBanner'] },
       { key: 'infoRibbon', label: 'סרגל המידע כולו', ids: ['infoRibbonWrap'] },
       { key: 'ribbon-dafyomi', label: '  ↳ דף יומי', ids: ['ribbonItem-dafyomi'] },
@@ -872,6 +1176,7 @@
       { key: 'ribbon-nextholiday', label: '  ↳ מועד קרוב', ids: ['ribbonItem-nextholiday'] },
       { key: 'ribbon-parasha', label: '  ↳ שניים מקרא ופרשה', ids: ['ribbonItem-parasha'] },
       { key: 'ribbon-shabbatentrance', label: '  ↳ כניסת שבת', ids: ['ribbonItem-shabbatentrance'] },
+      { key: 'ribbon-duty', label: '  ↳ תור אחראי משפחתי', ids: ['ribbonItem-duty'] },
       { key: 'zmanimGrid', label: 'טבלת הזמנים', ids: ['zmanimGrid'] },
       { key: 'ticker', label: 'מבזקי חדשות', ids: ['tickerWrap'] },
       { key: 'bottomDock', label: 'הפס התחתון האנימטיבי', ids: ['bottomDock'] }
@@ -889,8 +1194,11 @@
     // V10: one-click display profiles, instead of manually toggling each checkbox every time.
     const DISPLAY_PROFILES = {
       full: [],
-      minimal: ['sidebar','ticker','bottomDock','locationToggle','siddurBtn','calendarBtn','qrBtn','shabbatTimesBtn','datePickerBtn','weather'],
-      guest: ['sidebar']
+      minimal: ['sidebar','ticker','bottomDock','locationToggle','siddurBtn','calendarBtn','qrBtn','shabbatTimesBtn','datePickerBtn','weather','torahBtn','homeBtn'],
+      guest: ['sidebar'],
+      // V15: simplified view for kids - keeps the clock, zmanim, and task list (fun to check off),
+      // hides the more "administrative" buttons/panels that aren't meant for them.
+      kids: ['ticker','bottomDock','weather','locationToggle','calendarBtn','personalDatesBtn','qrBtn','shabbatTimesBtn','datePickerBtn','dndBtn','torahBtn','homeBtn']
     };
     function applyDisplayProfile(name) {
       appSettings.hiddenComponents = (DISPLAY_PROFILES[name] || []).slice();
@@ -901,8 +1209,8 @@
       updateDisplayProfileCycleBtnLabel();
     }
     // V11: header button to cycle full -> minimal -> guest -> full -> ... without opening settings.
-    const DISPLAY_PROFILE_ORDER = ['full', 'minimal', 'guest'];
-    const DISPLAY_PROFILE_LABELS = { full: '🔄 מצב: קיוסק מלא', minimal: '🔄 מצב: מינימלי', guest: '🔄 מצב: אורח' };
+    const DISPLAY_PROFILE_ORDER = ['full', 'minimal', 'guest', 'kids'];
+    const DISPLAY_PROFILE_LABELS = { full: '🔄 מצב: קיוסק מלא', minimal: '🔄 מצב: מינימלי', guest: '🔄 מצב: אורח', kids: '🔄 מצב: ילדים' };
     function cycleDisplayProfile() {
       const current = appSettings.currentDisplayProfile || 'full';
       const nextIdx = (DISPLAY_PROFILE_ORDER.indexOf(current) + 1) % DISPLAY_PROFILE_ORDER.length;
@@ -928,6 +1236,25 @@
       // a different header height led the clock to over-scale and its content to spill down into the
       // ticker bar - which is what looked like "the ticker hides the zmanim". Forcing a fresh baseline
       // measurement here (component visibility can affect header height) fixes it at the source.
+      clockBaseline = null;
+      applyFullscreenAutoVisibility();
+      updateDutyWidget(); // has its own condition (needs family members) beyond plain hiddenComponents
+    }
+
+    // V15: מבזקים (ticker) + the bottom equalizer are meant for real fullscreen/kiosk display only -
+    // outside fullscreen they're hidden automatically (no manual toggle needed) and the layout
+    // reclaims their space so nothing leaves an empty gap. A component the user explicitly hid via
+    // settings stays hidden either way; this only controls the extra fullscreen-only behavior on
+    // top of that.
+    function applyFullscreenAutoVisibility() {
+      const isFullscreen = !!document.fullscreenElement;
+      const tickerEl = document.getElementById('tickerWrap');
+      const dockEl = document.getElementById('bottomDock');
+      const tickerUserHidden = appSettings.hiddenComponents.includes('ticker');
+      const dockUserHidden = appSettings.hiddenComponents.includes('bottomDock');
+      if(tickerEl) tickerEl.style.display = (isFullscreen && !tickerUserHidden) ? '' : 'none';
+      if(dockEl) dockEl.style.display = (isFullscreen && !dockUserHidden) ? '' : 'none';
+      document.body.classList.toggle('no-fs-extras', !isFullscreen);
       clockBaseline = null;
       scaleClockToFit();
     }
@@ -968,8 +1295,11 @@
       };
       clockBaselineViewportKey = viewportKey;
 
-      // restore the real current hidden state
-      COMPONENT_TOGGLES.forEach(c => { const hidden = previouslyHidden.includes(c.key); c.ids.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = hidden ? 'none' : ''; }); });
+      // restore the real current hidden state - ticker/bottomDock are ALSO auto-hidden outside real
+      // fullscreen (see applyFullscreenAutoVisibility), which isn't reflected in hiddenComponents,
+      // so it has to be folded in here too or this restore step would clobber that hide.
+      const fsHidden = !document.fullscreenElement ? ['ticker', 'bottomDock'] : [];
+      COMPONENT_TOGGLES.forEach(c => { const hidden = previouslyHidden.includes(c.key) || fsHidden.includes(c.key); c.ids.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = hidden ? 'none' : ''; }); });
       if(mainContent) mainContent.style.gridTemplateColumns = previouslyHidden.includes('sidebar') ? '1fr' : '';
 
       return clockBaseline;
@@ -1024,6 +1354,78 @@
     ];
 
     function saveSettings() { localStorage.setItem('dashSettings', JSON.stringify(appSettings)); }
+    // V15: applied immediately on input (not just on settings-close) so the effect is visible right
+    // away. `pct` is 100-130 from the slider; 100 means fully off (scale 1, no contrast/brightness
+    // boost) so there's no separate on/off state to keep in sync with the slider value.
+    function applyAccessibilityScale(pct) {
+      const scale = parseInt(pct) / 100;
+      appSettings.accessibilityScale = scale;
+      document.documentElement.style.setProperty('--a11y-scale', scale);
+      document.documentElement.style.setProperty('--a11y-contrast', scale > 1 ? (1 + (scale - 1) * 1.5) : 1);
+      document.documentElement.style.setProperty('--a11y-brightness', scale > 1 ? 1.05 : 1);
+      saveSettings();
+    }
+    // V15: offline indicator - only shown when actually offline (no clutter while online), so the
+    // kiosk display makes clear when zmanim/weather/news might be stale from a lost connection.
+    function updateConnectionStatus() {
+      const el = document.getElementById('connectionStatus');
+      if(!el) return;
+      if(navigator.onLine) { el.style.display = 'none'; }
+      else { el.style.display = 'flex'; el.innerHTML = '📡 אין חיבור לאינטרנט'; el.style.color = 'var(--alert)'; }
+    }
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+
+    // V15: battery indicator - the Battery Status API isn't universally available (removed from most
+    // browsers besides Chrome/Edge for privacy reasons), so this stays hidden entirely rather than
+    // showing a fake/static value where the real API doesn't exist.
+    function initBatteryStatus() {
+      if(!navigator.getBattery) return;
+      navigator.getBattery().then(battery => {
+        const el = document.getElementById('batteryStatus');
+        if(!el) return;
+        const render = () => {
+          const pct = Math.round(battery.level * 100);
+          const icon = battery.charging ? '🔌' : (pct <= 20 ? '🪫' : '🔋');
+          el.style.display = 'flex';
+          el.textContent = `${icon} ${pct}%`;
+          el.style.color = (!battery.charging && pct <= 20) ? 'var(--alert)' : '';
+        };
+        render();
+        battery.addEventListener('levelchange', render);
+        battery.addEventListener('chargingchange', render);
+      }).catch(() => {});
+    }
+    // V15: theme mode - 'dark'/'light' apply directly; 'auto' switches based on the current hour
+    // (06:00-18:00 = light, otherwise dark), independent of the screensaver dimming feature.
+    function applyThemeMode(mode) {
+      appSettings.themeMode = mode;
+      saveSettings();
+      updateAutoTheme();
+    }
+    function updateAutoTheme() {
+      const mode = appSettings.themeMode || 'dark';
+      let effective = mode;
+      if(mode === 'auto') { const hour = new Date().getHours(); effective = (hour >= 6 && hour < 18) ? 'light' : 'dark'; }
+      document.body.classList.toggle('light-mode', effective === 'light');
+    }
+    // V15: simple daily-rotating "who's on duty" widget among family members (day-of-year modulo list
+    // length) - hidden entirely when no family members are configured, shown otherwise unless the user
+    // explicitly hid this ribbon item via the component-visibility settings.
+    function updateDutyWidget() {
+      const wrap = document.getElementById('ribbonItem-duty');
+      if(!wrap) return;
+      const members = appSettings.familyMembers || [];
+      if(!members.length || appSettings.hiddenComponents.includes('ribbon-duty')) { wrap.style.display = 'none'; return; }
+      const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+      document.getElementById('dutyVal').textContent = members[dayOfYear % members.length];
+      wrap.style.display = '';
+    }
+    function applyAccentColor(color) {
+      appSettings.accentColor = color;
+      document.documentElement.style.setProperty('--cyan', color);
+      saveSettings();
+    }
 
     function switchSiddurTab(id, btn) {
       document.querySelectorAll('.siddur-content').forEach(el => el.style.display = 'none');
@@ -1047,24 +1449,61 @@
         window.speechSynthesis.addEventListener('voiceschanged', onChange);
       });
     }
+    // V15: guaranteed Hebrew speech regardless of whether the device has a Hebrew voice pack installed
+    // (very common gap on Android without the Google Hebrew TTS pack, and on most iOS/Windows setups).
+    // Native speechSynthesis is tried first when a real Hebrew voice is available (best quality, fully
+    // offline). When none is found, this automatically falls back to fetching real speech audio from
+    // Google Translate's public TTS endpoint (used here the same way every other free public API in
+    // this app is used - no key, no library) and plays it as an <audio> element - so Hebrew speech
+    // always works, even on a device with zero Hebrew voices installed.
+    let fallbackAudioEl = null;
+    function stopFallbackAudio() { if (fallbackAudioEl) { fallbackAudioEl.pause(); fallbackAudioEl = null; } }
+    function speakHebrewViaGoogleTTS(text) {
+      stopFallbackAudio();
+      // The endpoint has a practical length limit, so long text (e.g. a full Chovot HaLevavot chapter)
+      // is split into chunks at sentence/word boundaries and played back-to-back.
+      const chunks = [];
+      let remaining = text.replace(/\s+/g, ' ').trim();
+      while (remaining.length > 0) {
+        if (remaining.length <= 180) { chunks.push(remaining); break; }
+        let cut = remaining.lastIndexOf(' ', 180);
+        if (cut <= 0) cut = 180;
+        chunks.push(remaining.slice(0, cut));
+        remaining = remaining.slice(cut).trim();
+      }
+      let i = 0;
+      function playNext() {
+        if (i >= chunks.length) { fallbackAudioEl = null; return; }
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunks[i])}&tl=he&client=tw-ob`;
+        fallbackAudioEl = new Audio(url);
+        i++;
+        fallbackAudioEl.onended = playNext;
+        fallbackAudioEl.onerror = () => { alert('גם ההקראה החלופית נכשלה - ייתכן שאין חיבור אינטרנט כרגע.'); fallbackAudioEl = null; };
+        fallbackAudioEl.play().catch(() => {});
+      }
+      playNext();
+    }
     async function speakHebrew(text) {
-      if (!('speechSynthesis' in window)) { alert('הדפדפן שלך לא תומך בהקראה קולית.'); return; }
-      if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
+      // Stop whichever engine might currently be speaking (native or fallback) - acts as a toggle/stop
+      // when pressed again, same as before.
+      if (window.speechSynthesis && window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
+      if (fallbackAudioEl) { stopFallbackAudio(); return; }
+
+      if (!('speechSynthesis' in window)) { speakHebrewViaGoogleTTS(text); return; }
 
       const voices = await getVoicesAsync();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'he-IL';
       const heVoice = voices.find(v => /^(he|iw)(-|$)/i.test(v.lang) || (v.name && v.name.toLowerCase().includes('hebrew')));
 
       if (heVoice) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'he-IL';
         u.voice = heVoice;
-      } else if (voices.length === 0) {
-        alert('לא נמצאו קולות הקראה בכלל במכשיר. ייתכן שצריך לחכות לטעינת הדף או לבדוק הגדרות נגישות.');
-        return;
+        window.speechSynthesis.speak(u);
       } else {
-        alert('לא נמצא קול בעברית במכשיר הזה. באנדרואיד: הגדרות > נגישות > המרת טקסט לדיבור > התקן/הפעל קול עברית של Google. המערכת תנסה להקריא בקול ברירת המחדל בינתיים.');
+        // No local Hebrew voice found on this device - use the guaranteed online fallback instead of
+        // just showing an error, per the "always available" requirement.
+        speakHebrewViaGoogleTTS(text);
       }
-      window.speechSynthesis.speak(u);
     }
 
 
@@ -1081,9 +1520,16 @@
     }
     document.addEventListener('fullscreenchange', () => {
       const btn = document.getElementById('btnFullscreen');
-      if (!btn) return;
-      btn.textContent = document.fullscreenElement ? '⛝ יציאה ממסך מלא' : '⛶ מסך מלא';
+      if (btn) btn.textContent = document.fullscreenElement ? '⛝ יציאה ממסך מלא' : '⛶ מסך מלא';
+      // V14: opportunistic real orientation lock where the platform actually supports it (mainly
+      // Android Chrome in fullscreen) - a nicer experience than the CSS rotate-trick where available,
+      // which stays as the universal fallback everywhere else (iOS, non-fullscreen, desktop).
+      if (document.fullscreenElement && screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+      applyFullscreenAutoVisibility();
     });
+    applyFullscreenAutoVisibility();
 
     // V8: real "install as app" button - only appears when the browser actually offers installability
     // (Chrome/Edge/most Android browsers; Safari never fires this event, so the button stays hidden
@@ -1141,7 +1587,7 @@
     function openSettings() {
       document.getElementById('shabbatModeToggle').checked = appSettings.autoShabbat;
       document.getElementById('audioModeToggle').checked = appSettings.audioAlerts;
-      document.getElementById('screensaverToggle').checked = appSettings.disableScreensaver;
+      document.getElementById('screensaverToggle').checked = appSettings.screensaverEnabled;
       document.getElementById('ageInput').value = appSettings.age || 30;
       document.getElementById('candleOffsetInput').value = appSettings.candleOffset || 20;
       document.getElementById('reminderDaysAheadInput').value = appSettings.reminderDaysAhead;
@@ -1152,18 +1598,36 @@
       document.getElementById('vacationDate').value = appSettings.vacationDate;
       if(document.getElementById('nusachSelect')) document.getElementById('nusachSelect').value = appSettings.nusach;
       if(document.getElementById('newsSourceSelect')) document.getElementById('newsSourceSelect').value = appSettings.newsSource || 'rotter';
+      document.getElementById('themeModeSelect').value = appSettings.themeMode || 'dark';
+      document.getElementById('chimeSoundSelect').value = appSettings.chimeSound || 'bell';
+      document.getElementById('densityCompactToggle').checked = appSettings.densityCompact;
+      document.getElementById('accessibilitySlider').value = Math.round(appSettings.accessibilityScale * 100);
+      document.getElementById('accessibilitySliderVal').textContent = Math.round(appSettings.accessibilityScale * 100) + '%';
+      document.getElementById('accentColorInput').value = appSettings.accentColor;
+      document.getElementById('staplesListInput').value = (appSettings.staplesList || []).join('\n');
       renderEventsTable(); renderComponentToggles(); renderEmergencyContactsTable(); renderFamilyMembersTable(); renderMinyanTimesTable(); document.getElementById('settingsModal').showModal();
     }
+    // V13 BUGFIX: this used to be wired only to the ✖ button's onclick, so dismissing the dialog any
+    // other way (Escape key, which is instinctive) closed it WITHOUT ever running this - every setting
+    // changed in that visit was silently discarded, including "disable screensaver". The ✖ button now
+    // calls closeSettings() directly (guaranteed path, verified in-browser), and 'close'/'cancel'
+    // listeners are added as well so Escape-key dismissal is also covered in browsers that fire those
+    // dialog events (this tool's own test browser did not reliably fire 'close' on a scripted .close()
+    // call, so the button's direct call is the one path this was actually verified to work through -
+    // don't remove it in favor of the event listeners alone).
+    document.getElementById('settingsModal').addEventListener('close', closeSettings);
+    document.getElementById('settingsModal').addEventListener('cancel', closeSettings);
     function closeSettings() {
       appSettings.autoShabbat = document.getElementById('shabbatModeToggle').checked;
       appSettings.audioAlerts = document.getElementById('audioModeToggle').checked;
-      appSettings.disableScreensaver = document.getElementById('screensaverToggle').checked;
+      appSettings.screensaverEnabled = document.getElementById('screensaverToggle').checked;
       appSettings.age = document.getElementById('ageInput').value || 30;
       appSettings.candleOffset = parseInt(document.getElementById('candleOffsetInput').value) || 20;
       appSettings.reminderDaysAhead = parseInt(document.getElementById('reminderDaysAheadInput').value);
       if(isNaN(appSettings.reminderDaysAhead)) appSettings.reminderDaysAhead = 2;
       appSettings.pasukText = document.getElementById('pasukTextInput').value.trim() || DEFAULT_PASUK_TEXT;
-      document.getElementById('pasukBanner').textContent = appSettings.pasukText;
+      applyPasukRotation();
+      appSettings.staplesList = document.getElementById('staplesListInput').value.split('\n').map(s => s.trim()).filter(Boolean);
       appSettings.worldClockLabel = document.getElementById('worldClockLabel').value.trim();
       appSettings.worldClockTz = document.getElementById('worldClockTz').value;
       updateWorldClock();
@@ -1173,7 +1637,7 @@
       if(document.getElementById('nusachSelect')) { appSettings.nusach = document.getElementById('nusachSelect').value; applyNusach(); }
       if(document.getElementById('newsSourceSelect')) appSettings.newsSource = document.getElementById('newsSourceSelect').value;
       appSettings.hiddenComponents = [...document.querySelectorAll('.comp-toggle')].filter(cb => !cb.checked).map(cb => cb.dataset.key);
-      saveSettings(); applyComponentVisibility(); document.getElementById('settingsModal').close();
+      saveSettings(); applyComponentVisibility();
       checkPersonalEvents(); updateTehillimLink(); resetIdleTimer();
       if(appSettings.audioAlerts && !audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
       // Refresh immediately so candle offset / news source changes take effect without waiting for the daily refetch
@@ -1206,7 +1670,7 @@
 
     // V5: export/import a full backup, since everything currently lives only in this browser's
     // localStorage and disappears if history is cleared or the file is opened on another machine.
-    const BACKUP_KEYS = ['dashSettings', 'dashboardTasks', 'dashNotes', 'shabbatTasks', 'dashTzedakah', 'customBg', 'customBgList', 'lastTzedakahMonth', 'shoppingList', 'familyPresence'];
+    const BACKUP_KEYS = ['dashSettings', 'dashboardTasks', 'dashNotes', 'shabbatTasks', 'dashTzedakah', 'customBg', 'customBgList', 'lastTzedakahMonth', 'shoppingList', 'shoppingLists', 'currentShoppingList', 'archivedTasks', 'dafYomiLearnedDates'];
     function exportBackup() {
       const backup = { exportDate: new Date().toISOString() };
       BACKUP_KEYS.forEach(k => backup[k] = localStorage.getItem(k));
@@ -1216,6 +1680,41 @@
       a.href = url; a.download = `dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      localStorage.setItem('lastBackupExport', new Date().toISOString());
+    }
+    // V15: everything lives only in this browser's localStorage - no server, no sync - so a periodic
+    // nudge to export a backup is the only real protection against losing it all. Reminds at most
+    // once/day, and only once every 14 days since the last actual export.
+    const BACKUP_REMINDER_DAYS = 14;
+    function checkBackupReminder() {
+      const today = new Date().toDateString();
+      if(localStorage.getItem('backupReminderDismissedDate') === today) return;
+      const last = localStorage.getItem('lastBackupExport');
+      const daysSince = last ? (Date.now() - new Date(last).getTime()) / 86400000 : Infinity;
+      if(daysSince >= BACKUP_REMINDER_DAYS) {
+        document.getElementById('backupReminderBanner').style.display = 'block';
+      }
+    }
+    // V15: gentle Thursday nudge toward the "הכנות לשבת" tab - dismissible per day, like the backup
+    // reminder above.
+    function checkPrepReminder() {
+      if(new Date().getDay() !== 4) return; // Thursday only
+      const today = new Date().toDateString();
+      if(localStorage.getItem('prepReminderDismissedDate') === today) return;
+      document.getElementById('prepReminderBanner').style.display = 'block';
+    }
+    function dismissPrepReminder() {
+      localStorage.setItem('prepReminderDismissedDate', new Date().toDateString());
+      document.getElementById('prepReminderBanner').style.display = 'none';
+    }
+    function goToPrepTab() {
+      const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes('tab-prep'));
+      if(btn) switchTab('tab-prep', btn);
+      dismissPrepReminder();
+    }
+    function dismissBackupReminder() {
+      localStorage.setItem('backupReminderDismissedDate', new Date().toDateString());
+      document.getElementById('backupReminderBanner').style.display = 'none';
     }
     function importBackup(file) {
       const reader = new FileReader();
@@ -1254,34 +1753,113 @@
       notes.forEach(n => { list.innerHTML += `<li class="note-item"><div class="delete-icon" onclick="deleteNote(${n.id})">✖</div>${n.text}</li>`; });
     }
     function addNote() { const v = document.getElementById('newNoteInput').value.trim(); if(v) { notes.push({id:Date.now(), text:v}); document.getElementById('newNoteInput').value=''; localStorage.setItem('dashNotes', JSON.stringify(notes)); renderNotes(); } }
-    function deleteNote(id) { notes = notes.filter(x=>x.id!==id); localStorage.setItem('dashNotes', JSON.stringify(notes)); renderNotes(); }
+    function deleteNote(id) {
+      const idx = notes.findIndex(x=>x.id===id); if(idx === -1) return;
+      const removed = notes[idx]; notes.splice(idx, 1);
+      localStorage.setItem('dashNotes', JSON.stringify(notes)); renderNotes();
+      showUndoToast('הפתק נמחק', () => { notes.splice(idx, 0, removed); localStorage.setItem('dashNotes', JSON.stringify(notes)); renderNotes(); });
+    }
     renderNotes();
 
+    // V15: generic undo-snackbar. Shows a message + "בטל" button for a few seconds; clicking it (or
+    // calling undoFn before the timeout) reverses whatever the caller just did. Only one toast is
+    // ever shown at a time - a new delete replaces the pending undo of the previous one.
+    let undoToastTimer = null;
+    function showUndoToast(message, undoFn) {
+      const toast = document.getElementById('undoToast');
+      const btn = document.getElementById('undoToastBtn');
+      if(!toast || !btn) return;
+      document.getElementById('undoToastMessage').textContent = message;
+      clearTimeout(undoToastTimer);
+      toast.classList.add('visible');
+      btn.onclick = () => { clearTimeout(undoToastTimer); toast.classList.remove('visible'); undoFn(); };
+      undoToastTimer = setTimeout(() => toast.classList.remove('visible'), 5000);
+    }
+
+    // V15: Hebrew voice input for text fields, via the Web Speech API's SpeechRecognition. Not
+    // universally supported (notably missing on Firefox and some browsers), so the mic button next
+    // to each field only appears when the API actually exists - it stays hidden everywhere else
+    // rather than being shown and failing silently when clicked.
+    const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
+    function startVoiceInput(inputId) {
+      if(!SpeechRecognitionImpl) { alert('הכתבה קולית אינה נתמכת בדפדפן הזה.'); return; }
+      const input = document.getElementById(inputId);
+      if(!input) return;
+      const recognition = new SpeechRecognitionImpl();
+      recognition.lang = 'he-IL';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.onresult = (e) => { input.value = e.results[0][0].transcript; input.focus(); };
+      recognition.onerror = () => { alert('לא זוהה דיבור, נסה שוב.'); };
+      recognition.start();
+    }
+    if(SpeechRecognitionImpl) {
+      document.querySelectorAll('[id$="MicBtn"]').forEach(btn => btn.style.display = 'inline-block');
+    }
+
     let tasks = JSON.parse(localStorage.getItem('dashboardTasks')) || [];
+    let archivedTasks = JSON.parse(localStorage.getItem('archivedTasks')) || [];
     function saveTasks() { localStorage.setItem('dashboardTasks', JSON.stringify(tasks)); renderTasks(); }
-    // V11: now supports an assignee filter and priority color-coding on top of the existing list.
+    function saveArchivedTasks() { localStorage.setItem('archivedTasks', JSON.stringify(archivedTasks)); }
+    // V15: now also supports a text search, and each task can show an archive/snooze action.
     function renderTasks() {
       const list = document.getElementById('tasksList'); list.innerHTML = '';
       const filterVal = document.getElementById('taskFilterAssignee') ? document.getElementById('taskFilterAssignee').value : '';
-      const filtered = filterVal ? tasks.filter(t => t.assignee === filterVal) : tasks;
-      filtered.forEach(t => {
+      const searchVal = document.getElementById('taskSearchInput') ? document.getElementById('taskSearchInput').value.trim().toLowerCase() : '';
+      let filtered = filterVal ? tasks.filter(t => t.assignee === filterVal) : tasks;
+      if(searchVal) filtered = filtered.filter(t => t.text.toLowerCase().includes(searchVal) || (t.tag || '').toLowerCase().includes(searchVal));
+      // V15: manual reordering (up/down) only makes sense against the real, unfiltered order - with a
+      // filter/search active the visible list isn't the true order, so the arrows are hidden rather
+      // than moving a task somewhere unexpected in the full list.
+      const reorderable = !filterVal && !searchVal;
+      filtered.forEach((t, i) => {
         const timeHtml = t.time ? `<span class="task-time">⏰${t.time}</span>` : '';
         const assigneeHtml = t.assignee ? `<span class="task-assignee-tag">👤 ${t.assignee}</span>` : '';
+        const tagHtml = t.tag ? `<span class="task-assignee-tag" style="background:rgba(168,85,247,0.2); color:#c084fc;">🏷️ ${t.tag}</span>` : '';
         const priorityClass = t.priority === 'urgent' ? 'priority-urgent' : (t.priority === 'low' ? 'priority-low' : '');
-        list.innerHTML += `<li class="task-item ${t.done?'completed':''} ${priorityClass}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})"><span>${t.text}</span>${assigneeHtml}${timeHtml}<div class="delete-icon" onclick="deleteTask(${t.id})">✖</div></li>`;
+        const snoozeHtml = !t.done ? `<span class="delete-icon" style="color:var(--gold);" onclick="snoozeTaskToTomorrow(${t.id})" title="דחה למחר">⏭</span>` : '';
+        const archiveHtml = t.done ? `<span class="delete-icon" style="color:var(--gold);" onclick="archiveTask(${t.id})" title="העבר לארכיון">🗄️</span>` : '';
+        const upHtml = reorderable && i > 0 ? `<span class="delete-icon" onclick="moveTask(${t.id}, -1)" title="הזז למעלה">⬆️</span>` : '';
+        const downHtml = reorderable && i < filtered.length - 1 ? `<span class="delete-icon" onclick="moveTask(${t.id}, 1)" title="הזז למטה">⬇️</span>` : '';
+        list.innerHTML += `<li class="task-item ${t.done?'completed':''} ${priorityClass}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})"><span>${t.text}</span>${tagHtml}${assigneeHtml}${timeHtml}${upHtml}${downHtml}${snoozeHtml}${archiveHtml}<div class="delete-icon" onclick="deleteTask(${t.id})">✖</div></li>`;
       });
+    }
+    // V15: manual task reordering - simple up/down swap rather than drag-and-drop, so it works
+    // reliably with touch/kiosk screens too, not just mouse drag.
+    function moveTask(id, direction) {
+      const idx = tasks.findIndex(t => t.id === id);
+      const swapIdx = idx + direction;
+      if(idx === -1 || swapIdx < 0 || swapIdx >= tasks.length) return;
+      [tasks[idx], tasks[swapIdx]] = [tasks[swapIdx], tasks[idx]];
+      saveTasks();
     }
     function addTask() {
       const input = document.getElementById('newTaskInput');
       const timeInput = document.getElementById('newTaskTime');
       const assigneeSel = document.getElementById('newTaskAssignee');
       const prioritySel = document.getElementById('newTaskPriority');
+      const repeatSel = document.getElementById('newTaskRepeat');
+      const tagInput = document.getElementById('newTaskTag');
       const v = input.value.trim();
       if(v) {
-        tasks.push({id:Date.now(), text:v, done:false, time: timeInput.value || null, alerted:false, assignee: assigneeSel ? assigneeSel.value : '', priority: prioritySel ? prioritySel.value : 'normal'});
-        input.value = ''; timeInput.value = '';
+        tasks.push({id:Date.now(), text:v, done:false, time: timeInput.value || null, alerted:false, assignee: assigneeSel ? assigneeSel.value : '', priority: prioritySel ? prioritySel.value : 'normal', repeat: repeatSel ? repeatSel.value : 'daily', tag: tagInput ? tagInput.value.trim() : ''});
+        input.value = ''; timeInput.value = ''; if(tagInput) tagInput.value = '';
         saveTasks();
       }
+    }
+    // V15: plain-text export for tasks + notes together (mirrors exportShoppingListText's pattern).
+    function exportTasksNotesText() {
+      if(!tasks.length && !notes.length) { alert('אין משימות או פתקים לייצוא.'); return; }
+      let lines = ['=== משימות ==='];
+      lines.push(...tasks.map(t => `${t.done ? '[V]' : '[ ]'} ${t.text}${t.tag ? ' #' + t.tag : ''}${t.assignee ? ' (' + t.assignee + ')' : ''}${t.time ? ' @' + t.time : ''}`));
+      lines.push('', '=== פתקים ===');
+      lines.push(...notes.map(n => '- ' + n.text));
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `משימות-ופתקים-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
     // V11: keeps the assignee dropdowns (add-task, filter) in sync with the family members list.
     function renderTaskAssigneeOptions() {
@@ -1291,32 +1869,60 @@
       const filterSel = document.getElementById('taskFilterAssignee');
       if(filterSel) filterSel.innerHTML = '<option value="">הצג הכל</option>' + optionsHtml;
     }
-    // V11: "who's home" presence toggle - a simple per-person chip, state kept in localStorage
-    // (per-browser/per-device, not shared live across family members' own phones).
-    function renderPresenceWidget() {
-      const widget = document.getElementById('presenceWidget');
-      if(!widget) return;
-      const presence = JSON.parse(localStorage.getItem('familyPresence') || '{}');
-      widget.innerHTML = appSettings.familyMembers.map(name => {
-        const isHome = !!presence[name];
-        return `<div class="presence-chip ${isHome ? 'home' : ''}" onclick="togglePresence('${name.replace(/'/g,"\\'")}')">${isHome ? '🏠' : '🚪'} ${name}</div>`;
-      }).join('');
-    }
-    function togglePresence(name) {
-      const presence = JSON.parse(localStorage.getItem('familyPresence') || '{}');
-      presence[name] = !presence[name];
-      localStorage.setItem('familyPresence', JSON.stringify(presence));
-      renderPresenceWidget();
-    }
-
     function toggleTask(id) { const t = tasks.find(x=>x.id===id); if(t) t.done = !t.done; saveTasks(); }
-    function deleteTask(id) { tasks = tasks.filter(x=>x.id!==id); saveTasks(); }
+    // V15: deleting now offers a few seconds to undo, instead of being instantly permanent.
+    function deleteTask(id) {
+      const idx = tasks.findIndex(x=>x.id===id); if(idx === -1) return;
+      const removed = tasks[idx]; tasks.splice(idx, 1); saveTasks();
+      showUndoToast(`המשימה "${removed.text}" נמחקה`, () => { tasks.splice(idx, 0, removed); saveTasks(); });
+    }
+    // V15: postpone a task to tomorrow instead of leaving it hanging today - just bumps its reminder
+    // time-of-day off (so it won't re-alert today) and marks it via a "snoozed" flag purely cosmetic
+    // for now (the task itself already persists to tomorrow since nothing deletes it).
+    function snoozeTaskToTomorrow(id) {
+      const t = tasks.find(x=>x.id===id); if(!t) return;
+      t.time = null; t.alerted = false;
+      saveTasks();
+    }
+    // V15: archive instead of permanently delete for completed tasks - kept in a separate list, viewable
+    // and restorable from the archive modal.
+    function archiveTask(id) {
+      const idx = tasks.findIndex(x=>x.id===id); if(idx === -1) return;
+      const [removed] = tasks.splice(idx, 1);
+      archivedTasks.unshift(removed);
+      saveTasks(); saveArchivedTasks();
+    }
+    function restoreArchivedTask(idx) {
+      const [restored] = archivedTasks.splice(idx, 1);
+      restored.done = false;
+      tasks.push(restored);
+      saveArchivedTasks(); saveTasks(); renderArchiveModal();
+    }
+    function deleteArchivedTaskForever(idx) { archivedTasks.splice(idx, 1); saveArchivedTasks(); renderArchiveModal(); }
+    function openArchiveModal() { renderArchiveModal(); document.getElementById('archiveModal').showModal(); }
+    function renderArchiveModal() {
+      const list = document.getElementById('archiveModalContent');
+      if(!archivedTasks.length) { list.innerHTML = '<p style="text-align:center; color:#94a3b8;">הארכיון ריק.</p>'; return; }
+      list.innerHTML = archivedTasks.map((t, i) => `<div style="display:flex; justify-content:space-between; align-items:center; padding:1vh 0.5vw; border-bottom:1px solid var(--card-border);">
+        <span>${t.text}</span>
+        <span><button onclick="restoreArchivedTask(${i})" style="background:var(--cyan); border:none; padding:0.4vh 1vw; border-radius:0.5vw; cursor:pointer; margin-left:0.5vw;">↩ שחזר</button>
+        <button onclick="deleteArchivedTaskForever(${i})" style="background:var(--alert); border:none; padding:0.4vh 1vw; border-radius:0.5vw; cursor:pointer;">מחק לצמיתות</button></span>
+      </div>`).join('');
+    }
+    // V15: repeat-aware reset. "daily" tasks reset every day like before (unchanged default behavior);
+    // "weekly" only reset on Sunday (matching the shabbat-prep list's own weekly reset day); "once"
+    // tasks never auto-reset, so marking one done keeps it done until manually archived/deleted.
     function checkResetTasks() {
       const last = localStorage.getItem('lastTaskReset');
-      if(last !== new Date().toDateString()) {
-        tasks.forEach(t=>{ t.done=false; t.alerted=false; });
+      const today = new Date();
+      if(last !== today.toDateString()) {
+        const isSunday = today.getDay() === 0;
+        tasks.forEach(t => {
+          const repeat = t.repeat || 'daily';
+          if(repeat === 'daily' || (repeat === 'weekly' && isSunday)) { t.done = false; t.alerted = false; }
+        });
         saveTasks();
-        localStorage.setItem('lastTaskReset', new Date().toDateString());
+        localStorage.setItem('lastTaskReset', today.toDateString());
       }
     }
 
@@ -1389,6 +1995,13 @@
       }
     }
 
+    // V15: one-click "tomorrow's zmanim" shortcut on top of the existing date-picker infrastructure.
+    function showTomorrowZmanim() {
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('zmanimDateInput').value = tomorrow.toISOString().split('T')[0];
+      loadZmanimForDate();
+    }
+
     // === SHABBAT TIMES AHEAD (new in V8) - reuses shabbatIntervals (already fetched for shabbat-mode
     // detection) as a dedicated, printable candle-lighting/havdalah table instead of building anything new. ===
     function openShabbatTimesModal() {
@@ -1409,6 +2022,43 @@
       content.innerHTML = `<table class="events-table"><thead><tr><th>כניסה</th><th>יציאה</th></tr></thead><tbody>${
         upcoming.map(iv => `<tr><td>${fmtDate(iv.start)}, ${fmtTime(iv.start)}</td><td>${fmtDate(iv.end)}, ${fmtTime(iv.end)}</td></tr>`).join('')
       }</tbody></table>`;
+    }
+
+    // V15: ICS export for personal events. Only the Gregorian-dated ones are exported here (as a real
+    // yearly-recurring VEVENT, computed directly - no guessing involved). Hebrew-dated events (most
+    // yahrzeits) are deliberately NOT included: converting a recurring Hebrew date to next Gregorian
+    // occurrences correctly needs real Hebrew-calendar arithmetic, and this app has no verified way to
+    // do that beyond "within the current Hebrew month" (see checkPersonalEvents) - guessing a wrong
+    // DTSTART for a yahrzeit would be a real, meaningful error, so those are pointed at Hebcal's own
+    // Yahrzeit calendar tool (which does this correctly) instead of being faked here.
+    function exportPersonalEventsICS() {
+      const gregorianEvents = appSettings.personalEvents.filter(e => e.dateType === 'gregorian');
+      const hebrewCount = appSettings.personalEvents.length - gregorianEvents.length;
+      if(!gregorianEvents.length && !hebrewCount) { alert('לא הוגדרו תאריכים אישיים עדיין.'); return; }
+      if(hebrewCount > 0) {
+        alert(`${hebrewCount} מהתאריכים מוגדרים בתאריך עברי (כמו יארצייט) - אלה לא נכללים בקובץ, כי המרה מדויקת של תאריך עברי חוזר לתאריך לועזי דורשת חישוב שאין לו כאן מקור אמין. ל-Yahrzeit מדויק ביומן, מומלץ להשתמש בכלי הרשמי של Hebcal: hebcal.com/yahrzeit\n\nהקובץ שיורד יכלול רק את ${gregorianEvents.length} התאריכים הלועזיים.`);
+      }
+      if(!gregorianEvents.length) return;
+      const pad = n => String(n).padStart(2, '0');
+      const now = new Date();
+      let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Dashboard Yehudi//V15//HE\r\nCALSCALE:GREGORIAN\r\n';
+      gregorianEvents.forEach((e, idx) => {
+        const dateStr = `${now.getFullYear()}${pad(e.gmonth)}${pad(e.gday)}`;
+        ics += 'BEGIN:VEVENT\r\n';
+        ics += `UID:personal-event-${idx}-${e.gday}${e.gmonth}@dashboard-yehudi\r\n`;
+        ics += `DTSTAMP:${dateStr}T000000Z\r\n`;
+        ics += `DTSTART;VALUE=DATE:${dateStr}\r\n`;
+        ics += `RRULE:FREQ=YEARLY\r\n`;
+        ics += `SUMMARY:${e.type} - ${e.name}\r\n`;
+        ics += 'END:VEVENT\r\n';
+      });
+      ics += 'END:VCALENDAR\r\n';
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'תאריכים-אישיים.ics';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // V9: export the same shabbatIntervals as a standard .ics file, importable into Google
@@ -1495,20 +2145,139 @@
 
     // V9: shopping list - separate from the general task list, no daily/weekly auto-reset (items stay
     // until manually deleted, since a shopping list is naturally cleared by checking things off, not by time).
-    let shoppingItems = JSON.parse(localStorage.getItem('shoppingList')) || [];
-    function saveShoppingList() { localStorage.setItem('shoppingList', JSON.stringify(shoppingItems)); renderShoppingList(); }
+    // V15: upgraded from one flat array to several named lists (e.g. "סופר" / "בית מרקחת") - the old
+    // single-list data (localStorage key 'shoppingList') is migrated into a "כללי" (general) list on
+    // first load, so nothing existing gets lost by the upgrade.
+    let shoppingLists = JSON.parse(localStorage.getItem('shoppingLists')) || null;
+    if(!shoppingLists) {
+      const legacyItems = JSON.parse(localStorage.getItem('shoppingList')) || [];
+      shoppingLists = { 'כללי': legacyItems };
+    }
+    let currentShoppingList = localStorage.getItem('currentShoppingList') || Object.keys(shoppingLists)[0] || 'כללי';
+    if(!shoppingLists[currentShoppingList]) currentShoppingList = Object.keys(shoppingLists)[0];
+    function saveShoppingLists() { localStorage.setItem('shoppingLists', JSON.stringify(shoppingLists)); renderShoppingList(); }
+    function get_shoppingItems() { return shoppingLists[currentShoppingList] || []; }
+    function renderShoppingListSelect() {
+      const sel = document.getElementById('shoppingListSelect');
+      if(!sel) return;
+      sel.innerHTML = Object.keys(shoppingLists).map(name => `<option value="${name}" ${name === currentShoppingList ? 'selected' : ''}>${name}</option>`).join('');
+    }
+    function switchShoppingList(name) {
+      if(!shoppingLists[name]) return;
+      currentShoppingList = name;
+      localStorage.setItem('currentShoppingList', name);
+      renderShoppingList();
+    }
+    function addShoppingList() {
+      const name = prompt('שם הרשימה החדשה:');
+      if(!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if(!shoppingLists[trimmed]) shoppingLists[trimmed] = [];
+      currentShoppingList = trimmed;
+      localStorage.setItem('currentShoppingList', trimmed);
+      saveShoppingLists();
+      renderShoppingListSelect();
+    }
+    function deleteShoppingList() {
+      const names = Object.keys(shoppingLists);
+      if(names.length <= 1) { alert('חייבת להישאר לפחות רשימה אחת.'); return; }
+      if(!confirm(`למחוק את הרשימה "${currentShoppingList}"?`)) return;
+      delete shoppingLists[currentShoppingList];
+      currentShoppingList = Object.keys(shoppingLists)[0];
+      localStorage.setItem('currentShoppingList', currentShoppingList);
+      saveShoppingLists();
+      renderShoppingListSelect();
+    }
     function renderShoppingList() {
       const list = document.getElementById('shoppingList');
       if(!list) return;
-      list.innerHTML = shoppingItems.map((item, i) => `<li class="task-item ${item.done?'completed':''}"><input type="checkbox" ${item.done?'checked':''} onchange="toggleShoppingItem(${i})"><span>${item.text}</span><div class="delete-icon" onclick="deleteShoppingItem(${i})">✖</div></li>`).join('');
+      renderShoppingListSelect();
+      const items = get_shoppingItems();
+      list.innerHTML = items.map((item, i) => `<li class="task-item ${item.done?'completed':''}"><input type="checkbox" ${item.done?'checked':''} onchange="toggleShoppingItem(${i})"><span>${item.text}</span><div class="delete-icon" onclick="deleteShoppingItem(${i})">✖</div></li>`).join('');
     }
     function addShoppingItem() {
       const input = document.getElementById('newShoppingInput');
       const v = input.value.trim();
-      if(v) { shoppingItems.push({ text: v, done: false }); input.value = ''; saveShoppingList(); }
+      if(v) { get_shoppingItems().push({ text: v, done: false }); input.value = ''; saveShoppingLists(); }
     }
-    function toggleShoppingItem(i) { if(shoppingItems[i]) shoppingItems[i].done = !shoppingItems[i].done; saveShoppingList(); }
-    function deleteShoppingItem(i) { shoppingItems.splice(i, 1); saveShoppingList(); }
+    function toggleShoppingItem(i) { const items = get_shoppingItems(); if(items[i]) items[i].done = !items[i].done; saveShoppingLists(); }
+    // V15: plain-text export so the list can be printed, shared, or opened away from the dashboard.
+    function exportShoppingListText() {
+      const items = get_shoppingItems();
+      if(!items.length) { alert('רשימת הקניות ריקה.'); return; }
+      const lines = items.map(item => `${item.done ? '[V]' : '[ ]'} ${item.text}`);
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${currentShoppingList}-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    function deleteShoppingItem(i) {
+      const items = get_shoppingItems();
+      const removed = items[i]; if(!removed) return;
+      items.splice(i, 1); saveShoppingLists();
+      showUndoToast(`"${removed.text}" הוסר מהרשימה`, () => { items.splice(i, 0, removed); saveShoppingLists(); });
+    }
+    // V15: paste-import - splits pasted multi-line text (e.g. copied from WhatsApp) into separate items.
+    function openShoppingImportModal() {
+      document.getElementById('shoppingImportTextarea').value = '';
+      document.getElementById('shoppingImportModal').showModal();
+    }
+    function importShoppingListText() {
+      const lines = document.getElementById('shoppingImportTextarea').value.split('\n').map(s => s.trim()).filter(Boolean);
+      if(!lines.length) return;
+      const items = get_shoppingItems();
+      lines.forEach(text => items.push({ text, done: false }));
+      saveShoppingLists();
+      document.getElementById('shoppingImportModal').close();
+    }
+    // V15: user-configurable "weekly staples" list (set in Settings) - adds every staple not already
+    // present (by exact text match) to the current list, in one click.
+    function addStaplesToShoppingList() {
+      const staples = (appSettings.staplesList || []);
+      if(!staples.length) { alert('לא הוגדרו מוצרי יסוד עדיין. אפשר להגדיר בהגדרות המערכת.'); return; }
+      const items = get_shoppingItems();
+      const existing = new Set(items.map(i => i.text));
+      let added = 0;
+      staples.forEach(text => { if(!existing.has(text)) { items.push({ text, done: false }); added++; } });
+      saveShoppingLists();
+      if(added === 0) alert('כל מוצרי היסוד כבר ברשימה.');
+    }
+    // V15: share a read-only snapshot of the current list via a self-contained link/QR - the whole
+    // list is encoded straight into the URL (base64 JSON), so no server or sync is involved. It's a
+    // one-time snapshot: scanning it shows the list as it was at share time, not a live copy.
+    function encodeShoppingListForShare() {
+      const payload = JSON.stringify({ name: currentShoppingList, items: get_shoppingItems() });
+      return btoa(unescape(encodeURIComponent(payload)));
+    }
+    function openShoppingQrModal() {
+      const img = document.getElementById('shoppingQrImage');
+      if (window.location.protocol === 'file:') {
+        alert('הדף הזה נפתח כקובץ מקומי, ולכן אי אפשר ליצור QR שיעבוד בנייד. פתח דרך הכתובת החיה שהועלתה ל-GitHub Pages.');
+        return;
+      }
+      const url = `${window.location.origin}${window.location.pathname}?shoplist=${encodeURIComponent(encodeShoppingListForShare())}`;
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`;
+      document.getElementById('shoppingQrModal').showModal();
+    }
+    // V15: if this page was opened via a shared shopping-list link, show that snapshot as a simple
+    // read-only overlay instead of (or on top of) the normal dashboard.
+    function checkSharedShoppingList() {
+      const param = new URLSearchParams(window.location.search).get('shoplist');
+      if(!param) return;
+      try {
+        const data = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(param)))));
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.92); display:flex; align-items:center; justify-content:center; padding:3vh;';
+        overlay.innerHTML = `<div style="background:#1e293b; border:1px solid var(--card-border); border-radius:1vw; padding:2vh 2vw; max-width:500px; width:100%; max-height:80vh; overflow:auto;">
+          <h2 style="color:var(--cyan); margin-bottom:1vh;">🛒 ${data.name} <span style="font-size:0.7em; color:#94a3b8;">(תמונת מצב משותפת)</span></h2>
+          <ul style="list-style:none; padding:0;">${(data.items||[]).map(i => `<li style="padding:0.5vh 0; border-bottom:1px solid #333; ${i.done?'text-decoration:line-through; color:#666;':''}">${i.done?'☑':'☐'} ${i.text}</li>`).join('')}</ul>
+          <button onclick="this.closest('div').parentElement.remove()" style="margin-top:1.5vh; width:100%; background:var(--cyan); color:#000; border:none; padding:1vh; border-radius:0.5vw; cursor:pointer; font-weight:bold;">סגור וראה את הדשבורד המלא</button>
+        </div>`;
+        document.body.appendChild(overlay);
+      } catch(e) { console.error('shared shopping list decode failed:', e); }
+    }
     function renderShabbatTasks() {
        if(typeof shabbatTasks === 'undefined') window.shabbatTasks = JSON.parse(localStorage.getItem('shabbatTasks')) || [];
        const list = document.getElementById('shabbatTasksList');
@@ -1690,6 +2459,21 @@
     ];
 
     let cachedSunset = null, cachedTzeit72 = null, zmanimDataCache = null;
+    // V15: highlights whichever zman card is soonest to happen, so it's obvious at a glance what's
+    // coming up next instead of having to scan/compare all the times manually.
+    function highlightNextZman() {
+      document.querySelectorAll('.zman-card.next-zman').forEach(el => el.classList.remove('next-zman'));
+      if(!zmanimDataCache) return;
+      const now = new Date();
+      let bestKey = null, bestDiff = Infinity;
+      ZMANIM_KEYS.forEach(item => {
+        const raw = zmanimDataCache[item.key];
+        if(!raw) return;
+        const diff = new Date(raw) - now;
+        if(diff > 0 && diff < bestDiff) { bestDiff = diff; bestKey = item.key; }
+      });
+      if(bestKey) { const el = document.getElementById('zman-card-' + bestKey); if(el) el.classList.add('next-zman'); }
+    }
     const ALIYOT_NAMES = ["ראשונה", "שנייה", "שלישית", "רביעית", "חמישית", "שישית", "שביעית"];
 
     // === Weather & News split out into their own functions so they can be refreshed independently
@@ -1718,6 +2502,122 @@
           el.innerHTML = `${Math.round(d.current_weather.temperature)}°C ${info[0]} ${info[1]}`;
         } else el.textContent = 'מזג אוויר לא זמין';
       } catch(e) { el.textContent = 'שגיאה בטעינת מזג אוויר'; }
+    }
+
+    // V15: short countdown timer - deliberately NOT gated by appSettings.audioAlerts/DND like the
+    // zman chime is, since starting a timer is an explicit request for it to ring when done.
+    let timerInterval = null, timerEndTime = null;
+    function openTimerModal() { document.getElementById('timerModal').showModal(); }
+    function startTimer() {
+      const mins = parseInt(document.getElementById('timerMinutesInput').value) || 10;
+      timerEndTime = Date.now() + mins * 60000;
+      document.getElementById('timerSetup').style.display = 'none';
+      document.getElementById('timerStartBtn').style.display = 'none';
+      document.getElementById('timerStopBtn').style.display = 'inline-block';
+      clearInterval(timerInterval);
+      timerInterval = setInterval(tickTimer, 250);
+      tickTimer();
+    }
+    function tickTimer() {
+      const remaining = Math.max(0, timerEndTime - Date.now());
+      const mins = Math.floor(remaining / 60000), secs = Math.floor((remaining % 60000) / 1000);
+      document.getElementById('timerDisplay').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      if(remaining <= 0) {
+        clearInterval(timerInterval);
+        ringTimerAlarm();
+        resetTimerUI();
+      }
+    }
+    function ringTimerAlarm() {
+      try {
+        const ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.4, 0.8].forEach(delay => {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'square'; osc.frequency.setValueAtTime(880, ctx.currentTime + delay);
+          gain.gain.setValueAtTime(0.25, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.35);
+          osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.35);
+        });
+      } catch(e) {}
+      if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('טיימר', {body: 'הזמן נגמר!'}); }
+      else alert('⏱️ הטיימר הסתיים!');
+    }
+    function stopTimer() { clearInterval(timerInterval); resetTimerUI(); }
+    function resetTimerUI() {
+      document.getElementById('timerDisplay').textContent = '00:00';
+      document.getElementById('timerSetup').style.display = 'flex';
+      document.getElementById('timerStartBtn').style.display = 'inline-block';
+      document.getElementById('timerStopBtn').style.display = 'none';
+    }
+
+    // V15: fixed list of cities for the side-by-side zmanim comparison (coordinates rounded to ~city
+    // center - fine for zmanim purposes, which don't meaningfully change over a few km).
+    const COMPARE_CITIES = [
+      { name: 'ירושלים', lat: 31.7683, lng: 35.2137 },
+      { name: 'תל אביב', lat: 32.0853, lng: 34.7818 },
+      { name: 'אשקלון', lat: 31.6699, lng: 34.5715 },
+      { name: 'בני ברק', lat: 32.0807, lng: 34.8338 },
+      { name: 'חיפה', lat: 32.7940, lng: 34.9896 },
+      { name: 'באר שבע', lat: 31.2530, lng: 34.7915 },
+      { name: 'ניו יורק', lat: 40.7128, lng: -74.0060 },
+      { name: 'לונדון', lat: 51.5074, lng: -0.1278 }
+    ];
+    function openCityCompareModal() {
+      const container = document.getElementById('cityCompareChecks');
+      container.innerHTML = COMPARE_CITIES.map((c, i) => `
+        <label style="display:flex; align-items:center; gap:0.3vw; cursor:pointer;">
+          <input type="checkbox" class="city-compare-check" value="${i}" ${i < 3 ? 'checked' : ''}> ${c.name}
+        </label>`).join('');
+      document.getElementById('cityCompareContent').innerHTML = '';
+      document.getElementById('cityCompareModal').showModal();
+    }
+    async function loadCityCompare() {
+      const selected = [...document.querySelectorAll('.city-compare-check:checked')].map(cb => COMPARE_CITIES[cb.value]);
+      const content = document.getElementById('cityCompareContent');
+      if(!selected.length) { content.innerHTML = '<p style="text-align:center; color:#94a3b8;">בחר לפחות עיר אחת.</p>'; return; }
+      content.innerHTML = 'טוען...';
+      const todayStr = new Date().toISOString().split('T')[0];
+      try {
+        const results = await Promise.all(selected.map(c =>
+          fetch(`https://www.hebcal.com/zmanim?cfg=json&latitude=${c.lat}&longitude=${c.lng}&tzid=Asia/Jerusalem&date=${todayStr}`).then(r => r.json())
+        ));
+        let html = '<table class="events-table"><thead><tr><th>זמן</th>' + selected.map(c => `<th>${c.name}</th>`).join('') + '</tr></thead><tbody>';
+        ZMANIM_KEYS.forEach(item => {
+          html += `<tr><td>${item.label}</td>` + results.map(r => {
+            const raw = r.times && r.times[item.key];
+            return `<td>${raw ? new Date(raw).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : '--:--'}</td>`;
+          }).join('') + '</tr>';
+        });
+        html += '</tbody></table>';
+        content.innerHTML = html;
+      } catch(e) { content.innerHTML = '<p style="text-align:center; color:var(--alert);">שגיאה בטעינת הנתונים.</p>'; }
+    }
+
+    // V15: weekly forecast modal - lets מתי see the whole week at a glance instead of just "now".
+    async function openWeatherModal() {
+      const modal = document.getElementById('weatherModal');
+      const content = document.getElementById('weatherModalContent');
+      content.innerHTML = 'טוען...';
+      modal.showModal();
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLng}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Jerusalem&forecast_days=7`);
+        const d = await r.json();
+        if(!d.daily || !d.daily.time) { content.textContent = 'תחזית לא זמינה כרגע.'; return; }
+        const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+        content.innerHTML = d.daily.time.map((t, i) => {
+          const date = new Date(t + 'T12:00:00');
+          const info = WEATHER_CODES[d.daily.weathercode[i]] || ['🌡️', ''];
+          const max = Math.round(d.daily.temperature_2m_max[i]);
+          const min = Math.round(d.daily.temperature_2m_min[i]);
+          return `<div style="text-align:center; flex:1;">
+            <div style="font-weight:bold; margin-bottom:0.5vh;">${dayNames[date.getDay()]}</div>
+            <div style="font-size:1.8vw;">${info[0]}</div>
+            <div style="font-size:0.85vw; color:#94a3b8; margin:0.3vh 0;">${info[1]}</div>
+            <div style="font-weight:bold;">${max}°<span style="color:#94a3b8; font-weight:normal;">/${min}°</span></div>
+          </div>`;
+        }).join('');
+      } catch(e) { content.textContent = 'שגיאה בטעינת התחזית.'; }
     }
 
     // V11: real hourly forecast (not just "current weather") for the specific candle-lighting hour,
@@ -1785,6 +2685,7 @@
         });
         updateDynamicStyles();
         applyNusach();
+        highlightNextZman();
         scaleClockToFit(); // the grid just went from empty to populated, which changes available vertical space
       } catch(e) {
         console.error('zmanim fetch failed:', e);
@@ -1952,6 +2853,69 @@
       return Math.round((target - today0) / 86400000);
     }
 
+    // V15: prints a clean, light-background snapshot of today's dashboard (date, zmanim, ribbon info)
+    // in a separate window - opened this way rather than styling the live dark dashboard for print, so
+    // the printout doesn't fight the app's own dark theme/layout or leave dead space from hidden panels.
+    function printDashboardSnapshot() {
+      const hebrewDate = document.getElementById('hebrewDate') ? document.getElementById('hebrewDate').textContent : '';
+      const gregorianDate = document.getElementById('gregorianDate') ? document.getElementById('gregorianDate').textContent : '';
+      const zmanRows = [...document.querySelectorAll('#zmanimGrid .zman-card')].map(card => {
+        const title = card.querySelector('.zman-title'); const time = card.querySelector('.zman-time');
+        return `<tr><td>${title ? title.textContent : ''}</td><td>${time ? time.textContent : ''}</td></tr>`;
+      }).join('');
+      const ribbonRows = [...document.querySelectorAll('#infoRibbonWrap .info-item')].map(item => {
+        const label = item.querySelector('.label'); const value = item.querySelector('.value');
+        if(!label || !value || !value.textContent.trim()) return '';
+        return `<tr><td>${label.textContent}</td><td>${value.textContent}</td></tr>`;
+      }).join('');
+      const win = window.open('', '_blank');
+      win.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="UTF-8"><title>דשבורד יומי - ${gregorianDate}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 2em; color: #000; }
+          h1 { font-size: 1.5em; } h2 { font-size: 1.1em; margin-top: 1.5em; }
+          table { border-collapse: collapse; width: 100%; max-width: 500px; }
+          td { padding: 0.4em 0.6em; border-bottom: 1px solid #ccc; }
+        </style></head><body>
+        <h1>${hebrewDate}</h1>
+        <div>${gregorianDate}</div>
+        <h2>זמנים</h2>
+        <table>${zmanRows}</table>
+        <h2>מידע נוסף</h2>
+        <table>${ribbonRows}</table>
+      </body></html>`);
+      win.document.close();
+      win.focus();
+      win.print();
+    }
+
+    // V15: sorted read-only overview of all personal dates, opened from its own header button.
+    // Gregorian dates get an exact day-count (same math as the reminder banner); Hebrew dates only
+    // get one within the current Hebrew month (a real limitation, not fetched data - stated in the UI
+    // rather than faking a cross-month countdown that isn't actually computed anywhere in this app).
+    function openPersonalDatesModal() {
+      const content = document.getElementById('personalDatesModalContent');
+      if(!appSettings.personalEvents.length) { content.innerHTML = '<p style="text-align:center; color:#94a3b8;">לא הוגדרו תאריכים אישיים עדיין. אפשר להוסיף בהגדרות.</p>'; document.getElementById('personalDatesModal').showModal(); return; }
+      const rows = appSettings.personalEvents.map(e => {
+        let daysLeft = null, dateLabel;
+        if(e.dateType === 'gregorian') {
+          daysLeft = daysUntilGregorian(e.gday, e.gmonth);
+          dateLabel = `${e.gday}/${e.gmonth}`;
+        } else {
+          dateLabel = `${e.day} ${e.month}`;
+          if(currentHebrewMonth && currentHebrewMonth.includes(e.month)) {
+            const eventDayNum = hebrewNumeralToNumber(e.day);
+            if(eventDayNum) daysLeft = eventDayNum - currentHebrewDayNum;
+          }
+        }
+        const daysLabel = daysLeft === null ? '(תאריך עברי מחוץ לחודש הנוכחי)' : daysLeft === 0 ? 'היום!' : daysLeft > 0 ? `בעוד ${daysLeft} ימים` : `עבר (${-daysLeft} ימים)`;
+        return { e, daysLeft: daysLeft === null ? 9999 : daysLeft, dateLabel, daysLabel };
+      }).sort((a, b) => a.daysLeft - b.daysLeft);
+      content.innerHTML = `<table class="events-table"><thead><tr><th>שם</th><th>סוג</th><th>תאריך</th><th>ספירה</th></tr></thead><tbody>` +
+        rows.map(r => `<tr><td>${r.e.name}</td><td>${r.e.type}</td><td>${r.dateLabel}</td><td>${r.daysLabel}</td></tr>`).join('') +
+        `</tbody></table>`;
+      document.getElementById('personalDatesModal').showModal();
+    }
+
     // V8: now shows an early "בעוד X ימים" reminder ahead of the day itself, not just an on-the-day
     // banner - configurable via appSettings.reminderDaysAhead.
     function checkPersonalEvents() {
@@ -2011,14 +2975,35 @@
       if(btn) btn.textContent = '🔕 שקט';
     }
 
+    // V15: a few selectable chime presets (all generated via Web Audio oscillators - no audio files
+    // needed, keeps the app a single self-contained HTML file).
+    const CHIME_PRESETS = {
+      bell: () => [{ freq: 659.25, type: 'sine', delay: 0, dur: 2.5 }],
+      gentle: () => [{ freq: 440, type: 'sine', delay: 0, dur: 1.2 }, { freq: 554.37, type: 'sine', delay: 0.3, dur: 1.2 }],
+      double: () => [{ freq: 880, type: 'square', delay: 0, dur: 0.25 }, { freq: 880, type: 'square', delay: 0.35, dur: 0.25 }]
+    };
     function playChime() {
       if(isDndActive() || !appSettings.audioAlerts || !audioContext) return;
       if(audioContext.state === 'suspended') audioContext.resume();
-      const osc = audioContext.createOscillator(), gain = audioContext.createGain();
-      osc.connect(gain); gain.connect(audioContext.destination);
-      osc.type = 'sine'; osc.frequency.setValueAtTime(659.25, audioContext.currentTime);
-      gain.gain.setValueAtTime(0, audioContext.currentTime); gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1); gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
-      osc.start(audioContext.currentTime); osc.stop(audioContext.currentTime + 2.5);
+      const preset = CHIME_PRESETS[appSettings.chimeSound] || CHIME_PRESETS.bell;
+      preset().forEach(note => {
+        const osc = audioContext.createOscillator(), gain = audioContext.createGain();
+        osc.connect(gain); gain.connect(audioContext.destination);
+        osc.type = note.type; osc.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.delay);
+        gain.gain.setValueAtTime(0, audioContext.currentTime + note.delay);
+        gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + note.delay + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.delay + note.dur);
+        osc.start(audioContext.currentTime + note.delay); osc.stop(audioContext.currentTime + note.delay + note.dur);
+      });
+    }
+    function previewChime(name) {
+      if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const original = appSettings.chimeSound;
+      appSettings.chimeSound = name;
+      const wasAudioAlerts = appSettings.audioAlerts, wasDnd = appSettings.dndUntil;
+      appSettings.audioAlerts = true; appSettings.dndUntil = 0;
+      playChime();
+      appSettings.chimeSound = original; appSettings.audioAlerts = wasAudioAlerts; appSettings.dndUntil = wasDnd;
     }
     function checkZmanimAlerts(now) {
       if(isDndActive()) return; // V11: temporary quiet mode silences all zman/candle voice+chime alerts
@@ -2242,8 +3227,8 @@
         setFlipVal('m1', String(now.getMinutes()).padStart(2,'0')[0]); setFlipVal('m2', String(now.getMinutes()).padStart(2,'0')[1]);
         setFlipVal('s1', String(now.getSeconds()).padStart(2,'0')[0]); setFlipVal('s2', String(now.getSeconds()).padStart(2,'0')[1]);
         const todayStr = now.toDateString();
-        if (todayStr !== lastDateStr) { lastDateStr = todayStr; checkResetTasks(); updateHebrewDateParts(now); updateHalacha(); document.getElementById('gregorianDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); fetchAllData(currentLat, currentLng); }
-        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); }
+        if (todayStr !== lastDateStr) { lastDateStr = todayStr; checkResetTasks(); updateHebrewDateParts(now); updateHalacha(); document.getElementById('gregorianDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); fetchAllData(currentLat, currentLng); updateDutyWidget(); checkPrepReminder(); }
+        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); }
 
         checkResetShabbatTasks();
 
@@ -2297,14 +3282,27 @@
       }
     }
 
-    // V7: added a settings toggle to disable this entirely, since a wall-mounted / always-on screen
-    // doesn't always want auto-dimming after 5 minutes of no touch input.
+    // V13: off by default now - only runs at all if explicitly enabled in settings.
     function resetIdleTimer() {
       document.body.classList.remove('screensaver-active'); clearTimeout(idleTimer);
-      if(appSettings.disableScreensaver) return;
+      if(!appSettings.screensaverEnabled) return;
       if(!document.body.classList.contains('shabbat-active')) { idleTimer = setTimeout(() => { document.body.classList.add('screensaver-active'); }, 5 * 60 * 1000); }
     }
     window.addEventListener('mousemove', resetIdleTimer); window.addEventListener('touchstart', resetIdleTimer); window.addEventListener('keydown', resetIdleTimer);
+    // V15: "/" jumps straight to the task search box - skipped while already typing in any field (so
+    // a literal "/" character can still be typed normally), and while a <dialog> is open (native
+    // <dialog> already closes on Escape by itself, without any extra code needed here).
+    window.addEventListener('keydown', (e) => {
+      if(e.key !== '/') return;
+      const tag = document.activeElement.tagName;
+      if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable) return;
+      if(document.querySelector('dialog[open]')) return;
+      e.preventDefault();
+      const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes('tab-tasks'));
+      if(btn) switchTab('tab-tasks', btn);
+      const search = document.getElementById('taskSearchInput');
+      if(search) search.focus();
+    });
     window.addEventListener('click', () => { if(!audioContext && appSettings.audioAlerts) audioContext = new (window.AudioContext || window.webkitAudioContext)(); });
 
     const canvas = document.getElementById('equalizerCanvas'); const ctx = canvas.getContext('2d');
@@ -2339,9 +3337,9 @@
       }, { once: true });
     }
 
-    renderTaskAssigneeOptions(); renderPresenceWidget(); renderMinyanTimesWidget(); updateDisplayProfileCycleBtnLabel();
+    renderTaskAssigneeOptions(); renderMinyanTimesWidget(); updateDisplayProfileCycleBtnLabel();
     if(isDndActive() && document.getElementById('btnDnd')) document.getElementById('btnDnd').textContent = '🔕 שקט (פעיל)';
-    checkResetTasks(); renderTasks(); renderShabbatTasks(); renderShoppingList(); renderEmergencyContactsWidget(); updateWorldClock(); updateVacationCountdown(); updateDafYomiStreakLabel(); resetIdleTimer(); initCompass(); updateTehillimLink(); applyComponentVisibility(); requestAnimationFrame(update); requestAnimationFrame(renderEq);
+    checkResetTasks(); renderTasks(); renderShabbatTasks(); renderShoppingList(); renderEmergencyContactsWidget(); updateWorldClock(); updateVacationCountdown(); updateDafYomiStreakLabel(); resetIdleTimer(); initCompass(); updateTehillimLink(); applyComponentVisibility(); checkBackupReminder(); checkPrepReminder(); updateConnectionStatus(); initBatteryStatus(); checkSharedShoppingList(); updateDutyWidget(); requestAnimationFrame(update); requestAnimationFrame(renderEq);
     // V3: keep the weather genuinely "live" - refresh it every 30 minutes on top of the daily/location refreshes.
     setInterval(() => fetchWeather(currentLat, currentLng), 30 * 60 * 1000);
   </script>
