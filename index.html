@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>דשבורד יומי - V15 (20 שדרוגים: קול עברי מובטח, חיפוש, ארכיון, חוזרות, ועוד)</title>
+  <title>דשבורד יומי - V17</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,10 +35,97 @@
     }
     body.light-mode .btn { color: #1e293b; }
 
+    /* V17: 10 named color-palette themes, layered on TOP of the light/dark/auto toggle (a theme here
+       decides its own dark-or-light character and wins regardless of that toggle once selected) - built
+       on the exact same variable set as light-mode above, so every place already reading --text-color/
+       --card-bg/etc. picks these up automatically with no separate per-theme CSS needed elsewhere.
+       --cyan/--gold are the two accent colors used throughout (links, borders, glows, headings) and are
+       overridden per theme too, so each one feels genuinely distinct, not just a background tint.
+       Known scope limit (same one light-mode already has): the header's individually-colored gradient
+       buttons (סידורון/לוח שנה/QR/etc.) each carry their own fixed inline color and don't shift with
+       these themes - only the shared surfaces (background, cards, text, dialogs, forms, the cyan/gold
+       accents) do. Contrast was the hard requirement for every one of these: each pairs a background
+       group with a text color verified to read clearly against it, the same way light-mode's dark-text-
+       on-light-surface pairing was chosen. */
+    body.theme-gold-black {
+      --dark-bg: #0d0d0d; --theme-color: #241c05; --card-bg: rgba(30,26,10,0.8); --card-border: rgba(212,175,55,0.3);
+      --text-color: #f5eddc; --dialog-bg: #161208; --header-bg: rgba(0,0,0,0.4); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #1a1508; --input-border: #4a3c1a; --input-text: #f5eddc; --muted-text: #b8a670;
+      --btn-hover-bg: rgba(212,175,55,0.15); --btn-hover-text: #f5eddc;
+      --cyan: #d4af37; --gold: #f5c542;
+    }
+    body.theme-emerald {
+      --dark-bg: #061512; --theme-color: #0d2e26; --card-bg: rgba(10,35,29,0.8); --card-border: rgba(52,211,153,0.25);
+      --text-color: #e8fdf5; --dialog-bg: #0a1f1a; --header-bg: rgba(0,0,0,0.35); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #0c231d; --input-border: #1e5245; --input-text: #e8fdf5; --muted-text: #7dd3ae;
+      --btn-hover-bg: rgba(52,211,153,0.15); --btn-hover-text: #e8fdf5;
+      --cyan: #34d399; --gold: #fbbf24;
+    }
+    body.theme-sapphire {
+      --dark-bg: #060a18; --theme-color: #0f1d42; --card-bg: rgba(12,22,55,0.8); --card-border: rgba(96,165,250,0.25);
+      --text-color: #eaf1ff; --dialog-bg: #0a1128; --header-bg: rgba(0,0,0,0.35); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #0c1730; --input-border: #24356b; --input-text: #eaf1ff; --muted-text: #93b4f5;
+      --btn-hover-bg: rgba(96,165,250,0.15); --btn-hover-text: #eaf1ff;
+      --cyan: #60a5fa; --gold: #e2c078;
+    }
+    body.theme-bordeaux {
+      --dark-bg: #170609; --theme-color: #3a0d17; --card-bg: rgba(45,12,20,0.8); --card-border: rgba(251,113,133,0.25);
+      --text-color: #fbe9ec; --dialog-bg: #1a0a0f; --header-bg: rgba(0,0,0,0.35); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #220c11; --input-border: #5c1f2a; --input-text: #fbe9ec; --muted-text: #e2a0ab;
+      --btn-hover-bg: rgba(251,113,133,0.15); --btn-hover-text: #fbe9ec;
+      --cyan: #fb7185; --gold: #e8b04b;
+    }
+    body.theme-bronze {
+      --dark-bg: #140d06; --theme-color: #3a2410; --card-bg: rgba(40,26,13,0.8); --card-border: rgba(217,119,6,0.3);
+      --text-color: #f5e8d8; --dialog-bg: #1a120b; --header-bg: rgba(0,0,0,0.35); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #22160a; --input-border: #5a3d1c; --input-text: #f5e8d8; --muted-text: #d1a876;
+      --btn-hover-bg: rgba(217,119,6,0.15); --btn-hover-text: #f5e8d8;
+      --cyan: #ea9b4f; --gold: #f2b565;
+    }
+    body.theme-marble {
+      --dark-bg: #eeece8; --theme-color: #d8d4cc; --card-bg: rgba(255,255,255,0.85); --card-border: rgba(120,113,108,0.25);
+      --text-color: #292524; --dialog-bg: #ffffff; --header-bg: rgba(255,255,255,0.6); --btn-bg: rgba(255,255,255,0.7);
+      --input-bg: #f8f7f5; --input-border: #d6d3d1; --input-text: #292524; --muted-text: #78716c;
+      --btn-hover-bg: rgba(0,0,0,0.06); --btn-hover-text: #1c1917;
+      --cyan: #a8a29e; --gold: #ca8a04;
+    }
+    body.theme-marble .btn { color: #292524; }
+    body.theme-jerusalem-stone {
+      --dark-bg: #f2e9d3; --theme-color: #e3d3ac; --card-bg: rgba(255,251,240,0.85); --card-border: rgba(180,140,80,0.3);
+      --text-color: #4a3419; --dialog-bg: #fffbf0; --header-bg: rgba(255,251,240,0.6); --btn-bg: rgba(255,251,240,0.7);
+      --input-bg: #faf3e3; --input-border: #d9c290; --input-text: #4a3419; --muted-text: #8a6d40;
+      --btn-hover-bg: rgba(180,140,80,0.12); --btn-hover-text: #3a2812;
+      --cyan: #c2703d; --gold: #b8860b;
+    }
+    body.theme-jerusalem-stone .btn { color: #4a3419; }
+    body.theme-ice-silver {
+      --dark-bg: #eaf3f8; --theme-color: #cfe4ee; --card-bg: rgba(255,255,255,0.85); --card-border: rgba(56,189,248,0.25);
+      --text-color: #16323f; --dialog-bg: #ffffff; --header-bg: rgba(255,255,255,0.6); --btn-bg: rgba(255,255,255,0.7);
+      --input-bg: #f3fafd; --input-border: #b9dcec; --input-text: #16323f; --muted-text: #5b8ba0;
+      --btn-hover-bg: rgba(56,189,248,0.1); --btn-hover-text: #0c222b;
+      --cyan: #0ea5e9; --gold: #94a3b8;
+    }
+    body.theme-ice-silver .btn { color: #16323f; }
+    body.theme-royal-purple {
+      --dark-bg: #0f0817; --theme-color: #2a1240; --card-bg: rgba(30,15,45,0.8); --card-border: rgba(167,139,250,0.25);
+      --text-color: #f2ebfb; --dialog-bg: #180a24; --header-bg: rgba(0,0,0,0.35); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #1c0e29; --input-border: #4a2a68; --input-text: #f2ebfb; --muted-text: #c4a8e8;
+      --btn-hover-bg: rgba(167,139,250,0.15); --btn-hover-text: #f2ebfb;
+      --cyan: #a78bfa; --gold: #f0c674;
+    }
+    body.theme-turquoise {
+      --dark-bg: #041a18; --theme-color: #0c332f; --card-bg: rgba(8,45,41,0.8); --card-border: rgba(45,212,191,0.25);
+      --text-color: #e6fdfa; --dialog-bg: #062825; --header-bg: rgba(0,0,0,0.35); --btn-bg: rgba(0,0,0,0.5);
+      --input-bg: #0a2622; --input-border: #1f5b52; --input-text: #e6fdfa; --muted-text: #7fd4c8;
+      --btn-hover-bg: rgba(45,212,191,0.15); --btn-hover-text: #e6fdfa;
+      --cyan: #2dd4bf; --gold: #f2c94c;
+    }
+
     body {
       background: radial-gradient(circle at center, var(--theme-color) 0%, var(--dark-bg) 100%);
       color: var(--text-color); font-family: 'Assistant', 'Heebo', sans-serif;
       height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column;
+      height: 100dvh; width: 100dvw; /* dynamic viewport units on top of the vh/vw fallback above - see the portrait media query below for why */
       transition: background 2s ease, --theme-color 2s ease;
     }
 
@@ -57,6 +144,17 @@
         left: 50%;
         width: 100vh;
         height: 100vw;
+        /* V16.5 BUGFIX: static 100vh/100vw are measured against the LARGEST possible viewport on real
+           mobile browsers (address bar collapsed), not the viewport actually visible right now - with
+           the toolbar showing (the normal state), the box below was sized bigger than the real visible
+           area, and since width/height get SWAPPED by the 90deg rotation, that mismatch showed up as a
+           genuinely broken/clipped layout on a real phone (this wasn't visible in desktop-browser
+           testing, which doesn't have a real collapsing toolbar). dvh/dvw ("dynamic viewport") track the
+           actual visible viewport as the toolbar shows/hides, so they override the vh/vw values above on
+           any browser that supports them (iOS Safari 15.4+, Chrome/Android 108+); older browsers simply
+           keep the vh/vw fallback already declared. */
+        width: 100dvh;
+        height: 100dvw;
         /* Centering an element with top:50%/left:50% + translate(-50%,-50%) is self-correcting
            regardless of the element's exact size (percentage translate is relative to the element's
            OWN box), which sidesteps needing exact pixel/anchor math for the rotation offset - that
@@ -68,6 +166,7 @@
          this override it stays sized to the narrow portrait dimensions inside the now-rotated html,
          rendering as a small box instead of filling the screen. */
       body { width: 100vh; height: 100vw; }
+      body { width: 100dvh; height: 100dvw; }
     }
 
     .bg-texture {
@@ -195,7 +294,7 @@
        plain vw units alone don't respond to that, since they're relative to the viewport, not the
        space freed up around the clock. */
     :root { --clock-scale: 1; }
-    .flip-clock-container { display: flex; gap: calc(1vw * var(--clock-scale)); align-items: center; direction: ltr; transition: transform 1s ease; }
+    .flip-clock-container { display: flex; gap: calc(1vw * var(--clock-scale)); align-items: center; direction: ltr; transition: transform 1s ease; cursor: pointer; }
     .flip-group { display: flex; gap: calc(0.4vw * var(--clock-scale)); }
     .flip-card { position: relative; background: linear-gradient(to bottom, #2a2a2a 0%, #111 100%); border-radius: calc(0.6vw * var(--clock-scale)); border: 2px solid #333; box-shadow: 0 0.5vw 1.5vw rgba(0,0,0,0.9); width: calc(6.5vw * var(--clock-scale)); height: calc(9vw * var(--clock-scale)); display: flex; justify-content: center; align-items: center; font-family: 'Bebas Neue', sans-serif; font-size: calc(7vw * var(--clock-scale)); color: #e0e0e0; transition: width 0.4s ease, height 0.4s ease, font-size 0.4s ease; }
     .flip-card::after { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: #000; transform: translateY(-50%); }
@@ -222,6 +321,11 @@
     .zman-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0.8vw; padding: 1vh 0.2vw; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     /* V15: soonest-upcoming zman gets a gentle pulse so it stands out without a screenshot-style diff. */
     .zman-card.next-zman { border-color: var(--cyan); box-shadow: 0 0 1.2vw rgba(0,229,255,0.5); animation: nextZmanPulse 2.5s ease-in-out infinite; }
+    /* marks whichever of sof-zman-shma/tzeit-shabbat pair matches the selected nusach's more commonly
+       cited default (see applyNusach) - a small gold corner flag, not a full border change, so it
+       doesn't visually compete with the next-zman cyan pulse when both land on the same card. */
+    .zman-card.nusach-preferred { position: relative; }
+    .zman-card.nusach-preferred::before { content: '⭐'; position: absolute; top: 0.2vh; left: 0.3vw; font-size: 0.7vw; }
     @keyframes nextZmanPulse { 0%,100% { box-shadow: 0 0 0.6vw rgba(0,229,255,0.3); } 50% { box-shadow: 0 0 1.5vw rgba(0,229,255,0.7); } }
     .zman-title { font-size: 0.85vw; font-weight: 700; color: var(--muted-text); margin-bottom: 0.3vh; text-align: center; line-height: 1.1; }
     .zman-time { font-size: 1.4vw; font-weight: 900; color: var(--text-color); font-family: 'Bebas Neue', 'Heebo', sans-serif; direction: ltr; }
@@ -273,11 +377,28 @@
 
     .bg-holiday-icon { position: absolute; font-size: 5vw; opacity: 0; pointer-events: none; transition: 2s; z-index: 0; animation: floatIcon 20s linear infinite; }
     @keyframes floatIcon { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0.1; } 50% { opacity: 0.3; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
+    /* V16: quieter ambient variant for non-holiday days (season + a constant Judaica motif) - noticeably
+       more subtle than the holiday version above so it never reads as "almost a holiday". */
+    .bg-holiday-icon.ambient { animation: floatIconAmbient 32s linear infinite; }
+    @keyframes floatIconAmbient { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0.05; } 50% { opacity: 0.14; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
 
     body.shabbat-advanced .header-bar, body.shabbat-advanced .sidebar, body.shabbat-advanced .ticker-wrap, body.shabbat-advanced .info-ribbon, body.shabbat-advanced .zmanim-grid, body.shabbat-advanced .bottom-dock { display: none !important; }
     body.shabbat-advanced .app-layout { grid-template-rows: 1fr; }
     body.shabbat-advanced .main-content { grid-template-columns: 1fr; padding: 5vh; }
     body.shabbat-advanced .dashboard-area { justify-content: center; transform: scale(1.4); }
+
+    /* V16: clicking the clock hides everything except the clock+date and lets them fill the whole
+       screen; clicking again restores exactly what was showing before (nothing here is toggled
+       permanently - it's all display:none scoped to this one class, layered on top of whatever the
+       user's normal component-visibility/shabbat-mode state already was). */
+    body.clock-focus-mode .header-bar, body.clock-focus-mode .sidebar, body.clock-focus-mode .ticker-wrap,
+    body.clock-focus-mode .info-ribbon, body.clock-focus-mode .zmanim-grid, body.clock-focus-mode .bottom-dock,
+    body.clock-focus-mode .personal-banner, body.clock-focus-mode .pasuk-banner, body.clock-focus-mode #shabbatCountdown,
+    body.clock-focus-mode .shabbat-overlay-zmanim, body.clock-focus-mode .backup-reminder { display: none !important; }
+    body.clock-focus-mode .app-layout { grid-template-rows: 1fr; }
+    body.clock-focus-mode .main-content { grid-template-columns: 1fr; padding: 5vh; }
+    body.clock-focus-mode .dashboard-area { justify-content: center; height: 100%; }
+    body.clock-focus-mode .flip-clock-container { cursor: pointer; }
 
     .shabbat-overlay-zmanim { display: none; flex-direction: row; gap: 2vw; margin-top: 4vh; background: rgba(0,0,0,0.5); padding: 2vh 4vw; border-radius: 2vw; border: 2px solid var(--gold); }
     body.shabbat-advanced .shabbat-overlay-zmanim { display: flex; }
@@ -293,25 +414,17 @@
     #siddurModal { width:70vw; max-width:1000px; }
     .siddur-content { font-family: 'Assistant'; }
 
-    /* --- RESPONSIVE --- */
-    @media (max-width: 900px) {
-        body { height: auto; overflow-y: auto; }
-        .main-content { grid-template-columns: 1fr !important; display: flex; flex-direction: column-reverse; }
-        .sidebar { min-height: 400px; }
-        .clock { font-size: 15vw !important; }
-        .date-hebrew-text { font-size: 6vw !important; }
-        .date-gregorian-text { font-size: 4vw !important; }
-        .info-ribbon { flex-wrap: wrap; }
-        .info-item { width: 30%; margin-bottom: 1vh; }
-        .info-item .label { font-size: 2.5vw !important; }
-        .info-item .value { font-size: 3.5vw !important; }
-        .zmanim-grid { grid-template-columns: repeat(3, 1fr) !important; }
-        .header-actions { flex-wrap: wrap; justify-content: center; margin-top: 1vh; }
-        .btn { font-size: 3.5vw !important; padding: 1vh 3vw !important; margin-bottom: 1vh; }
-        #chovotWidget { font-size: 4vw !important; line-height: 1.8 !important; }
-        #calendarModal { width: 95vw !important; max-width: 100% !important; }
-        .pasuk-banner { font-size: 4.5vw !important; margin-bottom: 2vh !important; }
-    }
+    /* V16.5 BUGFIX: this whole block predates the V14 "always landscape" requirement and was never
+       removed once the rotation-lock was added - it redesigned the layout into a narrow, stacked mobile
+       view (body height:auto+scroll, .main-content flipped to a column, everything else resized) on any
+       viewport under 900px wide. Since a portrait phone IS under 900px wide, this fired at the same time
+       as the orientation:portrait rotation rule above, and the two fought each other: rotated 90deg by
+       one rule while forced into a completely different stacked layout by this one - exactly the
+       "messy screen" reported on a real device. The rotation-lock already makes every screen render
+       landscape (and everything in this app is already sized in vw/vh, which scales to any landscape
+       viewport on its own), so this override is not just redundant now but actively breaks the layout -
+       removed rather than fixed, since keeping it correct alongside the rotation lock isn't meaningful
+       (a landscape-only app has no real narrow-viewport case left to design for). */
 
     .shabbat-countdown { font-size: 3.5vw; font-weight: 900; color: #f1c40f; text-shadow: 0 0 15px rgba(241,196,15,0.8); margin-bottom: 1.5vh; text-align: center; letter-spacing: 0.2vw; display: none; background: rgba(0,0,0,0.5); padding: 1vh 2vw; border-radius: 1vw; border: 1px solid var(--gold); }
     .bg-texture { background-size: cover; background-position: center; transition: background-image 1s ease; }
@@ -329,7 +442,7 @@
     <div class="header-bar">
       <div class="greeting-weather">
         <div class="greeting" id="greetingText">בוקר טוב</div>
-        <div class="edah-badge" id="edahBadge">מנהג עדות המזרח</div>
+        <div class="edah-badge" id="edahBadge" onclick="cycleNusach()" style="cursor:pointer;" title="לחץ למעבר בין נוסחים">מנהג עדות המזרח</div>
         <div class="weather-info" id="weatherInfo" onclick="openWeatherModal()" style="cursor:pointer;" title="לחץ לתחזית שבועית">טוען מזג אוויר...</div>
         <div class="weather-info" id="worldClockInfo" style="display:none;"></div>
         <div class="api-loader" id="apiLoader">מרענן נתונים...</div>
@@ -456,11 +569,15 @@
       <!-- DASHBOARD (Clock, Ribbon, Zmanim Grid) -->
       <div class="dashboard-area">
         <div class="personal-banner" id="personalBanner"></div>
+        <div class="personal-banner" id="specialDayBanner" style="display:none;"></div>
+        <div class="personal-banner" id="preShabbatChecklistBanner" style="display:none; background: linear-gradient(90deg, rgba(6,182,212,0.2) 0%, rgba(6,182,212,0.8) 50%, rgba(6,182,212,0.2) 100%);"></div>
+        <div class="personal-banner" id="havdalahChecklistBanner" style="display:none; background: linear-gradient(90deg, rgba(124,58,237,0.2) 0%, rgba(124,58,237,0.8) 50%, rgba(124,58,237,0.2) 100%);"></div>
+        <div class="personal-banner" id="seudahShlishitBanner" style="display:none;"></div>
 
         <div class="pasuk-banner" id="pasukBanner" style="font-size: 2.2vw; font-weight: bold; color: var(--cyan); text-shadow: 0 0 15px rgba(0,229,255,0.8); margin-bottom: 1.5vh; text-align: center; letter-spacing: 0.1vw;">"וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ"</div>
         <div id="shabbatCountdown" class="shabbat-countdown"></div>
 
-        <div class="flip-clock-container">
+        <div class="flip-clock-container" onclick="toggleClockFocusMode()" title="לחץ למסך שעון מלא">
           <div class="flip-group"><div class="flip-card" id="h1">0</div><div class="flip-card" id="h2">0</div></div>
           <div class="colon">:</div>
           <div class="flip-group"><div class="flip-card" id="m1">0</div><div class="flip-card" id="m2">0</div></div>
@@ -746,6 +863,21 @@
         <div id="talUmatarText"></div>
       </div>
 
+      <div id="fastDayWidget" style="display:none; background: rgba(255,71,87,0.1); border: 1px solid var(--alert); padding: 1vh; border-radius: 0.5vw; font-size: 0.95vw; color: var(--text-color); margin-top: 1vh;">
+        <div style="font-weight:800; color:var(--alert);">🕯️ יום צום</div>
+        <div id="fastDayText"></div>
+      </div>
+
+      <div id="barMitzvahWidget" style="display:none; background: rgba(6,182,212,0.1); border: 1px solid var(--cyan); padding: 1vh; border-radius: 0.5vw; font-size: 0.95vw; color: var(--text-color); margin-top: 1vh; text-align:center;"></div>
+
+      <div id="halachicDayProgressWidget" style="display:none; margin-top: 1vh;">
+        <div style="font-weight:800; color:var(--gold); font-size:0.9vw; margin-bottom:0.4vh;">⏳ היום ההלכתי (עלות השחר - צאת הכוכבים)</div>
+        <div style="background: rgba(255,255,255,0.1); border-radius: 1vw; height: 1.2vh; overflow: hidden;">
+          <div id="halachicDayProgressBar" style="background: linear-gradient(90deg, var(--gold), var(--cyan)); height: 100%; width: 0%; transition: width 30s linear;"></div>
+        </div>
+        <div id="halachicDayProgressText" style="font-size:0.8vw; color:var(--muted-text); margin-top:0.3vh; text-align:center;"></div>
+      </div>
+
       <div class="panel-title" style="margin-top: 2vh;">פרשת השבוע</div>
       <div id="parashaDetails" style="background: rgba(0,0,0,0.3); padding: 1.2vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0; display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -764,6 +896,10 @@
 
       <div class="panel-title" style="margin-top: 2vh;">תהילים ומצפן</div>
       <a id="tehillimLink" href="#" target="_blank" class="tehillim-btn">קרא פרק אישי בתהילים</a>
+      <a href="https://he.chabad.org/dailystudy/tehillim.htm" target="_blank" class="tehillim-btn" style="margin-top:0.6vh; background: linear-gradient(45deg, #7c3aed, #6d28d9);">📅 תהילים היומי (לפי יום בחודש)</a>
+      <div class="panel-title" style="margin-top: 2vh;">עוד מסלולי לימוד יומיים</div>
+      <div style="font-size:0.85vw; color:var(--muted-text); margin-bottom:0.8vh;">אין API חינמי אמין למשנה יומית/רמב"ם יומי (בניגוד לדף היומי), אז אלה קישורים ללוח הלימוד המדויק באתר ספריא, ולא מעקב רצף כמו בדף היומי.</div>
+      <a href="https://www.sefaria.org.il/calendars" target="_blank" class="tehillim-btn" style="background: linear-gradient(45deg, #059669, #047857);">📖 משנה יומית / רמב"ם היומי (ספריא)</a>
       <div class="compass-container" style="margin-top: 1vh;">
         <div class="compass-ring"><div class="compass-arrow" id="compassArrow"></div></div>
         <div class="compass-label" id="compassLabel">טוען כיוון ירושלים...</div>
@@ -820,7 +956,7 @@
   <!-- SETTINGS MODAL -->
 
   <dialog id="settingsModal">
-    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V15)</h2><button class="close-btn" onclick="closeSettings(); document.getElementById('settingsModal').close();">✖</button></div>
+    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V17)</h2><button class="close-btn" onclick="closeSettings(); document.getElementById('settingsModal').close();">✖</button></div>
 
     <!-- V15: reorganized from ~19 stacked boxes into a collapsible accordion by topic - much less
          overwhelming to scan, and every control here reads its colors from the shared theme variables
@@ -842,6 +978,23 @@
             <input type="color" id="accentColorInput" value="#00e5ff" onchange="applyAccentColor(this.value)" style="width:3vw; height:3vh; border:none; cursor:pointer; background:transparent;">
             <button onclick="applyAccentColor('#00e5ff'); document.getElementById('accentColorInput').value='#00e5ff';" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">איפוס</button>
           </div>
+          <div style="display:flex; align-items:center; gap:1vw; flex-wrap:wrap;">
+            <span>ערכת צבעים מיוחדת:</span>
+            <select id="colorThemeSelect" onchange="applyColorTheme(this.value)">
+              <option value="default">ללא (צבע ראשי רגיל)</option>
+              <option value="gold-black">זהב ושחור</option>
+              <option value="emerald">אזמרגד מלכותי</option>
+              <option value="sapphire">ספיר כחול</option>
+              <option value="bordeaux">יין בורדו</option>
+              <option value="bronze">ארד ונחושת</option>
+              <option value="marble">שיש לבן</option>
+              <option value="jerusalem-stone">אבן ירושלים</option>
+              <option value="ice-silver">כסף וכחול קרח</option>
+              <option value="royal-purple">סגול מלכות</option>
+              <option value="turquoise">טורקיז ים המלח</option>
+            </select>
+          </div>
+          <div class="settings-hint">ערכת צבעים מיוחדת קובעת גם רקע וגם טקסט יחד (בניגוד "לצבע ראשי" שרק צובע הדגשות) ומחליפה אותו זמנית - בחירת צבע ראשי משלך תבטל אותה בחזרה. כפתורי הפעולה הצבעוניים בכותרת (סידורון, לוח שנה וכו') נשארים תמיד באותם צבעים משלהם, בכל ערכה.</div>
         </div>
         <div class="setting-group"><label>נגישות וצפיפות</label>
           <div style="display:flex; align-items:center; gap:1vw;">
@@ -851,6 +1004,11 @@
           </div>
           <div class="settings-hint">מגדיל את תוכן הדשבורד (לא את פס הכותרת, שנשאר תמיד נגיש) ומעלה ניגודיות בכל ערך מעל 100%.</div>
           <div class="toggle-switch" style="margin-top:1vh;"><input type="checkbox" id="densityCompactToggle" onchange="appSettings.densityCompact=this.checked; document.body.classList.toggle('density-compact', this.checked); saveSettings();"><span>תצוגה צפופה בסיידבר (יותר שורות במסך אחד)</span></div>
+        </div>
+        <div class="setting-group"><label>אנימציית רקע בימים ללא חג</label>
+          <div class="settings-hint" style="margin-bottom:0.5vh;">עונה (עלים/שלג/פריחה/שמש) תמיד פעילה כשאין חג. אפשר להוסיף גם:</div>
+          <div class="toggle-switch"><input type="checkbox" id="ambientTimeOfDayToggle" onchange="appSettings.ambientTimeOfDay=this.checked; saveSettings(); applyHolidayBgIcon();"><span>סמל יום/לילה (⭐ בלילה, ☀️ ביום)</span></div>
+          <div class="toggle-switch"><input type="checkbox" id="ambientShabbatMotifToggle" onchange="appSettings.ambientShabbatMotif=this.checked; saveSettings(); applyHolidayBgIcon();"><span>מוטיב יהודי (✡️) בימי שישי - כניסת שבת מתקרבת</span></div>
         </div>
         <div class="setting-group"><label>רקע - תמונות משפחה מתחלפות</label>
           <input type="file" id="bgUpload" accept="image/*" multiple style="width:100%; margin-top:0.5vh;">
@@ -895,15 +1053,34 @@
             <option value="ashkenazi">אשכנז</option>
             <option value="teimani">תימן</option>
           </select>
-          <div class="settings-hint">משנה את תג המנהג בכותרת ואת ייחוס "סוזק"ש" בטבלת הזמנים (הגר"א לאשכנזים, עובדיה לספרדים). שאר חישובי הזמנים זהים לכל הנוסחים.</div>
+          <div class="settings-hint">משנה את תג המנהג בכותרת, ומסמן ⭐ בטבלת הזמנים על סוזק"ש וצאת שבת לפי המנהג הנפוץ (אשכנז: מג"א / ר"ת 72 דק'; ספרד ותימן: הגר"א / שיטה רגילה). זו הפניה למנהג מקובל בלבד ולא פסק הלכה - שני הזמנים מוצגים תמיד, ומומלץ לוודא מול הרב שלך.</div>
         </div>
         <div class="setting-group"><label>פסוק/משפט עליון</label>
           <div class="settings-hint" style="margin-bottom:0.5vh;">אפשר להכניס כמה פסוקים, כל אחד בשורה נפרדת - יוצג פסוק אחר בכל יום (מתחלף לפי תאריך, לא אקראי).</div>
           <textarea id="pasukTextInput" rows="3" style="width:100%; resize:vertical;" placeholder="&quot;וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ&quot;"></textarea>
           <button onclick="resetPasukText()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לפסוק המקורי</button>
         </div>
-        <div class="setting-group"><label>זמני הדלקת נרות</label>
+        <div class="setting-group"><label>כניסה ויציאת שבת</label>
           <div class="event-inputs"><span>הדלקת נרות כמה דקות לפני השקיעה: </span><input type="number" id="candleOffsetInput" min="10" max="60" style="width:80px;" placeholder="20"></div>
+          <div class="event-inputs"><span>יציאת שבת/חג (לפי איזו שיטה ה"מצב שבת" של האפליקציה נכבה): </span>
+            <select id="havdalahMinutesSelect">
+              <option value="42">42 דקות אחרי השקיעה</option>
+              <option value="50">50 דקות אחרי השקיעה</option>
+              <option value="72">72 דקות אחרי השקיעה (ר"ת)</option>
+            </select>
+          </div>
+          <div class="settings-hint">קובע מתי בדיוק "מצב שבת" (הרקע, הכפתורים המוסתרים, הספירה לאחור) נכבה בפועל - בעבר זה היה קבוע על 42 דקות בלי קשר למה שנבחר כאן, מה שיצר פער בין הזמן שמוצג בטבלת הזמנים (72 דק'/שיטה רגילה) לזמן שהאפליקציה בפועל השתמשה בו. עכשיו שניהם עקביים לפי הבחירה שלך.</div>
+        </div>
+        <div class="setting-group"><label>צ'ק-ליסטים אוטומטיים לשבת</label>
+          <div class="settings-hint" style="margin-bottom:0.5vh;">רשימה שמופיעה כבאנר בדיוק כשצריך - כל פריט בשורה נפרדת.</div>
+          <div style="margin-bottom:1vh;">
+            <span style="font-size:0.85vw; color:var(--muted-text);">לפני כניסת שבת (90 דקות לפני הדלקת נרות):</span>
+            <textarea id="preShabbatChecklistInput" rows="3" style="width:100%; resize:vertical;" placeholder="טלפון&#10;פלטה&#10;מעלית שבת"></textarea>
+          </div>
+          <div>
+            <span style="font-size:0.85vw; color:var(--muted-text);">להבדלה (15 דקות לפני צאת שבת):</span>
+            <textarea id="havdalahChecklistInput" rows="3" style="width:100%; resize:vertical;" placeholder="בשמים&#10;נר הבדלה&#10;יין"></textarea>
+          </div>
         </div>
       </div>
     </details>
@@ -1039,6 +1216,11 @@
     if(!appSettings.dndUntil) appSettings.dndUntil = 0;
     if(!appSettings.newsSource) appSettings.newsSource = 'rotter';
     if(!appSettings.candleOffset) appSettings.candleOffset = 20;
+    if(!appSettings.havdalahMinutes) appSettings.havdalahMinutes = 42;
+    if(!appSettings.preShabbatChecklist) appSettings.preShabbatChecklist = ['טלפון', 'פלטה', 'מעלית שבת'];
+    if(!appSettings.havdalahChecklist) appSettings.havdalahChecklist = ['בשמים', 'נר הבדלה', 'יין'];
+    if(appSettings.ambientTimeOfDay === undefined) appSettings.ambientTimeOfDay = true;
+    if(appSettings.ambientShabbatMotif === undefined) appSettings.ambientShabbatMotif = true;
     // V13: renamed from disableScreensaver (opt-out, defaulted to dimming ON) to screensaverEnabled
     // (opt-in, defaults OFF) - clearer polarity, and the user asked for dimming to be off unless they
     // explicitly turn it on, not on-unless-disabled.
@@ -1054,9 +1236,16 @@
     if(!appSettings.chimeSound) appSettings.chimeSound = 'bell';
     if(appSettings.densityCompact === undefined) appSettings.densityCompact = false;
     document.body.classList.toggle('density-compact', appSettings.densityCompact);
+    if(!appSettings.colorTheme) appSettings.colorTheme = 'default';
+    // V17: 10 named color-palette themes (see the CSS body.theme-* rules) - layered on top of the
+    // existing light/dark/auto toggle, and mutually exclusive with a custom accent color (see
+    // applyAccentColor below) since both ultimately compete for the same --cyan variable. Declared here
+    // (early, before first use) rather than next to applyColorTheme/applyAccentColor further down, since
+    // those come after the init sequence that already needs this const on page load.
+    const COLOR_THEME_CLASSES = ['theme-gold-black','theme-emerald','theme-sapphire','theme-bordeaux','theme-bronze','theme-marble','theme-jerusalem-stone','theme-ice-silver','theme-royal-purple','theme-turquoise'];
     updateAutoTheme();
     applyAccessibilityScale(Math.round(appSettings.accessibilityScale * 100));
-    document.documentElement.style.setProperty('--cyan', appSettings.accentColor);
+    applyColorTheme(appSettings.colorTheme);
     // V15: pasukText can now hold several quotes (one per line) - a different one shows each day,
     // picked by day-of-year so it's stable through the day and changes daily, not randomly per load.
     function applyPasukRotation() {
@@ -1194,18 +1383,44 @@
       saveSettings(); renderMinyanTimesTable(); renderMinyanTimesWidget();
     }
 
-    // V9: nusach selector - scoped honestly. The underlying zmanim CALCULATIONS are identical for every
-    // nusach here (same Hebcal fields); what genuinely differs by community convention is which posek's
-    // name is attributed to the sof-zman-shema figure, and the header badge. We do not claim to compute
-    // separate Ashkenazi/Sephardi/Teimani zmanim formulas - that would require verified per-nusach
-    // halachic formulas we don't have a reliable source for.
+    // V9/V16.5: nusach selector - scoped honestly. This app doesn't compute separate per-nusach zmanim
+    // formulas (no reliable single source for that), but the grid ALREADY shows two genuinely different,
+    // already-correct figures for two of these: sofZmanShma (GRA method) vs sofZmanShmaMGA (Magen
+    // Avraham method), and tzeit7083deg (lenient/geonim, ~20-25 min after sunset) vs tzeit72min
+    // (Rabbeinu Tam's stringent 72-minute count). This highlights whichever of each pair is the more
+    // commonly-cited default for the selected nusach, instead of only relabeling one card - a real,
+    // visible difference (the two cards' times genuinely differ), while being explicit in the settings
+    // hint that this is a general convention to confirm with your own rabbi, not a psak from this app.
     const NUSACH_BADGE_LABELS = { sephardi: 'מנהג עדות המזרח', ashkenazi: 'מנהג אשכנז', teimani: 'מנהג תימן' };
     const NUSACH_SHMA_LABELS = { sephardi: 'סוזק"ש (עובדיה)', ashkenazi: 'סוזק"ש (הגר"א)', teimani: 'סוזק"ש (הגר"א)' };
+    const NUSACH_PREFERRED_ZMANIM = {
+      sephardi:  { shma: 'sofZmanShma',    tzeit: 'tzeit7083deg' },
+      ashkenazi: { shma: 'sofZmanShmaMGA', tzeit: 'tzeit72min'   },
+      teimani:   { shma: 'sofZmanShma',    tzeit: 'tzeit7083deg' }
+    };
     function applyNusach() {
       const badge = document.getElementById('edahBadge');
       if(badge) badge.textContent = NUSACH_BADGE_LABELS[appSettings.nusach] || NUSACH_BADGE_LABELS.sephardi;
       const shmaTitle = document.querySelector('#zman-card-sofZmanShma .zman-title');
       if(shmaTitle) shmaTitle.textContent = NUSACH_SHMA_LABELS[appSettings.nusach] || NUSACH_SHMA_LABELS.sephardi;
+
+      document.querySelectorAll('.zman-card.nusach-preferred').forEach(el => el.classList.remove('nusach-preferred'));
+      const pref = NUSACH_PREFERRED_ZMANIM[appSettings.nusach] || NUSACH_PREFERRED_ZMANIM.sephardi;
+      [pref.shma, pref.tzeit].forEach(key => {
+        const el = document.getElementById('zman-card-' + key);
+        if(el) el.classList.add('nusach-preferred');
+      });
+    }
+    // V16: the nusach badge in the header is now itself a button that cycles between the three
+    // supported nusachim, instead of only being changeable from deep inside settings.
+    const NUSACH_ORDER = ['sephardi', 'ashkenazi', 'teimani'];
+    function cycleNusach() {
+      const idx = NUSACH_ORDER.indexOf(appSettings.nusach);
+      appSettings.nusach = NUSACH_ORDER[(idx + 1) % NUSACH_ORDER.length];
+      applyNusach();
+      saveSettings();
+      const sel = document.getElementById('nusachSelect');
+      if(sel) sel.value = appSettings.nusach;
     }
 
     // V7: component show/hide - covers the whole dashboard per the user's request (not just the header).
@@ -1307,6 +1522,40 @@
     // reclaims their space so nothing leaves an empty gap. A component the user explicitly hid via
     // settings stays hidden either way; this only controls the extra fullscreen-only behavior on
     // top of that.
+    // V16: clock-focus mode - clicking the clock hides every other component and lets the clock+date
+    // fill the freed space, using the SAME auto-fit sizing the app already does whenever components
+    // are hidden (scaleClockToFit/measureClockBaseline) - no separate sizing logic needed, since
+    // hiding siblings via CSS is exactly the condition that system already grows the clock for.
+    // V16 BUGFIX: reusing the general scaleClockToFit ratio (baseline measured with the sidebar
+    // visible) capped focus mode at only ~1.4-1.6x, because losing the sidebar only widens the
+    // dashboard column that much - going from "5/7 of the screen" to "all of it" just isn't a huge
+    // jump geometrically, even though visually everything else vanished. A dedicated full-screen fit
+    // measures directly against the CURRENT viewport instead of that baseline, so the clock actually
+    // grows to fill the freed screen rather than a fraction of it.
+    function fitClockToFullScreen() {
+      const clockWrap = document.querySelector('.flip-clock-container');
+      const dashArea = document.querySelector('.dashboard-area');
+      if(!clockWrap || !dashArea) return;
+      const root = document.documentElement;
+      root.style.setProperty('--clock-scale', '1');
+      const rect = clockWrap.getBoundingClientRect();
+      if(rect.width === 0 || rect.height === 0) return;
+      const availableWidth = dashArea.clientWidth * 0.94;
+      const availableHeight = dashArea.clientHeight * 0.8; // leaves room for the date text below it
+      const scale = Math.min(availableWidth / rect.width, availableHeight / rect.height);
+      root.style.setProperty('--clock-scale', Math.max(1, scale).toFixed(3));
+    }
+    function toggleClockFocusMode() {
+      const entering = !document.body.classList.contains('clock-focus-mode');
+      document.body.classList.toggle('clock-focus-mode');
+      if(entering) {
+        fitClockToFullScreen();
+      } else {
+        // Deliberately NOT nulling clockBaseline here: it must stay the true "everything visible"
+        // reference (cached from before entering focus mode) for scale=1 to mean the same thing again.
+        scaleClockToFit();
+      }
+    }
     function applyFullscreenAutoVisibility() {
       const isFullscreen = !!document.fullscreenElement;
       const tickerEl = document.getElementById('tickerWrap');
@@ -1393,7 +1642,10 @@
 
       root.style.setProperty('--clock-scale', scale.toFixed(3));
     }
-    window.addEventListener('resize', () => { clockBaseline = null; scaleClockToFit(); });
+    window.addEventListener('resize', () => {
+      if(document.body.classList.contains('clock-focus-mode')) { fitClockToFullScreen(); return; }
+      clockBaseline = null; scaleClockToFit();
+    });
 
     let currentHebrewDay = '', currentHebrewDayNum = 0, currentHebrewMonth = '', audioContext = null, alertedZmanim = {}, idleTimer;
     let currentLat = 31.6688, currentLng = 34.5744;
@@ -1488,7 +1740,24 @@
     }
     function applyAccentColor(color) {
       appSettings.accentColor = color;
+      // Picking a custom color is a deliberate opt-out of any named palette (they'd otherwise silently
+      // fight over --cyan) - so this also resets colorTheme back to 'default'.
+      appSettings.colorTheme = 'default';
+      const sel = document.getElementById('colorThemeSelect');
+      if(sel) sel.value = 'default';
+      COLOR_THEME_CLASSES.forEach(c => document.body.classList.remove(c));
       document.documentElement.style.setProperty('--cyan', color);
+      saveSettings();
+    }
+    function applyColorTheme(theme) {
+      appSettings.colorTheme = theme;
+      COLOR_THEME_CLASSES.forEach(c => document.body.classList.remove(c));
+      if(theme && theme !== 'default') {
+        document.body.classList.add('theme-' + theme);
+        document.documentElement.style.removeProperty('--cyan'); // let the theme class's own --cyan apply
+      } else {
+        document.documentElement.style.setProperty('--cyan', appSettings.accentColor || '#00e5ff');
+      }
       saveSettings();
     }
 
@@ -1655,6 +1924,9 @@
       document.getElementById('screensaverToggle').checked = appSettings.screensaverEnabled;
       document.getElementById('ageInput').value = appSettings.age || 30;
       document.getElementById('candleOffsetInput').value = appSettings.candleOffset || 20;
+      document.getElementById('havdalahMinutesSelect').value = appSettings.havdalahMinutes || 42;
+      document.getElementById('preShabbatChecklistInput').value = (appSettings.preShabbatChecklist || []).join('\n');
+      document.getElementById('havdalahChecklistInput').value = (appSettings.havdalahChecklist || []).join('\n');
       document.getElementById('reminderDaysAheadInput').value = appSettings.reminderDaysAhead;
       document.getElementById('pasukTextInput').value = appSettings.pasukText;
       document.getElementById('worldClockLabel').value = appSettings.worldClockLabel;
@@ -1666,9 +1938,12 @@
       document.getElementById('themeModeSelect').value = appSettings.themeMode || 'dark';
       document.getElementById('chimeSoundSelect').value = appSettings.chimeSound || 'bell';
       document.getElementById('densityCompactToggle').checked = appSettings.densityCompact;
+      document.getElementById('ambientTimeOfDayToggle').checked = appSettings.ambientTimeOfDay;
+      document.getElementById('ambientShabbatMotifToggle').checked = appSettings.ambientShabbatMotif;
       document.getElementById('accessibilitySlider').value = Math.round(appSettings.accessibilityScale * 100);
       document.getElementById('accessibilitySliderVal').textContent = Math.round(appSettings.accessibilityScale * 100) + '%';
       document.getElementById('accentColorInput').value = appSettings.accentColor;
+      document.getElementById('colorThemeSelect').value = appSettings.colorTheme || 'default';
       document.getElementById('staplesListInput').value = (appSettings.staplesList || []).join('\n');
       renderEventsTable(); renderComponentToggles(); renderEmergencyContactsTable(); renderFamilyMembersTable(); renderMinyanTimesTable(); document.getElementById('settingsModal').showModal();
     }
@@ -1688,6 +1963,9 @@
       appSettings.screensaverEnabled = document.getElementById('screensaverToggle').checked;
       appSettings.age = document.getElementById('ageInput').value || 30;
       appSettings.candleOffset = parseInt(document.getElementById('candleOffsetInput').value) || 20;
+      appSettings.havdalahMinutes = parseInt(document.getElementById('havdalahMinutesSelect').value) || 42;
+      appSettings.preShabbatChecklist = document.getElementById('preShabbatChecklistInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+      appSettings.havdalahChecklist = document.getElementById('havdalahChecklistInput').value.split('\n').map(s => s.trim()).filter(Boolean);
       appSettings.reminderDaysAhead = parseInt(document.getElementById('reminderDaysAheadInput').value);
       if(isNaN(appSettings.reminderDaysAhead)) appSettings.reminderDaysAhead = 2;
       appSettings.pasukText = document.getElementById('pasukTextInput').value.trim() || DEFAULT_PASUK_TEXT;
@@ -2377,6 +2655,27 @@
     }
 
     // === Omer counter (new in V1) — computed locally from the Hebrew date, no API dependency ===
+    // V17: a nightly voice/notification reminder to count the Omer, once nightfall has passed - the
+    // existing omerWidget only ever DISPLAYED the count, with no active reminder to actually count it.
+    function checkOmerNightReminder(now) {
+      if(isDndActive()) return;
+      const month = currentHebrewMonth, day = currentHebrewDayNum;
+      let inOmerPeriod = false;
+      if(month && month.includes('ניסן') && day >= 16) inOmerPeriod = true;
+      else if(month && month.includes('אייר')) inOmerPeriod = true;
+      else if(month && (month.includes('סיון') || month.includes('סיוון')) && day <= 5) inOmerPeriod = true;
+      if(!inOmerPeriod) return;
+      if(!zmanimDataCache || !zmanimDataCache.tzeit7083deg) return;
+      if(now < new Date(zmanimDataCache.tzeit7083deg)) return; // only after nightfall
+      const today = now.toDateString();
+      if(localStorage.getItem('lastOmerCountDate') === today) return; // already counted
+      const reminderKey = 'omerNightReminder_' + today;
+      if(alertedZmanim[reminderKey]) return;
+      alertedZmanim[reminderKey] = true;
+      playChime();
+      speakHebrew('שים לב, הגיע הזמן לספירת העומר של הלילה');
+      if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: 'הגיע הזמן לספירת העומר' }); }
+    }
     function updateOmerCounter() {
       const el = document.getElementById('omerWidget');
       if(!el) return;
@@ -2436,10 +2735,12 @@
       const upcoming = windows.find(w => w.start > now);
       const fmt = d => d.toLocaleDateString('he-IL', { day:'numeric', month:'numeric' });
       if(active) {
-        textEl.textContent = `אפשר לברך עד ${fmt(active.end)} (החל מ-${fmt(active.start)}, לפי מנהג 3 ימים אחרי המולד; לנוהגים כמנהג אשכנז - 7 ימים אחרי המולד)`;
+        const daysLeft = Math.ceil((active.end - now) / 86400000);
+        textEl.textContent = `אפשר לברך עד ${fmt(active.end)} - עוד ${toHebrewNumeral(daysLeft)} ימים (החל מ-${fmt(active.start)}, לפי מנהג 3 ימים אחרי המולד; לנוהגים כמנהג אשכנז - 7 ימים אחרי המולד)`;
         widget.style.display = 'block';
       } else if(upcoming) {
-        textEl.textContent = `החלון הבא: ${fmt(upcoming.start)} עד ${fmt(upcoming.end)} (לפי מנהג 3 ימים אחרי המולד)`;
+        const daysUntilStart = Math.ceil((upcoming.start - now) / 86400000);
+        textEl.textContent = `החלון הבא: ${fmt(upcoming.start)} עד ${fmt(upcoming.end)} - עוד ${toHebrewNumeral(daysUntilStart)} ימים (לפי מנהג 3 ימים אחרי המולד)`;
         widget.style.display = 'block';
       } else {
         widget.style.display = 'none';
@@ -2475,6 +2776,246 @@
       widget.style.display = 'block';
     }
 
+    // V16: per-holiday background icon, matched against Hebcal's real (English, year-stable) event
+    // titles rather than guessed from the Hebrew month. `festive: false` entries (the two Shoah/Zikaron
+    // memorial days, and all fast days) deliberately get NO floating-icon animation at all - a cute
+    // bouncing emoji isn't appropriate on a memorial or fast day, so those are matched only so the app
+    // KNOWS one is happening (for possible future use), while rendering nothing decorative.
+    const HOLIDAY_ICON_RULES = [
+      { match: t => t.startsWith('Rosh Hashana'), icon: '🍎', festive: true },
+      { match: t => t === 'Yom Kippur' || t === 'Erev Yom Kippur', icon: '🕊️', festive: true },
+      { match: t => t.startsWith('Sukkot') || t === 'Erev Sukkot', icon: '🌿', festive: true },
+      { match: t => t === 'Shmini Atzeret', icon: '📜', festive: true }, // = Simchat Torah in Israel (i=on)
+      { match: t => t.startsWith('Chanukah'), icon: '🕎', festive: true },
+      { match: t => t === 'Tu BiShvat', icon: '🌳', festive: true },
+      { match: t => t === 'Purim' || t === 'Shushan Purim' || t === 'Erev Purim', icon: '🎭', festive: true },
+      { match: t => t.startsWith('Pesach') || t === 'Erev Pesach', icon: '🫓', festive: true },
+      { match: t => t === 'Lag BaOmer', icon: '🔥', festive: true },
+      { match: t => t === 'Shavuot' || t === 'Erev Shavuot', icon: '🔟', festive: true }, // no dedicated "tablets of the covenant" emoji exists - 🔟 stands in for the Ten Commandments
+      { match: t => t === 'Tu B’Av' || t === 'Tu BAv', icon: '💐', festive: true },
+      { match: t => t === 'Yom HaAtzma’ut' || t === 'Yom HaAtzmaut', icon: '🇮🇱', festive: true },
+      { match: t => t === 'Yom Yerushalayim', icon: '🏛️', festive: true },
+      // Solemn - matched but intentionally non-festive (see comment above).
+      { match: t => t === 'Yom HaShoah', icon: '🕯️', festive: false },
+      { match: t => t === 'Yom HaZikaron', icon: '🕯️', festive: false },
+      { match: t => /^(Tzom|Ta[’']anit|Asara|Tish[’']a)/.test(t), icon: '🕯️', festive: false }
+    ];
+    // V17: reminders for special liturgical insertions and announcements - all derived from Hebcal's
+    // real per-day categories/titles (never invented), fixed lists of which HOLIDAYS trigger which
+    // insertion (undisputed facts - e.g. "Al HaNissim is added on Chanukah/Purim" isn't a matter of
+    // interpretation), or the real molad instant already fetched for Kiddush Levana.
+    function applySpecialDayBanners() {
+      const banner = document.getElementById('specialDayBanner');
+      if(!banner) return;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayItems = lastEventItems.filter(i => i.date === todayStr);
+      const messages = [];
+
+      // Ya'aleh V'Yavo: Rosh Chodesh and Chol HaMoed (Pesach/Sukkot) days.
+      const needsYaaleh = todayItems.some(i => i.category === 'roshchodesh' || /CH[’'`]{2}M/.test(i.title || ''));
+      if(needsYaaleh) messages.push('היום מוסיפים "יַעֲלֶה וְיָבֹא" בתפילה ובברכת המזון');
+
+      // Al HaNissim: Chanukah and Purim (incl. Shushan Purim).
+      const needsAlHanissim = todayItems.some(i => /^Chanukah/.test(i.title || '') || i.title === 'Purim' || i.title === 'Shushan Purim');
+      if(needsAlHanissim) messages.push('היום מוסיפים "עַל הַנִּסִּים" בתפילה ובברכת המזון');
+
+      // Mevarchim Chodesh - Hebcal's own category, includes the exact molad text in `memo`.
+      const mevarchim = todayItems.find(i => i.category === 'mevarchim');
+      if(mevarchim) messages.push(`שבת מברכים: ${mevarchim.hebrew}${mevarchim.memo ? ' - ' + mevarchim.memo : ''}`);
+
+      // Yizkor days - fixed, undisputed list (Israel practice, matching this app's i=on setting).
+      const YIZKOR_TITLES = ['Yom Kippur', 'Shmini Atzeret', 'Pesach VII', 'Shavuot'];
+      if(todayItems.some(i => YIZKOR_TITLES.includes(i.title))) {
+        const namesToRemember = (appSettings.personalEvents || []).filter(e => /אזכרה|יארצייט|יאהרצייט|נשמה/.test(e.type || ''));
+        if(namesToRemember.length) messages.push(`היום אומרים יזכור - ${namesToRemember.map(e => e.name).join(', ')}`);
+        else messages.push('היום אומרים יזכור בבית הכנסת');
+      }
+
+      if(messages.length) { banner.style.display = 'block'; banner.innerHTML = messages.join(' | '); }
+      else { banner.style.display = 'none'; }
+
+      updateFastDayWidget(todayItems);
+    }
+    // V17: dedicated fast-day widget - separate from the regular zmanim grid since a fast's start/end
+    // deserve to stand out, not blend into the same 11 cards as everything else. Tzom Gedaliah/Asara
+    // B'Tevet/Ta'anit Esther/Tzom Tammuz/Ta'anit Bechorot start at Alot HaShachar (today's own value,
+    // already fetched); Tish'a B'Av and Yom Kippur start the PREVIOUS evening at sunset, which isn't
+    // fetched here (would need yesterday's data) - shown as "started last night" instead of a guessed
+    // time, rather than fetching an extra day just for this. End time (tzeit) is correct for all of them
+    // either way, since that's always TODAY's value.
+    // V17: three time-triggered Shabbat banners (dismissible, reappear fresh for the next Shabbat since
+    // each is keyed to that specific occurrence's timestamp) - pre-Shabbat checklist ~90 min before
+    // candle-lighting, Havdalah checklist ~15 min before Shabbat/Yom-Tov exit, and a Seudah Shlishit
+    // nudge in the Shabbat-afternoon window before exit (Saturday only - Yom Tov has no Seudah
+    // Shlishit). All three read their item lists from the same customizable settings as everything
+    // else, so nothing here is invented content.
+    function dismissShabbatBanner(id) {
+      document.getElementById(id).style.display = 'none';
+      localStorage.setItem(id + '_dismissedKey', document.getElementById(id).dataset.key || '');
+    }
+    function checkShabbatReminderBanners(now) {
+      if(!shabbatIntervals || !shabbatIntervals.length) return;
+      const nextCandle = shabbatIntervals.find(iv => iv.start && iv.start > now);
+      if(nextCandle) {
+        const diffMins = (nextCandle.start - now) / 60000;
+        const banner = document.getElementById('preShabbatChecklistBanner');
+        const key = nextCandle.start.toISOString();
+        if(diffMins > 0 && diffMins <= 90 && localStorage.getItem('preShabbatChecklistBanner_dismissedKey') !== key) {
+          const items = (appSettings.preShabbatChecklist || []).map(i => `☐ ${i}`).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+          banner.innerHTML = `לקראת כניסת שבת: ${items} <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('preShabbatChecklistBanner')">✖</span>`;
+          banner.dataset.key = key;
+          banner.style.display = 'block';
+        } else if(diffMins <= 0 || diffMins > 90) { banner.style.display = 'none'; }
+      }
+      const activeOrNext = shabbatIntervals.find(iv => (now >= iv.start && now < iv.end) || (iv.start && iv.start > now));
+      if(activeOrNext) {
+        const diffToEnd = (activeOrNext.end - now) / 60000;
+        const havdalahBanner = document.getElementById('havdalahChecklistBanner');
+        const key = activeOrNext.end.toISOString();
+        if(diffToEnd > 0 && diffToEnd <= 15 && localStorage.getItem('havdalahChecklistBanner_dismissedKey') !== key) {
+          const items = (appSettings.havdalahChecklist || []).map(i => `☐ ${i}`).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+          havdalahBanner.innerHTML = `לקראת יציאת שבת/חג: ${items} <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('havdalahChecklistBanner')">✖</span>`;
+          havdalahBanner.dataset.key = key;
+          havdalahBanner.style.display = 'block';
+        } else { havdalahBanner.style.display = 'none'; }
+
+        // Seudah Shlishit - Saturday afternoon only, in the ~2hr window before Shabbat ends.
+        const seudahBanner = document.getElementById('seudahShlishitBanner');
+        const isSaturdayActive = now.getDay() === 6 && now >= activeOrNext.start && now < activeOrNext.end;
+        if(isSaturdayActive && diffToEnd > 0 && diffToEnd <= 120 && localStorage.getItem('seudahShlishitBanner_dismissedKey') !== key) {
+          seudahBanner.innerHTML = `🍽️ זמן טוב לסעודה שלישית <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('seudahShlishitBanner')">✖</span>`;
+          seudahBanner.dataset.key = key;
+          seudahBanner.style.display = 'block';
+        } else { seudahBanner.style.display = 'none'; }
+      } else {
+        document.getElementById('havdalahChecklistBanner').style.display = 'none';
+        document.getElementById('seudahShlishitBanner').style.display = 'none';
+      }
+    }
+    function updateFastDayWidget(todayItems) {
+      const widget = document.getElementById('fastDayWidget');
+      const textEl = document.getElementById('fastDayText');
+      if(!widget) return;
+      const fastItem = todayItems.find(i => /^(Tzom|Ta[’']anit|Asara)/.test(i.title || ''));
+      const isYomKippur = todayItems.some(i => i.title === 'Yom Kippur');
+      const isTishaBav = todayItems.some(i => i.title === 'Tish’a B’Av' || i.title === 'Tisha B’Av');
+      if(!fastItem && !isTishaBav) { widget.style.display = 'none'; return; }
+      const startsPreviousEvening = isYomKippur || isTishaBav;
+      const tzeitTxt = zmanimDataCache && zmanimDataCache.tzeit7083deg ? new Date(zmanimDataCache.tzeit7083deg).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : '--:--';
+      if(startsPreviousEvening) {
+        textEl.textContent = `הצום התחיל אמש בשקיעה. סיום הצום היום: ${tzeitTxt}`;
+      } else {
+        const alotTxt = zmanimDataCache && zmanimDataCache.alotHaShachar ? new Date(zmanimDataCache.alotHaShachar).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : '--:--';
+        textEl.textContent = `${fastItem.hebrew} - התחלה: ${alotTxt} (עלות השחר), סיום: ${tzeitTxt}`;
+      }
+      widget.style.display = 'block';
+    }
+    // V17: visual progress through the halachic day (alot hashachar -> tzeit), for a glance-able sense
+    // of "how much of today is left" beyond just the digital clock. Purely a UI convenience - doesn't
+    // change any actual zman, just visualizes the span between two already-computed real times.
+    function updateHalachicDayProgress() {
+      const widget = document.getElementById('halachicDayProgressWidget');
+      if(!widget || !zmanimDataCache || !zmanimDataCache.alotHaShachar || !zmanimDataCache.tzeit7083deg) { if(widget) widget.style.display = 'none'; return; }
+      const now = new Date();
+      const start = new Date(zmanimDataCache.alotHaShachar), end = new Date(zmanimDataCache.tzeit7083deg);
+      if(now < start || now > end) { widget.style.display = 'none'; return; }
+      const pct = Math.round(((now - start) / (end - start)) * 100);
+      document.getElementById('halachicDayProgressBar').style.width = pct + '%';
+      document.getElementById('halachicDayProgressText').textContent = `${pct}% מהיום ההלכתי עבר`;
+      widget.style.display = 'block';
+    }
+    // V17: a dedicated, highlighted countdown for the nearest upcoming Bar/Bat Mitzvah - the generic
+    // personal-dates table already lists every personal event including these, but a life-cycle
+    // milestone like this deserves to stand out rather than blend into that list.
+    function updateBarMitzvahWidget() {
+      const widget = document.getElementById('barMitzvahWidget');
+      if(!widget) return;
+      const candidates = (appSettings.personalEvents || [])
+        .filter(e => /בר מצו|בת מצו/.test(e.type || ''))
+        .map(e => {
+          let daysLeft = null;
+          if(e.dateType === 'gregorian') daysLeft = daysUntilGregorian(e.gday, e.gmonth);
+          else if(currentHebrewMonth && currentHebrewMonth.includes(e.month)) {
+            const eventDayNum = hebrewNumeralToNumber(e.day);
+            if(eventDayNum) daysLeft = eventDayNum - currentHebrewDayNum;
+          }
+          return { e, daysLeft };
+        })
+        .filter(r => r.daysLeft !== null && r.daysLeft >= 0)
+        .sort((a, b) => a.daysLeft - b.daysLeft);
+      if(!candidates.length) { widget.style.display = 'none'; return; }
+      const next = candidates[0];
+      widget.innerHTML = next.daysLeft === 0
+        ? `🎉 היום ${next.e.type} של ${next.e.name}!`
+        : `🎉 ${next.e.type} של ${next.e.name} - עוד ${toHebrewNumeral(next.daysLeft)} ימים`;
+      widget.style.display = 'block';
+    }
+    // V17 BUGFIX: Hebcal's own `link` field (used as a fallback when there's no leyning data to build
+    // a direct Sefaria reference from) points to sefaria.org - the English-interface domain - not
+    // sefaria.org.il, which every OTHER Sefaria link in this app deliberately uses for the Hebrew
+    // interface. Rewrites just the domain so these fallback links match that same convention.
+    function toHebrewSefariaLink(url) {
+      if(!url) return url;
+      return url.replace(/https?:\/\/(www\.)?sefaria\.org\//, 'https://www.sefaria.org.il/');
+    }
+    function getTodayHolidayIcon() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      for(const item of lastEventItems) {
+        if(item.date !== todayStr || (item.category !== 'holiday' && item.category !== 'roshchodesh')) continue;
+        for(const rule of HOLIDAY_ICON_RULES) { if(rule.match(item.title || '')) return rule; }
+      }
+      // Elul isn't a Hebcal "holiday" event (it's a whole month, not a single day), so it can't be
+      // matched via lastEventItems like the others above - checked separately against the Hebrew month
+      // already tracked for other UI (currentHebrewMonth). Shofar-blowing all through Elul makes this a
+      // reasonable exception to the "one specific day" rule the rest of this list follows.
+      // No shofar emoji exists in Unicode - 🐏 (ram) is used instead since a shofar is a ram's horn,
+      // which also ties to Akeidat Yitzchak, thematically linked to this season of teshuva.
+      if(currentHebrewMonth && currentHebrewMonth.includes('אלול')) return { icon: '🐏', festive: true };
+      return null;
+    }
+    // V16: ambient (non-holiday) background mix - three layers, per מתי's spec:
+    //  1. Season (Gregorian month) - dominant, most of the icons.
+    //  2. Time of day (night/day) - a subtle secondary touch.
+    //  3. A Judaica motif (Star of David) - ONLY as Shabbat approaches (Friday), not shown otherwise.
+    // Holiday days (see HOLIDAY_ICON_RULES above) always take priority over all of this.
+    function getSeasonIcon() {
+      const month = new Date().getMonth(); // 0=Jan
+      if(month >= 8 && month <= 10) return '🍂';  // Sep-Nov
+      if(month === 11 || month <= 1) return '❄️'; // Dec-Feb
+      if(month >= 2 && month <= 4) return '🌸';   // Mar-May
+      return '🌻';                                 // Jun-Aug
+    }
+    function getTimeOfDayIcon() {
+      const hour = new Date().getHours();
+      return (hour >= 20 || hour < 6) ? '⭐' : '☀️';
+    }
+    function buildAmbientIcons() {
+      // Season is always on (the "dominant" layer, per מתי) - time-of-day and the Friday Judaica motif
+      // are each independently toggleable in settings (appSettings.ambientTimeOfDay/ambientShabbatMotif).
+      const icons = [getSeasonIcon(), getSeasonIcon(), getSeasonIcon()];
+      if(appSettings.ambientTimeOfDay !== false) icons.push(getTimeOfDayIcon());
+      if(appSettings.ambientShabbatMotif !== false && new Date().getDay() === 5) icons.push('✡️', '✡️'); // Friday - Shabbat approaching
+      return icons;
+    }
+    function applyHolidayBgIcon() {
+      const rule = getTodayHolidayIcon();
+      const container = document.getElementById('bgIconsContainer');
+      if(!container) return;
+      const isHoliday = rule && rule.festive;
+      const isSolemn = rule && !rule.festive;
+      const icons = isHoliday ? Array(6).fill(rule.icon) : (isSolemn ? [] : buildAmbientIcons());
+      const cacheKey = icons.join(',');
+      if(container.dataset.currentIcon === cacheKey) return; // avoid re-rendering every call with no change
+      container.innerHTML = '';
+      container.dataset.currentIcon = cacheKey;
+      icons.forEach(icon => {
+        let el = document.createElement('div');
+        el.className = 'bg-holiday-icon' + (isHoliday ? '' : ' ambient');
+        el.textContent = icon;
+        el.style.left = (Math.random() * 90) + 'vw'; el.style.animationDelay = (Math.random() * 10) + 's'; el.style.fontSize = (Math.random() * 3 + 2) + 'vw';
+        container.appendChild(el);
+      });
+    }
     function updateHebrewDateParts(date) {
       try {
         const parts = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' }).formatToParts(date);
@@ -2484,21 +3025,13 @@
           else if (p.type === 'month') { currentHebrewMonth = p.value; hebStr += p.value; }
           else if (p.type === 'year') { hebStr += toHebrewNumeral(parseInt(p.value.replace(/\D/g, ''), 10)); } else { hebStr += p.value; }
         }
-        document.getElementById('hebrewDate').textContent = hebStr; checkPersonalEvents(); updateOmerCounter(); updateDynamicStyles(); checkTzedakahMonthlyReset(); updateTalUmatarMashivHaruach(); updateDafYomiStreakLabel();
+        document.getElementById('hebrewDate').textContent = hebStr; checkPersonalEvents(); updateOmerCounter(); updateDynamicStyles(); checkTzedakahMonthlyReset(); updateTalUmatarMashivHaruach(); updateDafYomiStreakLabel(); updateBarMitzvahWidget();
 
-        // Holidays Background Animation
-        const monthThemes = { 'אלול': '🍎', 'תשרי': '🍯', 'כסלו': '🕎', 'טבת': '🕎', 'אדר': '🍷', 'אדר א': '🍷', 'אדר ב': '🎭', 'ניסן': '🌸' };
-        let holidayIcon = '';
-        for(let m in monthThemes) { if(currentHebrewMonth.includes(m)) holidayIcon = monthThemes[m]; }
-
-        const container = document.getElementById('bgIconsContainer');
-        if(holidayIcon && container.innerHTML === '') {
-            for(let i=0; i<6; i++) {
-                let el = document.createElement('div'); el.className = 'bg-holiday-icon'; el.textContent = holidayIcon;
-                el.style.left = (Math.random() * 90) + 'vw'; el.style.animationDelay = (Math.random() * 10) + 's'; el.style.fontSize = (Math.random() * 3 + 2) + 'vw';
-                container.appendChild(el);
-            }
-        } else if (!holidayIcon) { container.innerHTML = ''; }
+        // V16: per-holiday background animation - reads today's actual Hebcal holiday(s) instead of
+        // just the Hebrew month, so e.g. Sukkot gets its own icon distinct from the rest of Tishrei,
+        // and non-holiday days inside a "big" month (like most of Tishrei) show nothing rather than a
+        // whole-month generic icon. See HOLIDAY_ICON_RULES below for the full list and rationale.
+        applyHolidayBgIcon();
 
       } catch (e) { console.error('updateHebrewDateParts error:', e); }
     }
@@ -2751,6 +3284,7 @@
         updateDynamicStyles();
         applyNusach();
         highlightNextZman();
+        updateHalachicDayProgress();
         scaleClockToFit(); // the grid just went from empty to populated, which changes available vertical space
       } catch(e) {
         console.error('zmanim fetch failed:', e);
@@ -2768,33 +3302,53 @@
         // V10 BUGFIX: added i=on (Israel holiday scheme - 1-day Yom Tov, matches the rest of this
         // Israel-based app) which was missing before, silently defaulting to Diaspora 2-day rules.
         // Also added molad=on for the new Kiddush Levana feature.
-        const eRes = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&mod=on&F=on&s=on&c=on&i=on&molad=on&b=${appSettings.candleOffset || 20}&m=42&latitude=${lat}&longitude=${lng}&tzid=Asia/Jerusalem&start=${start}&end=${endStr}`);
+        // V16 BUGFIX: havdalah minutes used to be hardcoded to 42 regardless of what's set here,
+        // meaning "shabbat mode" (background, hidden buttons, countdown, and the alert-zman weekday
+        // gate) could turn off at a DIFFERENT moment than what the zmanim grid's own tzeit7083deg/
+        // tzeit72min cards showed for the same Shabbat - a real, confusing inconsistency. Now both read
+        // from the same appSettings.havdalahMinutes value.
+        const eRes = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&mod=on&F=on&s=on&c=on&i=on&molad=on&b=${appSettings.candleOffset || 20}&m=${appSettings.havdalahMinutes || 42}&latitude=${lat}&longitude=${lng}&tzid=Asia/Jerusalem&start=${start}&end=${endStr}`);
         const eData = await eRes.json();
-        if(eData && eData.items) lastEventItems = eData.items; // used by the calendar modal
+        if(eData && eData.items) { lastEventItems = eData.items; applyHolidayBgIcon(); applySpecialDayBanners(); } // used by the calendar modal; re-applied here since this is when lastEventItems actually becomes fresh for today
         if(eData && eData.items) { moladItems = eData.items.filter(i => i.category === 'molad' && i.molad && i.molad.instant); updateKiddushLevana(); }
         updateTalUmatarMashivHaruach();
 
         let dafYomi = 'לא זמין', dafYomiLink = '', parasha = 'אין פרשה', noTachanun = false, nextHoliday = 'אין חגים קרובים';
 
         if (eData && eData.items) {
-          const futureParasha = eData.items.find(i => i.date >= todayStr && i.category === 'parashat');
-          if(futureParasha) {
+          // V16 BUGFIX: this used to just grab the next item tagged 'parashat', which skips right past
+          // any Shabbat that a Yom Tov falls on (Hebcal correctly doesn't tag those with the regular
+          // weekly parasha, since it isn't read that week) - so checked a few days before a Shabbat like
+          // Rosh Hashana, this widget was showing the FOLLOWING week's parasha (e.g. "Ha'azinu") as if
+          // it were this week's, with nothing indicating the coming Shabbat is actually a Yom Tov with
+          // its own special reading instead. Fixed by first checking what's actually being read on the
+          // upcoming Shabbat itself (a Yom Tov's leyning, when Hebcal reports one on that exact date,
+          // takes priority over the regular cycle) instead of always searching forward for the next
+          // 'parashat'-tagged item.
+          const upcomingShabbat = new Date(todayObj);
+          upcomingShabbat.setDate(todayObj.getDate() + ((6 - todayObj.getDay() + 7) % 7));
+          const upcomingShabbatStr = upcomingShabbat.toISOString().split('T')[0];
+          const shabbatReading = eData.items.find(i => i.date === upcomingShabbatStr && i.category === 'parashat')
+            || eData.items.find(i => i.date === upcomingShabbatStr && i.category === 'holiday' && i.yomtov && i.leyning)
+            || eData.items.find(i => i.date >= todayStr && i.category === 'parashat'); // defensive fallback only
+          if(shabbatReading) {
+             const isSpecialReading = shabbatReading.category !== 'parashat';
              const dayOfWeek = todayObj.getDay();
-             let aliyahText = dayOfWeek < 6 ? ` (עליה ${ALIYOT_NAMES[dayOfWeek]})` : '';
-             parasha = futureParasha.hebrew + aliyahText;
+             let aliyahText = (!isSpecialReading && dayOfWeek < 6) ? ` (עליה ${ALIYOT_NAMES[dayOfWeek]})` : '';
+             parasha = shabbatReading.hebrew + (isSpecialReading ? ' (קריאה מיוחדת - לא פרשת השבוע)' : aliyahText);
              // V9: real Torah/Haftarah verse ranges from Hebcal's own leyning data (not a summary we
              // write ourselves - avoids ever presenting invented Torah content as authoritative).
-             if(futureParasha.leyning) {
-               const sefariaRef = (futureParasha.leyning.torah || '').replace(/:/g, '.').replace(/\s+/g, '_');
-               document.getElementById('parashaDetailsName').textContent = futureParasha.hebrew;
-               document.getElementById('parashaTorahRange').textContent = futureParasha.leyning.torah || '';
-               document.getElementById('parashaHaftarahRange').textContent = futureParasha.leyning.haftarah || '';
-               document.getElementById('parashaReadLink').href = sefariaRef ? `https://www.sefaria.org.il/${sefariaRef}` : futureParasha.link;
+             if(shabbatReading.leyning) {
+               const sefariaRef = (shabbatReading.leyning.torah || '').replace(/:/g, '.').replace(/\s+/g, '_');
+               document.getElementById('parashaDetailsName').textContent = shabbatReading.hebrew;
+               document.getElementById('parashaTorahRange').textContent = shabbatReading.leyning.torah || '';
+               document.getElementById('parashaHaftarahRange').textContent = shabbatReading.leyning.haftarah || '';
+               document.getElementById('parashaReadLink').href = sefariaRef ? `https://www.sefaria.org.il/${sefariaRef}` : toHebrewSefariaLink(shabbatReading.link);
                document.getElementById('parashaDetails').style.display = 'block';
              }
-             const parashaSefariaLink = futureParasha.leyning && futureParasha.leyning.torah
-               ? `https://www.sefaria.org.il/${futureParasha.leyning.torah.replace(/:/g, '.').replace(/\s+/g, '_')}`
-               : futureParasha.link;
+             const parashaSefariaLink = shabbatReading.leyning && shabbatReading.leyning.torah
+               ? `https://www.sefaria.org.il/${shabbatReading.leyning.torah.replace(/:/g, '.').replace(/\s+/g, '_')}`
+               : toHebrewSefariaLink(shabbatReading.link);
              document.getElementById('parashaVal').href = parashaSefariaLink || '#';
           }
 
@@ -2805,7 +3359,7 @@
           }
 
           eData.items.filter(i => i.date === todayStr).forEach(i => {
-            if(i.category === 'dafyomi') { dafYomi = i.hebrew; dafYomiLink = i.link || ''; }
+            if(i.category === 'dafyomi') { dafYomi = i.hebrew; dafYomiLink = toHebrewSefariaLink(i.link) || ''; }
             if(i.category === 'holiday' || i.category === 'roshchodesh' || i.category === 'minor') noTachanun = true;
           });
 
@@ -3081,8 +3635,23 @@
               playChime();
               let l = (k==='sunset') ? 'שקיעת החמה' : (k==='sofZmanTfilla' ? 'סוף זמן תפילה' : 'סוף זמן קריאת שמע');
               speakHebrew('שים לב, ' + l + ' בעוד חמש עשרה דקות');
+              // V16: a Notification alongside the voice/chime - if the browser silently blocks
+              // unattended audio (common on a kiosk left untouched for hours - see unlockAudioAndSpeech
+              // above), this is a second, non-audio channel for the same reminder.
+              if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: l + ' בעוד 15 דקות' }); }
               alertedZmanim[todayKey] = true;
             }
+            }
+            // V17: a second, more urgent alert 5 minutes before sof zman krias shema specifically - the
+            // most time-critical of these three, since it can't be made up once missed.
+            if(k === 'sofZmanShma' && diffMins > 4 && diffMins <= 5.5) {
+              const urgentKey = now.toDateString() + '_' + k + '_urgent';
+              if(!alertedZmanim[urgentKey]) {
+                playChime();
+                speakHebrew('דחוף! סוף זמן קריאת שמע בעוד חמש דקות בלבד');
+                if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('⚠️ דחוף - דשבורד יהודי', { body: 'סוף זמן קריאת שמע בעוד 5 דקות בלבד' }); }
+                alertedZmanim[urgentKey] = true;
+              }
             }
           }
         });
@@ -3098,6 +3667,7 @@
             if(!alertedZmanim[candleKey]) {
               playChime();
               speakHebrew('שים לב, הדלקת נרות בעוד חמש עשרה דקות');
+              if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: 'הדלקת נרות בעוד 15 דקות' }); }
               alertedZmanim[candleKey] = true;
             }
           }
@@ -3119,6 +3689,15 @@
       const root = document.documentElement;
       if (hour >= 6 && hour < 17) root.style.setProperty('--theme-color', '#1a365d'); else if (hour >= 17 && hour < 20) root.style.setProperty('--theme-color', '#4a1c1c'); else root.style.setProperty('--theme-color', '#0a0a0a');
 
+      // V16 BUGFIX: "צאת שבת" (tzeit7083deg/tzeit72min) is really just "nightfall" astronomically, so
+      // Hebcal returns a value for it every single day - not only on an actual Shabbat/Yom Tov. This
+      // loop used to pulse/alert those cards purely from the clock approaching that time of day, with
+      // no check that today is actually Shabbat/Yom Tov - so on an ordinary weekday, right around the
+      // real Havdalah-equivalent hour, it lit up as if Shabbat were about to end. Now gated on the app
+      // actually being in an active Shabbat/Yom-Tov period for those two keys specifically; every other
+      // zman (sof zman shma, tefilla, sunset, etc.) is legitimately daily and keeps alerting as before.
+      const isShabbatActiveNow = document.body.classList.contains('shabbat-active') || document.body.classList.contains('shabbat-advanced');
+      const TZEIT_KEYS = ['tzeit7083deg', 'tzeit72min'];
       if (zmanimDataCache) {
         ZMANIM_KEYS.forEach(k => {
           let zman; if (k.calc && zmanimDataCache.sunset) zman = k.calc(zmanimDataCache); else if (zmanimDataCache[k.key]) zman = new Date(zmanimDataCache[k.key]);
@@ -3127,7 +3706,8 @@
             if (el) {
               const minsLeft = (zman - now)/60000;
               const titleEl = el.querySelector('.zman-title');
-              if (minsLeft > 0 && minsLeft <= 15) {
+              const eligible = !TZEIT_KEYS.includes(k.key) || isShabbatActiveNow;
+              if (eligible && minsLeft > 0 && minsLeft <= 15) {
                 el.classList.add('alert-zman');
                 // V10: a live countdown ("עוד X דק'") on the card itself, not just a color pulse.
                 if (titleEl && !titleEl.dataset.orig) titleEl.dataset.orig = titleEl.textContent;
@@ -3293,7 +3873,7 @@
         setFlipVal('s1', String(now.getSeconds()).padStart(2,'0')[0]); setFlipVal('s2', String(now.getSeconds()).padStart(2,'0')[1]);
         const todayStr = now.toDateString();
         if (todayStr !== lastDateStr) { lastDateStr = todayStr; checkResetTasks(); updateHebrewDateParts(now); updateHalacha(); document.getElementById('gregorianDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); fetchAllData(currentLat, currentLng); updateDutyWidget(); checkPrepReminder(); }
-        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); }
+        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); applyHolidayBgIcon(); updateHalachicDayProgress(); checkOmerNightReminder(now); checkShabbatReminderBanners(now); }
 
         checkResetShabbatTasks();
 
@@ -3368,7 +3948,22 @@
       const search = document.getElementById('taskSearchInput');
       if(search) search.focus();
     });
-    window.addEventListener('click', () => { if(!audioContext && appSettings.audioAlerts) audioContext = new (window.AudioContext || window.webkitAudioContext)(); });
+    // V16: broadened from 'click' alone to also unlock on touch/keyboard interaction, and now also
+    // "primes" speechSynthesis with a near-silent utterance. Browsers gate audio/speech that isn't
+    // triggered by a recent user gesture - on a kiosk display that's rarely touched after launch, the
+    // zman/candle-lighting voice reminders (fired minutes or hours later, from a timer, not a click)
+    // could silently fail to produce sound even though the code path ran correctly. Priming once here
+    // is the standard workaround; it does not by itself guarantee every browser allows it, which is why
+    // the Notification fallback below was added as a second, non-audio channel for the same alerts.
+    let audioUnlocked = false;
+    function unlockAudioAndSpeech() {
+      if(audioUnlocked) return; audioUnlocked = true;
+      if(!audioContext && appSettings.audioAlerts) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if('speechSynthesis' in window) {
+        try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); } catch(e) {}
+      }
+    }
+    ['click', 'touchstart', 'keydown'].forEach(evt => window.addEventListener(evt, unlockAudioAndSpeech, { once: true }));
 
     const canvas = document.getElementById('equalizerCanvas'); const ctx = canvas.getContext('2d');
     function resizeCanvas() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; } window.addEventListener('resize', resizeCanvas); resizeCanvas();
