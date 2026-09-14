@@ -2823,6 +2823,13 @@
       const mevarchim = todayItems.find(i => i.category === 'mevarchim');
       if(mevarchim) messages.push(`שבת מברכים: ${mevarchim.hebrew}${mevarchim.memo ? ' - ' + mevarchim.memo : ''}`);
 
+      // V17 BUGFIX: the fast-day info (below, updateFastDayWidget) only ever rendered inside the
+      // "תורה והלכה" modal, which almost nobody opens just to check if today's a fast - reported live
+      // on Tzom Gedaliah 2026-09-14 as "no mention of it anywhere". Now also surfaced right here on the
+      // main-dashboard banner, which is always visible without opening anything.
+      const fastItem = todayItems.find(i => /^(Tzom|Ta[’']anit|Asara|Tish[’']a)/.test(i.title || ''));
+      if(fastItem) messages.push(`🕯️ היום ${fastItem.hebrew} - יום צום`);
+
       // Yizkor days - fixed, undisputed list (Israel practice, matching this app's i=on setting).
       const YIZKOR_TITLES = ['Yom Kippur', 'Shmini Atzeret', 'Pesach VII', 'Shavuot'];
       if(todayItems.some(i => YIZKOR_TITLES.includes(i.title))) {
@@ -3358,9 +3365,16 @@
             nextHoliday = (daysAway === 1) ? `${nextHol.hebrew} (מחר)` : `${nextHol.hebrew} (בעוד ${daysAway} ימים)`;
           }
 
+          // V17 BUGFIX: fast days (Tzom Gedaliah, Asara B'Tevet, Ta'anit Esther, Tzom Tammuz, Tish'a
+          // B'Av) are category:'holiday' in Hebcal's data too, same as actual Yamim Tovim - so this was
+          // wrongly marking every fast day as a no-Tachanun day. It's the opposite: Tachanun (and
+          // Selichot, cascading from the same flag below) IS said on a fast day - fast days are
+          // specifically NOT among the Tachanun-omitted days. Verified live against Tzom Gedaliah
+          // 2026-09-14, which was showing "לא אומרים" before this fix.
+          const isFastDayTitle = t => /^(Tzom|Ta[’']anit|Asara|Tish[’']a)/.test(t || '');
           eData.items.filter(i => i.date === todayStr).forEach(i => {
             if(i.category === 'dafyomi') { dafYomi = i.hebrew; dafYomiLink = toHebrewSefariaLink(i.link) || ''; }
-            if(i.category === 'holiday' || i.category === 'roshchodesh' || i.category === 'minor') noTachanun = true;
+            if((i.category === 'holiday' || i.category === 'roshchodesh' || i.category === 'minor') && !isFastDayTitle(i.title)) noTachanun = true;
           });
 
           // New in V1: build shabbat/yom-tov entry-exit intervals from real candle-lighting & havdalah
