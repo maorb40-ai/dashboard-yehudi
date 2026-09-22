@@ -317,6 +317,10 @@
 
     .info-ribbon { display: flex; gap: 1vw; background: var(--card-bg); border: 1px solid var(--gold); border-radius: 1vw; padding: 1.2vh 2vw; width: 100%; justify-content: space-around; box-shadow: 0 0 15px rgba(245, 158, 11, 0.15); backdrop-filter: blur(10px); }
     .info-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    /* V18: auto-hides the Selichot ribbon item outside its season (Elul through Erev Yom Kippur) -
+       see the selichotItem.classList.toggle call in fetchAllData for why this is a class instead of
+       an inline style. */
+    #ribbonItem-selichot.selichot-out-of-season { display: none !important; }
     .info-item .label { font-size: 0.85vw; color: var(--muted-text); font-weight: 600; }
     .info-item .value { font-size: 1.2vw; font-weight: 800; color: var(--text-color); text-decoration: none; }
     .link-val { color: var(--cyan) !important; cursor: pointer; transition: 0.2s; }
@@ -1224,7 +1228,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-22.1';
+    const APP_VERSION = '2026-09-22.2';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -3472,6 +3476,19 @@
         if (todayObj.getDay() !== 6 && (inElul || inAseretYemeiTeshuva)) {
           sVal.textContent = 'אומרים'; sVal.className = 'value tachanun-yes';
         } else { sVal.textContent = 'לא אומרים'; sVal.className = 'value tachanun-no'; }
+
+        // V18: מתי asked that the whole "סליחות" row auto-hide once the season is over for the year
+        // (not just show "לא אומרים" forever until next Elul) and reappear on its own when relevant
+        // again - checked here (runs daily via the date-change refresh) rather than once, so it turns
+        // back on by itself next Elul with no manual step. Uses a CSS class with !important instead of
+        // toggling inline style directly, because COMPONENT_TOGGLES' own restore logic (measureClockBaseline,
+        // runs on every clock-rescale) unconditionally sets this element's inline display based only on
+        // מתי's manual hide setting - a plain inline-style toggle here would just get overwritten by that
+        // on the next resize/rescale. The class layers on top of whatever that logic sets, so the two
+        // "hidden" reasons (out of season vs. user hid it manually in settings) stay independent of each
+        // other and neither one can silently undo the other.
+        const selichotItem = document.getElementById('ribbonItem-selichot');
+        if (selichotItem) selichotItem.classList.toggle('selichot-out-of-season', !(inElul || inAseretYemeiTeshuva));
 
         evaluateShabbatMode();
       } catch(e) {
