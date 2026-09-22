@@ -178,11 +178,20 @@
        them (the location-toggle buttons visibly overflowed their own pill shape). The header row can
        now grow if buttons wrap to a second line, instead of clipping/squishing them. */
     .app-layout { position: relative; z-index: 1; display: grid; grid-template-rows: minmax(8vh, auto) 1fr 5vh; height: 92vh; width: 100vw; transition: all 1s ease; }
+    /* V18 BUGFIX: only `body` had the dvh/dvw dynamic-viewport override (added for the mobile
+       toolbar-collapse bug) - .app-layout itself was still sized against static vh/vw, which on a
+       desktop browser is measured against the viewport at the moment the real Fullscreen API
+       transition STARTS, not the settled post-transition size. On some Windows/Chrome setups that
+       transition briefly leaves vh larger or smaller than the final fullscreen viewport, clipping
+       the layout against body's overflow:hidden until something else triggers a reflow. dvh tracks
+       the actual current viewport continuously, so it self-corrects instead of needing a resize. */
+    .app-layout { height: 92dvh; width: 100dvw; }
     /* V15: the ticker + bottom equalizer dock are shown only in real fullscreen (kiosk) mode -
        outside fullscreen their reserved rows/strip are dropped so the zmanim grid reclaims the
        space instead of leaving an empty gap (same root cause as the old V12 ticker-overlap bug,
        fixed here by not reserving the space at all when those elements aren't shown). */
     body.no-fs-extras .app-layout { grid-template-rows: minmax(8vh, auto) 1fr; height: 100vh; }
+    body.no-fs-extras .app-layout { height: 100dvh; }
 
     /* SCREENSAVER */
     body.screensaver-active .app-layout, body.screensaver-active .bg-texture { opacity: 0.1; transition: opacity 4s ease; }
@@ -1202,6 +1211,14 @@
   </dialog>
 
   <script>
+    // V18 BUGFIX: new Date().toISOString().split('T')[0] returns the UTC date, not the local
+    // (Israel) date - Israel is UTC+2/+3, so from local midnight until ~2-3AM the UTC date is
+    // still YESTERDAY. Every "todayStr"/date-key comparison against Hebcal's local-date items
+    // (zmanim fetch date, holiday/fast/parasha lookups, special-day banners, calendar modal) used
+    // this pattern, so the whole dashboard silently showed the WRONG day's data every night during
+    // that window - this app runs unattended as a kiosk display, so it's hit every single night.
+    // Fixed with a single local-date helper used everywhere "today" is turned into a YYYY-MM-DD key.
+    function localDateStr(d) { d = d || new Date(); const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
     const DEFAULT_PASUK_TEXT = '"וְהַבּוֹטֵחַ בַּה\' חֶסֶד יְסוֹבְבֶנּוּ"';
     const DEFAULT_EMERGENCY_CONTACTS = [ { name: 'מגן דוד אדום', phone: '101' }, { name: 'משטרה', phone: '100' }, { name: 'כבאות והצלה', phone: '102' } ];
     let appSettings = JSON.parse(localStorage.getItem('dashSettings')) || { autoShabbat: true, audioAlerts: true, personalEvents: [], age: 30, newsSource: 'rotter', candleOffset: 20, screensaverEnabled: false, hiddenComponents: [], reminderDaysAhead: 2, pasukText: DEFAULT_PASUK_TEXT, nusach: 'sephardi', emergencyContacts: DEFAULT_EMERGENCY_CONTACTS.slice() };
@@ -1861,7 +1878,13 @@
       if (document.fullscreenElement && screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(() => {});
       }
-      applyFullscreenAutoVisibility();
+      // V18 BUGFIX: measuring immediately on fullscreenchange can run before the browser has
+      // finished resizing the viewport to its final fullscreen dimensions (seen intermittently on
+      // desktop - "cut off" layout right after entering fullscreen) - a couple of animation frames
+      // is enough to land after the resize actually settles, and a follow-up call a bit later is a
+      // safety net for the slower cases without waiting long enough to be visible.
+      requestAnimationFrame(() => requestAnimationFrame(applyFullscreenAutoVisibility));
+      setTimeout(applyFullscreenAutoVisibility, 300);
     });
     applyFullscreenAutoVisibility();
 
@@ -2020,7 +2043,7 @@
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.href = url; a.download = `dashboard-backup-${localDateStr()}.json`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       localStorage.setItem('lastBackupExport', new Date().toISOString());
@@ -2200,7 +2223,7 @@
       const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `משימות-ופתקים-${new Date().toISOString().split('T')[0]}.txt`;
+      a.href = url; a.download = `משימות-ופתקים-${localDateStr()}.txt`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
@@ -2315,7 +2338,7 @@
     // display. ===
     function openDatePickerModal() {
       const input = document.getElementById('zmanimDateInput');
-      if(!input.value) input.value = new Date().toISOString().split('T')[0];
+      if(!input.value) input.value = localDateStr();
       document.getElementById('datePickerModal').showModal();
       loadZmanimForDate();
     }
@@ -2341,7 +2364,7 @@
     // V15: one-click "tomorrow's zmanim" shortcut on top of the existing date-picker infrastructure.
     function showTomorrowZmanim() {
       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-      document.getElementById('zmanimDateInput').value = tomorrow.toISOString().split('T')[0];
+      document.getElementById('zmanimDateInput').value = localDateStr(tomorrow);
       loadZmanimForDate();
     }
 
@@ -2442,7 +2465,7 @@
       const content = document.getElementById('calendarModalContent');
       document.getElementById('calendarModal').showModal();
       if(!lastEventItems.length) { content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">אין נתונים זמינים כרגע. נסה לרענן בעוד רגע.</p>'; return; }
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDateStr();
       const upcoming = lastEventItems
         .filter(i => i.date >= todayStr && !CALENDAR_EXCLUDED_CATEGORIES.includes(i.category))
         .sort((a,b) => a.date.localeCompare(b.date));
@@ -2552,7 +2575,7 @@
       const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `${currentShoppingList}-${new Date().toISOString().split('T')[0]}.txt`;
+      a.href = url; a.download = `${currentShoppingList}-${localDateStr()}.txt`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
@@ -2807,7 +2830,7 @@
     function applySpecialDayBanners() {
       const banner = document.getElementById('specialDayBanner');
       if(!banner) return;
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDateStr();
       const todayItems = lastEventItems.filter(i => i.date === todayStr);
       const messages = [];
 
@@ -2966,7 +2989,7 @@
       return url.replace(/https?:\/\/(www\.)?sefaria\.org\//, 'https://www.sefaria.org.il/');
     }
     function getTodayHolidayIcon() {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDateStr();
       for(const item of lastEventItems) {
         if(item.date !== todayStr || (item.category !== 'holiday' && item.category !== 'roshchodesh')) continue;
         for(const rule of HOLIDAY_ICON_RULES) { if(rule.match(item.title || '')) return rule; }
@@ -3182,7 +3205,7 @@
       const content = document.getElementById('cityCompareContent');
       if(!selected.length) { content.innerHTML = '<p style="text-align:center; color:var(--muted-text);">בחר לפחות עיר אחת.</p>'; return; }
       content.innerHTML = 'טוען...';
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDateStr();
       try {
         const results = await Promise.all(selected.map(c =>
           fetch(`https://www.hebcal.com/zmanim?cfg=json&latitude=${c.lat}&longitude=${c.lng}&tzid=Asia/Jerusalem&date=${todayStr}`).then(r => r.json())
@@ -3272,7 +3295,7 @@
     async function fetchAllData(lat, lng) {
       currentLat = lat; currentLng = lng;
       const loader = document.getElementById('apiLoader'); if(loader) loader.style.display = 'block';
-      const todayObj = new Date(); const todayStr = todayObj.toISOString().split('T')[0];
+      const todayObj = new Date(); const todayStr = localDateStr(todayObj);
 
       // --- Zmanim (own try/catch: a failure here no longer blocks events/weather/news) ---
       try {
@@ -3305,7 +3328,7 @@
         // last day of the PREVIOUS month - so it was actually only fetching ~1 month ahead (less, near
         // month-end) instead of the intended ~2 months. That's why the molad lookup above sometimes
         // came back empty. +3 with day 0 correctly lands on the last day of (current month + 2).
-        const start = todayStr; const endObj = new Date(todayObj.getFullYear(), todayObj.getMonth() + 3, 0); const endStr = endObj.toISOString().split('T')[0];
+        const start = todayStr; const endObj = new Date(todayObj.getFullYear(), todayObj.getMonth() + 3, 0); const endStr = localDateStr(endObj);
         // V10 BUGFIX: added i=on (Israel holiday scheme - 1-day Yom Tov, matches the rest of this
         // Israel-based app) which was missing before, silently defaulting to Diaspora 2-day rules.
         // Also added molad=on for the new Kiddush Levana feature.
@@ -3334,7 +3357,7 @@
           // 'parashat'-tagged item.
           const upcomingShabbat = new Date(todayObj);
           upcomingShabbat.setDate(todayObj.getDate() + ((6 - todayObj.getDay() + 7) % 7));
-          const upcomingShabbatStr = upcomingShabbat.toISOString().split('T')[0];
+          const upcomingShabbatStr = localDateStr(upcomingShabbat);
           const shabbatReading = eData.items.find(i => i.date === upcomingShabbatStr && i.category === 'parashat')
             || eData.items.find(i => i.date === upcomingShabbatStr && i.category === 'holiday' && i.yomtov && i.leyning)
             || eData.items.find(i => i.date >= todayStr && i.category === 'parashat'); // defensive fallback only
@@ -3926,7 +3949,7 @@
               // holiday item already fetched for the same date, no extra API call.
               let occasionLabel = 'שבת';
               if(next.start.getDay() !== 5 && lastEventItems && lastEventItems.length) {
-                const nextDateStr = next.start.toISOString().split('T')[0];
+                const nextDateStr = localDateStr(next.start);
                 const matchingHoliday = lastEventItems.find(i => i.category === 'holiday' && i.date === nextDateStr);
                 if(matchingHoliday) occasionLabel = matchingHoliday.hebrew;
               }
