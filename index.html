@@ -1078,12 +1078,13 @@
           <div class="event-inputs"><span>הדלקת נרות כמה דקות לפני השקיעה: </span><input type="number" id="candleOffsetInput" min="10" max="60" style="width:80px;" placeholder="20"></div>
           <div class="event-inputs"><span>יציאת שבת/חג (לפי איזו שיטה ה"מצב שבת" של האפליקציה נכבה): </span>
             <select id="havdalahMinutesSelect">
-              <option value="42">42 דקות אחרי השקיעה</option>
+              <option value="20">20 דקות אחרי השקיעה (מנהג עדות המזרח - הרב עובדיה יוסף)</option>
+              <option value="42">42 דקות אחרי השקיעה (מג"א)</option>
               <option value="50">50 דקות אחרי השקיעה</option>
               <option value="72">72 דקות אחרי השקיעה (ר"ת)</option>
             </select>
           </div>
-          <div class="settings-hint">קובע מתי בדיוק "מצב שבת" (הרקע, הכפתורים המוסתרים, הספירה לאחור) נכבה בפועל - בעבר זה היה קבוע על 42 דקות בלי קשר למה שנבחר כאן, מה שיצר פער בין הזמן שמוצג בטבלת הזמנים (72 דק'/שיטה רגילה) לזמן שהאפליקציה בפועל השתמשה בו. עכשיו שניהם עקביים לפי הבחירה שלך.</div>
+          <div class="settings-hint">קובע מתי בדיוק "מצב שבת" (הרקע, הכפתורים המוסתרים, הספירה לאחור) נכבה בפועל. <b>V18 BUGFIX:</b> ברירת המחדל הייתה קבועה על 42 דקות (שיטה אשכנזית/מחמירה) גם כשהנוסח שנבחר הוא עדות המזרח (ברירת המחדל של האפליקציה) - בעוד שהכוכבית ⭐ בטבלת הזמנים עבור עדות המזרח/תימן מדגישה את "צאת שבת (שיטה רגילה)" שקרובה בפועל ל-20 דקות, לא 42. עכשיו ברירת המחדל היא 20 דקות (מקובל כמנהג עדות המזרח, הרב עובדיה יוסף), ואפשר לבחור אחרת - כמו בכל מקום אחר באפליקציה, זו נוהג רווח ולא פסק הלכה מחייב, ורצוי לבדוק מול הרב הקהילה שלך.</div>
         </div>
         <div class="setting-group"><label>צ'ק-ליסטים אוטומטיים לשבת</label>
           <div class="settings-hint" style="margin-bottom:0.5vh;">רשימה שמופיעה כבאנר בדיוק כשצריך - כל פריט בשורה נפרדת.</div>
@@ -1228,7 +1229,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-22.2';
+    const APP_VERSION = '2026-09-22.3';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1262,7 +1263,7 @@
     if(!appSettings.dndUntil) appSettings.dndUntil = 0;
     if(!appSettings.newsSource) appSettings.newsSource = 'rotter';
     if(!appSettings.candleOffset) appSettings.candleOffset = 20;
-    if(!appSettings.havdalahMinutes) appSettings.havdalahMinutes = 42;
+    if(!appSettings.havdalahMinutes) appSettings.havdalahMinutes = 20;
     if(!appSettings.preShabbatChecklist) appSettings.preShabbatChecklist = ['טלפון', 'פלטה', 'מעלית שבת'];
     if(!appSettings.havdalahChecklist) appSettings.havdalahChecklist = ['בשמים', 'נר הבדלה', 'יין'];
     if(appSettings.ambientTimeOfDay === undefined) appSettings.ambientTimeOfDay = true;
@@ -1977,7 +1978,7 @@
       document.getElementById('screensaverToggle').checked = appSettings.screensaverEnabled;
       document.getElementById('ageInput').value = appSettings.age || 30;
       document.getElementById('candleOffsetInput').value = appSettings.candleOffset || 20;
-      document.getElementById('havdalahMinutesSelect').value = appSettings.havdalahMinutes || 42;
+      document.getElementById('havdalahMinutesSelect').value = appSettings.havdalahMinutes || 20;
       document.getElementById('preShabbatChecklistInput').value = (appSettings.preShabbatChecklist || []).join('\n');
       document.getElementById('havdalahChecklistInput').value = (appSettings.havdalahChecklist || []).join('\n');
       document.getElementById('reminderDaysAheadInput').value = appSettings.reminderDaysAhead;
@@ -2016,7 +2017,7 @@
       appSettings.screensaverEnabled = document.getElementById('screensaverToggle').checked;
       appSettings.age = document.getElementById('ageInput').value || 30;
       appSettings.candleOffset = parseInt(document.getElementById('candleOffsetInput').value) || 20;
-      appSettings.havdalahMinutes = parseInt(document.getElementById('havdalahMinutesSelect').value) || 42;
+      appSettings.havdalahMinutes = parseInt(document.getElementById('havdalahMinutesSelect').value) || 20;
       appSettings.preShabbatChecklist = document.getElementById('preShabbatChecklistInput').value.split('\n').map(s => s.trim()).filter(Boolean);
       appSettings.havdalahChecklist = document.getElementById('havdalahChecklistInput').value.split('\n').map(s => s.trim()).filter(Boolean);
       appSettings.reminderDaysAhead = parseInt(document.getElementById('reminderDaysAheadInput').value);
@@ -3367,7 +3368,7 @@
         // gate) could turn off at a DIFFERENT moment than what the zmanim grid's own tzeit7083deg/
         // tzeit72min cards showed for the same Shabbat - a real, confusing inconsistency. Now both read
         // from the same appSettings.havdalahMinutes value.
-        const eRes = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&mod=on&F=on&s=on&c=on&i=on&molad=on&b=${appSettings.candleOffset || 20}&m=${appSettings.havdalahMinutes || 42}&latitude=${lat}&longitude=${lng}&tzid=Asia/Jerusalem&start=${start}&end=${endStr}`);
+        const eRes = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&mod=on&F=on&s=on&c=on&i=on&molad=on&b=${appSettings.candleOffset || 20}&m=${appSettings.havdalahMinutes || 20}&latitude=${lat}&longitude=${lng}&tzid=Asia/Jerusalem&start=${start}&end=${endStr}`);
         const eData = await eRes.json();
         if(eData && eData.items) { lastEventItems = eData.items; applyHolidayBgIcon(); applySpecialDayBanners(); } // used by the calendar modal; re-applied here since this is when lastEventItems actually becomes fresh for today
         if(eData && eData.items) { moladItems = eData.items.filter(i => i.category === 'molad' && i.molad && i.molad.instant); updateKiddushLevana(); }
