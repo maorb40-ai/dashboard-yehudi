@@ -470,6 +470,7 @@
         <button class="btn" id="btnCalendar" style="background: linear-gradient(45deg, #059669, #10b981); color: white; margin-left:1vw;" onclick="openCalendarModal()">📅 לוח שנה</button>
         <button class="btn" id="btnPersonalDates" style="background: linear-gradient(45deg, #be185d, #db2777); color: white; margin-left:1vw;" onclick="openPersonalDatesModal()">📋 תאריכים אישיים</button>
         <button class="btn" id="btnFullscreen" style="background: linear-gradient(45deg, #334155, #1e293b); color: white; margin-left:1vw;" onclick="toggleFullscreen()">⛶ מסך מלא</button>
+        <button class="btn" id="btnCheckVersion" style="background: linear-gradient(45deg, #64748b, #475569); color: white; margin-left:1vw;" onclick="checkForUpdate()">🔄 בדוק גרסה עדכנית</button>
         <button class="btn" id="btnInstallPWA" style="background: linear-gradient(45deg, #7c3aed, #a855f7); color: white; margin-left:1vw; display:none;" onclick="installPWA()">📲 התקן אפליקציה</button>
         <button class="btn" id="btnQR" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; margin-left:1vw;" onclick="openQrModal()">📱 QR</button>
         <button class="btn" id="btnShabbatTimes" style="background: linear-gradient(45deg, #b45309, #d97706); color: white; margin-left:1vw;" onclick="openShabbatTimesModal()">🕯️ זמני שבת</button>
@@ -1219,6 +1220,30 @@
     // that window - this app runs unattended as a kiosk display, so it's hit every single night.
     // Fixed with a single local-date helper used everywhere "today" is turned into a YYYY-MM-DD key.
     function localDateStr(d) { d = d || new Date(); const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+
+    // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
+    // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
+    // so checking it doesn't mean re-downloading/parsing this whole page).
+    const APP_VERSION = '2026-09-22.1';
+    async function checkForUpdate() {
+      const btn = document.getElementById('btnCheckVersion');
+      const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
+      try {
+        const res = await fetch('https://maorb40-ai.github.io/dashboard-yehudi/version.json?t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.version && data.version !== APP_VERSION) {
+          if (confirm(`יש גרסה חדשה באתר (${data.version}) - הגרסה שרצה כרגע כאן: ${APP_VERSION}.\n\nלרענן עכשיו כדי לטעון אותה?`)) {
+            location.reload();
+          }
+        } else {
+          alert(`✅ אתה על הגרסה העדכנית (${APP_VERSION}).`);
+        }
+      } catch(e) {
+        alert('שגיאה בבדיקת גרסה - ודא שיש חיבור לאינטרנט ונסה שוב.');
+      } finally {
+        btn.textContent = original; btn.disabled = false;
+      }
+    }
     const DEFAULT_PASUK_TEXT = '"וְהַבּוֹטֵחַ בַּה\' חֶסֶד יְסוֹבְבֶנּוּ"';
     const DEFAULT_EMERGENCY_CONTACTS = [ { name: 'מגן דוד אדום', phone: '101' }, { name: 'משטרה', phone: '100' }, { name: 'כבאות והצלה', phone: '102' } ];
     let appSettings = JSON.parse(localStorage.getItem('dashSettings')) || { autoShabbat: true, audioAlerts: true, personalEvents: [], age: 30, newsSource: 'rotter', candleOffset: 20, screensaverEnabled: false, hiddenComponents: [], reminderDaysAhead: 2, pasukText: DEFAULT_PASUK_TEXT, nusach: 'sephardi', emergencyContacts: DEFAULT_EMERGENCY_CONTACTS.slice() };
@@ -1451,6 +1476,7 @@
       { key: 'calendarBtn', label: 'כפתור לוח שנה', ids: ['btnCalendar'] },
       { key: 'personalDatesBtn', label: 'כפתור תאריכים אישיים', ids: ['btnPersonalDates'] },
       { key: 'fullscreenBtn', label: 'כפתור מסך מלא', ids: ['btnFullscreen'] },
+      { key: 'checkVersionBtn', label: 'כפתור בדוק גרסה עדכנית', ids: ['btnCheckVersion'] },
       { key: 'qrBtn', label: 'כפתור QR', ids: ['btnQR'] },
       { key: 'shabbatTimesBtn', label: 'כפתור זמני שבת', ids: ['btnShabbatTimes'] },
       { key: 'datePickerBtn', label: 'כפתור זמנים לתאריך', ids: ['btnDatePicker'] },
@@ -3414,6 +3440,14 @@
 
         if (todayObj.getDay() === 6 || (todayObj.getDay() === 5 && todayObj.getHours() >= 12)) noTachanun = true;
         if (currentHebrewMonth && currentHebrewMonth.includes('ניסן')) noTachanun = true;
+        // V18 BUGFIX: Tachanun is omitted for the entire month of Tishrei EXCEPT the ordinary weekdays
+        // of Aseret Yemei Teshuva (3-9 Tishrei, where it IS said) - same "whole month" pattern already
+        // used above for Nissan. Days 1-2 (Rosh Hashana) and 10+ (Yom Kippur through the rest of the
+        // month - Sukkot, Shmini Atzeret, Simchat Torah, and the ordinary days around them) are all
+        // no-Tachanun. Previously this only fired when Hebcal flagged TODAY itself as a holiday-category
+        // item, which missed the ordinary days between Yom Kippur and Sukkot (e.g. 11-14 Tishrei) -
+        // found live the day after Yom Kippur 2026 (11 Tishrei), which was wrongly showing "אומרים".
+        if (currentHebrewMonth && currentHebrewMonth.includes('תשרי') && (currentHebrewDayNum <= 2 || currentHebrewDayNum >= 10)) noTachanun = true;
 
         const dafYomiEl = document.getElementById('dafYomiVal');
         dafYomiEl.textContent = dafYomi;
@@ -3424,8 +3458,18 @@
         const tVal = document.getElementById('tachanunVal');
         if (noTachanun) { tVal.textContent = 'לא אומרים'; tVal.className = 'value tachanun-no'; } else { tVal.textContent = 'אומרים'; tVal.className = 'value tachanun-yes'; }
 
+        // V18 BUGFIX: this used to piggyback on `!noTachanun`, which is backwards - Selichot (עדות
+        // המזרח: said daily from Rosh Chodesh Elul through Erev Yom Kippur, except Shabbat) actually
+        // overlaps exactly with Aseret Yemei Teshuva, which is precisely when Tachanun IS said (so
+        // !noTachanun was true then) - and once the Tachanun fix above makes Tachanun resume after Yom
+        // Kippur, `!noTachanun` would go back to true for the rest of Tishrei too, wrongly showing
+        // Selichot as still being said for the rest of the month when the Selichot season is actually
+        // over for the year the moment Yom Kippur passes. Computed independently instead, directly from
+        // the Hebrew day-of-month (Rosh Hashana=1-2 Tishrei and Yom Kippur=10 Tishrei never change).
         const sVal = document.getElementById('selichotVal');
-        if (currentHebrewMonth && (currentHebrewMonth.includes('אלול') || (currentHebrewMonth.includes('תשרי') && !noTachanun))) {
+        const inElul = currentHebrewMonth && currentHebrewMonth.includes('אלול');
+        const inAseretYemeiTeshuva = currentHebrewMonth && currentHebrewMonth.includes('תשרי') && currentHebrewDayNum >= 3 && currentHebrewDayNum <= 9;
+        if (todayObj.getDay() !== 6 && (inElul || inAseretYemeiTeshuva)) {
           sVal.textContent = 'אומרים'; sVal.className = 'value tachanun-yes';
         } else { sVal.textContent = 'לא אומרים'; sVal.className = 'value tachanun-no'; }
 
