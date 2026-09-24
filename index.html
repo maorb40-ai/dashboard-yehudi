@@ -229,9 +229,20 @@
        viewport (clipped by overflow-x:hidden and made unreachable) - the header stays untouched so
        it's never possible to lock yourself out of turning this back off. Gradual (a slider, not just
        on/off) via a CSS variable so any value from 100%-130% works with one rule. */
-    :root { --a11y-scale: 1; --a11y-contrast: 1; --a11y-brightness: 1; }
-    .main-content { transform: scale(var(--a11y-scale)); transform-origin: top center; }
+    :root { --a11y-scale: 1; --a11y-contrast: 1; --a11y-brightness: 1; --header-hide-scale: 1; }
+    .main-content { transform: scale(calc(var(--a11y-scale) * var(--header-hide-scale))); transform-origin: top center; }
     body { filter: contrast(var(--a11y-contrast)) brightness(var(--a11y-brightness)); }
+    /* V18: auto-hides the header bar 10s after it's shown (see toggleHeaderAutoHide in JS), growing
+       everything below it to fill the reclaimed space - same transform-scale technique as the a11y
+       scale above, combined via calc() so both can be active together without fighting. Collapsing the
+       grid row (rather than just display:none on .header-bar) is what actually frees the space - a
+       display:none child alone would still leave the row's minmax(8vh,...) minimum reserved. */
+    body.header-auto-hidden .header-bar { display: none; }
+    body.header-auto-hidden .app-layout { grid-template-rows: 1fr; }
+    /* clock-focus-mode and shabbat-advanced already have their own dedicated full-screen scaling
+       (the clock's own --clock-scale, and shabbat-advanced's fixed 1.4x) - neutralizes header-hide-scale
+       while either is active so the two scaling systems never compound into a double-scaled result. */
+    body.clock-focus-mode .main-content, body.shabbat-advanced .main-content { transform: scale(var(--a11y-scale)) !important; }
     @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
     .header-actions { display: flex; flex-wrap: wrap; gap: 0.6vw; row-gap: 0.8vh; align-items: center; justify-content: flex-end; }
@@ -1216,7 +1227,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-24.4';
+    const APP_VERSION = '2026-09-24.5';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -3912,6 +3923,41 @@
       if(!document.body.classList.contains('shabbat-active')) { idleTimer = setTimeout(() => { document.body.classList.add('screensaver-active'); }, 5 * 60 * 1000); }
     }
     window.addEventListener('mousemove', resetIdleTimer); window.addEventListener('touchstart', resetIdleTimer); window.addEventListener('keydown', resetIdleTimer);
+
+    // V18: header bar auto-hides 10s after being shown, growing everything else to fill the reclaimed
+    // space (see the .header-auto-hidden CSS above) - active in every display mode, not just kiosk
+    // fullscreen. A click on an empty background area (not on a button/control) brings it back and
+    // restarts the 10s countdown; clicking a real control is unaffected since those already have their
+    // own onclick handlers and this only acts when the click target IS one of the plain background
+    // containers themselves (nothing more specific caught the click first).
+    let headerHideTimer = null;
+    function scheduleHeaderAutoHide() {
+      clearTimeout(headerHideTimer);
+      headerHideTimer = setTimeout(hideHeaderBar, 10000);
+    }
+    function hideHeaderBar() {
+      if(document.body.classList.contains('header-auto-hidden')) return;
+      if(document.body.classList.contains('clock-focus-mode') || document.body.classList.contains('shabbat-advanced')) return; // those already hide the header their own way
+      const headerBar = document.querySelector('.header-bar');
+      const appLayout = document.querySelector('.app-layout');
+      if(!headerBar || !appLayout) return;
+      const headerHeight = headerBar.getBoundingClientRect().height;
+      const totalHeight = appLayout.clientHeight;
+      const scale = totalHeight / Math.max(1, totalHeight - headerHeight);
+      document.body.classList.add('header-auto-hidden');
+      document.documentElement.style.setProperty('--header-hide-scale', Math.min(scale, 1.3).toFixed(3));
+    }
+    function showHeaderBar() {
+      document.body.classList.remove('header-auto-hidden');
+      document.documentElement.style.setProperty('--header-hide-scale', '1');
+      scheduleHeaderAutoHide();
+    }
+    document.addEventListener('click', (e) => {
+      const emptyAreaClasses = ['bg-texture', 'app-layout', 'dashboard-area', 'main-content'];
+      const isEmptyAreaClick = e.target === document.body || emptyAreaClasses.includes(e.target.className);
+      if(isEmptyAreaClick && document.body.classList.contains('header-auto-hidden')) showHeaderBar();
+    });
+    scheduleHeaderAutoHide();
     // V15: "/" jumps straight to the task search box - skipped while already typing in any field (so
     // a literal "/" character can still be typed normally), and while a <dialog> is open (native
     // <dialog> already closes on Escape by itself, without any extra code needed here).
