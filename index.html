@@ -229,20 +229,21 @@
        viewport (clipped by overflow-x:hidden and made unreachable) - the header stays untouched so
        it's never possible to lock yourself out of turning this back off. Gradual (a slider, not just
        on/off) via a CSS variable so any value from 100%-130% works with one rule. */
-    :root { --a11y-scale: 1; --a11y-contrast: 1; --a11y-brightness: 1; --header-hide-scale: 1; }
-    .main-content { transform: scale(calc(var(--a11y-scale) * var(--header-hide-scale))); transform-origin: top center; }
+    :root { --a11y-scale: 1; --a11y-contrast: 1; --a11y-brightness: 1; }
+    .main-content { transform: scale(var(--a11y-scale)); transform-origin: top center; }
     body { filter: contrast(var(--a11y-contrast)) brightness(var(--a11y-brightness)); }
-    /* V18: auto-hides the header bar 10s after it's shown (see toggleHeaderAutoHide in JS), growing
-       everything below it to fill the reclaimed space - same transform-scale technique as the a11y
-       scale above, combined via calc() so both can be active together without fighting. Collapsing the
-       grid row (rather than just display:none on .header-bar) is what actually frees the space - a
+    /* V18 BUGFIX: auto-hides the header bar 10s after it's shown (see hideHeaderBar in JS), growing the
+       clock into the reclaimed space via the SAME scaleClockToFit() mechanism already used elsewhere
+       for hidden components - first tried a blanket transform:scale() on the whole .main-content, but
+       that scales width equally with height, and the content already spans the full viewport width at
+       scale=1, so ANY increase mathematically has to overflow horizontally somewhere - showed up as
+       real content getting clipped/cut off at the edges (מתי: "צריך לכייל זה נוראי"). scaleClockToFit
+       already solves exactly this by capping at Math.min(widthRatio, heightRatio), so it only ever
+       grows as far as both dimensions actually allow - no overflow possible by construction. Collapsing
+       the grid row (rather than just display:none on .header-bar) is what actually frees the space - a
        display:none child alone would still leave the row's minmax(8vh,...) minimum reserved. */
     body.header-auto-hidden .header-bar { display: none; }
     body.header-auto-hidden .app-layout { grid-template-rows: 1fr; }
-    /* clock-focus-mode and shabbat-advanced already have their own dedicated full-screen scaling
-       (the clock's own --clock-scale, and shabbat-advanced's fixed 1.4x) - neutralizes header-hide-scale
-       while either is active so the two scaling systems never compound into a double-scaled result. */
-    body.clock-focus-mode .main-content, body.shabbat-advanced .main-content { transform: scale(var(--a11y-scale)) !important; }
     @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
     .header-actions { display: flex; flex-wrap: wrap; gap: 0.6vw; row-gap: 0.8vh; align-items: center; justify-content: flex-end; }
@@ -1188,6 +1189,8 @@
             <button onclick="applyDisplayProfile('guest')" style="background:var(--gold); color:#000; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">👋 מצב אורח</button>
             <button onclick="applyDisplayProfile('kids')" style="background:#ec4899; color:#fff; border:none; padding:0.6vh 1.2vw; border-radius:0.5vw; cursor:pointer; font-weight:bold; font-size:0.9vw;">🧒 מצב ילדים</button>
           </div>
+          <div class="settings-hint" style="margin-bottom:0.5vh;">או 3 מצבים אישיים משלך - סמן/בטל סימון ברשימה למטה כרצונך, ואז "שמור" לתוך אחד המצבים כאן; "החל" בכל שלב מציג אותו:</div>
+          <div id="customProfilesContainer" style="display:flex; flex-direction:column; gap:0.6vh; margin-bottom:1.5vh;"></div>
           <div id="componentTogglesContainer"></div>
         </div>
       </div>
@@ -1227,7 +1230,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-24.5';
+    const APP_VERSION = '2026-09-24.7';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1519,16 +1522,57 @@
       // hides the more "administrative" buttons/panels that aren't meant for them.
       kids: ['weather','locationToggle','calendarBtn','personalDatesBtn','qrBtn','shabbatTimesBtn','datePickerBtn','dndBtn','torahBtn','homeBtn']
     };
+    // V18: 3 user-defined profiles, per מתי's request - unlike the 4 fixed presets above, these are
+    // empty until he picks his own component combination in the checklist below and saves it. Stored
+    // in appSettings (persisted the same way as everything else), so they survive across sessions.
+    if(!appSettings.customProfiles || !Array.isArray(appSettings.customProfiles) || appSettings.customProfiles.length !== 3) {
+      appSettings.customProfiles = [
+        { name: 'מצב אישי 1', hidden: [] },
+        { name: 'מצב אישי 2', hidden: [] },
+        { name: 'מצב אישי 3', hidden: [] }
+      ];
+    }
     function applyDisplayProfile(name) {
-      appSettings.hiddenComponents = (DISPLAY_PROFILES[name] || []).slice();
+      if(String(name).startsWith('custom')) {
+        const idx = parseInt(name.replace('custom', ''), 10) - 1;
+        appSettings.hiddenComponents = (appSettings.customProfiles[idx] && appSettings.customProfiles[idx].hidden || []).slice();
+      } else {
+        appSettings.hiddenComponents = (DISPLAY_PROFILES[name] || []).slice();
+      }
       appSettings.currentDisplayProfile = name;
       saveSettings();
       applyComponentVisibility();
       renderComponentToggles();
       updateDisplayProfileCycleBtnLabel();
     }
-    // V11: header button to cycle full -> minimal -> guest -> full -> ... without opening settings.
-    const DISPLAY_PROFILE_ORDER = ['full', 'minimal', 'guest', 'kids'];
+    // V18: saves whatever is CURRENTLY checked in the component list (not appSettings.hiddenComponents
+    // from some other profile) into custom slot `idx` (0-2), and switches to it immediately so the
+    // save is visibly in effect right away.
+    function saveCurrentAsCustomProfile(idx) {
+      const currentlyHidden = [...document.querySelectorAll('.comp-toggle')].filter(cb => !cb.checked).map(cb => cb.dataset.key);
+      const nameInput = document.getElementById('customProfileName' + idx);
+      appSettings.customProfiles[idx] = { name: (nameInput && nameInput.value.trim()) || ('מצב אישי ' + (idx + 1)), hidden: currentlyHidden };
+      appSettings.currentDisplayProfile = 'custom' + (idx + 1);
+      appSettings.hiddenComponents = currentlyHidden.slice();
+      saveSettings();
+      applyComponentVisibility();
+      renderCustomProfiles();
+      updateDisplayProfileCycleBtnLabel();
+    }
+    function renderCustomProfiles() {
+      const container = document.getElementById('customProfilesContainer');
+      if(!container) return;
+      container.innerHTML = appSettings.customProfiles.map((p, idx) => `
+        <div style="display:flex; align-items:center; gap:0.6vw; flex-wrap:wrap;">
+          <input type="text" id="customProfileName${idx}" value="${p.name}" style="flex:1; min-width:8vw; padding:0.4vh 0.6vw; border-radius:0.4vw; border:1px solid var(--input-border); background:var(--input-bg); color:var(--input-text);" placeholder="שם המצב">
+          <button onclick="saveCurrentAsCustomProfile(${idx})" style="background:#0f766e; color:#fff; border:none; padding:0.5vh 1vw; border-radius:0.4vw; cursor:pointer; font-size:0.85vw;" title="שומר את מה שמסומן כרגע ברשימה למטה תחת המצב הזה">💾 שמור מצב נוכחי</button>
+          <button onclick="applyDisplayProfile('custom${idx + 1}')" style="background:var(--cyan); color:#000; border:none; padding:0.5vh 1vw; border-radius:0.4vw; cursor:pointer; font-size:0.85vw;">▶ החל</button>
+          <span style="font-size:0.8vw; color:var(--muted-text);">(${p.hidden.length ? p.hidden.length + ' רכיבים מוסתרים' : 'עדיין לא נשמר'})</span>
+        </div>`).join('');
+    }
+    // V11: header button to cycle full -> minimal -> guest -> kids -> custom1-3 -> full -> ... without
+    // opening settings.
+    const DISPLAY_PROFILE_ORDER = ['full', 'minimal', 'guest', 'kids', 'custom1', 'custom2', 'custom3'];
     const DISPLAY_PROFILE_LABELS = { full: '🔄 מצב: קיוסק מלא', minimal: '🔄 מצב: מינימלי', guest: '🔄 מצב: אורח', kids: '🔄 מצב: ילדים' };
     function cycleDisplayProfile() {
       const current = appSettings.currentDisplayProfile || 'full';
@@ -1537,7 +1581,14 @@
     }
     function updateDisplayProfileCycleBtnLabel() {
       const btn = document.getElementById('btnDisplayProfileCycle');
-      if(btn) btn.textContent = DISPLAY_PROFILE_LABELS[appSettings.currentDisplayProfile || 'full'];
+      if(!btn) return;
+      const current = appSettings.currentDisplayProfile || 'full';
+      if(current.startsWith('custom')) {
+        const idx = parseInt(current.replace('custom', ''), 10) - 1;
+        btn.textContent = '🔄 מצב: ' + ((appSettings.customProfiles[idx] && appSettings.customProfiles[idx].name) || ('אישי ' + (idx + 1)));
+      } else {
+        btn.textContent = DISPLAY_PROFILE_LABELS[current] || DISPLAY_PROFILE_LABELS.full;
+      }
     }
 
     function applyComponentVisibility() {
@@ -1662,7 +1713,15 @@
       const gapPx = parseFloat(getComputedStyle(dashArea).rowGap) || 0;
       const totalGaps = gapPx * siblings.length;
 
-      const availableWidth = dashArea.clientWidth * 0.92;
+      // V18: when the header bar is auto-hidden, reclaim a bit of the normally-reserved 8% side margin
+      // too (not just the vertical space) - hiding the header only frees vertical room, and this ratio
+      // is Math.min(widthRatio, heightRatio) further down, so without ALSO loosening the width side the
+      // extra height alone could never move the scale past 1 (width ratio would stay locked at ~1 and
+      // clamp everything). This stays strictly within the box's real available width, so it can't cause
+      // the overflow/clipping the plain full-content transform:scale approach had (see the CSS comment
+      // near .header-auto-hidden for that history).
+      const widthMarginFactor = document.body.classList.contains('header-auto-hidden') ? 0.98 : 0.92;
+      const availableWidth = dashArea.clientWidth * widthMarginFactor;
       const availableHeight = Math.max(50, dashArea.clientHeight - siblingsHeight - totalGaps - (dashArea.clientHeight * 0.03));
 
       const widthRatio = availableWidth / baseline.width;
@@ -1907,7 +1966,7 @@
       document.getElementById('accentColorInput').value = appSettings.accentColor;
       document.getElementById('colorThemeSelect').value = appSettings.colorTheme || 'default';
       document.getElementById('staplesListInput').value = (appSettings.staplesList || []).join('\n');
-      renderEventsTable(); renderComponentToggles(); renderEmergencyContactsTable(); renderFamilyMembersTable(); renderMinyanTimesTable(); document.getElementById('settingsModal').showModal();
+      renderEventsTable(); renderComponentToggles(); renderCustomProfiles(); renderEmergencyContactsTable(); renderFamilyMembersTable(); renderMinyanTimesTable(); document.getElementById('settingsModal').showModal();
     }
     // V13 BUGFIX: this used to be wired only to the ✖ button's onclick, so dismissing the dialog any
     // other way (Escape key, which is instinctive) closed it WITHOUT ever running this - every setting
@@ -3924,8 +3983,9 @@
     }
     window.addEventListener('mousemove', resetIdleTimer); window.addEventListener('touchstart', resetIdleTimer); window.addEventListener('keydown', resetIdleTimer);
 
-    // V18: header bar auto-hides 10s after being shown, growing everything else to fill the reclaimed
-    // space (see the .header-auto-hidden CSS above) - active in every display mode, not just kiosk
+    // V18: header bar auto-hides 10s after being shown, growing the clock into the reclaimed space via
+    // the existing scaleClockToFit() (see the CSS comment above for why a blanket transform:scale on
+    // .main-content was tried first and reverted) - active in every display mode, not just kiosk
     // fullscreen. A click on an empty background area (not on a button/control) brings it back and
     // restarts the 10s countdown; clicking a real control is unaffected since those already have their
     // own onclick handlers and this only acts when the click target IS one of the plain background
@@ -3938,18 +3998,19 @@
     function hideHeaderBar() {
       if(document.body.classList.contains('header-auto-hidden')) return;
       if(document.body.classList.contains('clock-focus-mode') || document.body.classList.contains('shabbat-advanced')) return; // those already hide the header their own way
-      const headerBar = document.querySelector('.header-bar');
-      const appLayout = document.querySelector('.app-layout');
-      if(!headerBar || !appLayout) return;
-      const headerHeight = headerBar.getBoundingClientRect().height;
-      const totalHeight = appLayout.clientHeight;
-      const scale = totalHeight / Math.max(1, totalHeight - headerHeight);
       document.body.classList.add('header-auto-hidden');
-      document.documentElement.style.setProperty('--header-hide-scale', Math.min(scale, 1.3).toFixed(3));
+      // Deliberately NOT nulling clockBaseline here (unlike showHeaderBar below): measureClockBaseline's
+      // own "show everything" sweep only covers COMPONENT_TOGGLES-tracked elements, which the header bar
+      // isn't one of - if it were re-measured while header-auto-hidden is already applied, the baseline
+      // itself would already reflect the header-less height, making the ratio always come out to 1 (no
+      // growth at all). Reusing the existing baseline (captured while the header was genuinely visible)
+      // is what lets the ratio correctly reflect the extra space just freed up.
+      scaleClockToFit();
     }
     function showHeaderBar() {
       document.body.classList.remove('header-auto-hidden');
-      document.documentElement.style.setProperty('--header-hide-scale', '1');
+      clockBaseline = null;
+      scaleClockToFit();
       scheduleHeaderAutoHide();
     }
     document.addEventListener('click', (e) => {
