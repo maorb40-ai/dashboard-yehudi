@@ -177,7 +177,11 @@
     /* V9 BUGFIX: with more header buttons added over time, a fixed 8vh header row started squeezing
        them (the location-toggle buttons visibly overflowed their own pill shape). The header row can
        now grow if buttons wrap to a second line, instead of clipping/squishing them. */
-    .app-layout { position: relative; z-index: 1; display: grid; grid-template-rows: minmax(8vh, auto) 1fr 5vh; height: 92vh; width: 100vw; transition: all 1s ease; }
+    /* V18: the news ticker and bottom equalizer dock (previously shown only in real fullscreen/kiosk
+       mode, with a reserved 5vh row for them) were removed entirely at מתי's request - not enough
+       value for the screen space and visual clutter they added. .app-layout is now always the plain
+       2-row layout (header + main content, no reserved footer strip). */
+    .app-layout { position: relative; z-index: 1; display: grid; grid-template-rows: minmax(8vh, auto) 1fr; height: 100vh; width: 100vw; transition: all 1s ease; }
     /* V18 BUGFIX: only `body` had the dvh/dvw dynamic-viewport override (added for the mobile
        toolbar-collapse bug) - .app-layout itself was still sized against static vh/vw, which on a
        desktop browser is measured against the viewport at the moment the real Fullscreen API
@@ -185,13 +189,7 @@
        transition briefly leaves vh larger or smaller than the final fullscreen viewport, clipping
        the layout against body's overflow:hidden until something else triggers a reflow. dvh tracks
        the actual current viewport continuously, so it self-corrects instead of needing a resize. */
-    .app-layout { height: 92dvh; width: 100dvw; }
-    /* V15: the ticker + bottom equalizer dock are shown only in real fullscreen (kiosk) mode -
-       outside fullscreen their reserved rows/strip are dropped so the zmanim grid reclaims the
-       space instead of leaving an empty gap (same root cause as the old V12 ticker-overlap bug,
-       fixed here by not reserving the space at all when those elements aren't shown). */
-    body.no-fs-extras .app-layout { grid-template-rows: minmax(8vh, auto) 1fr; height: 100vh; }
-    body.no-fs-extras .app-layout { height: 100dvh; }
+    .app-layout { height: 100dvh; width: 100dvw; }
 
     /* SCREENSAVER */
     body.screensaver-active .app-layout, body.screensaver-active .bg-texture { opacity: 0.1; transition: opacity 4s ease; }
@@ -348,14 +346,6 @@
     .alert-zman { animation: pulseAlert 2s infinite; color: var(--alert); }
     .alert-zman .zman-time { color: var(--alert); }
 
-    /* TICKER */
-    .ticker-wrap { background: rgba(0,0,0,0.6); border-top: 1px solid var(--card-border); overflow: hidden; white-space: nowrap; display: flex; align-items: center; padding: 1vh 0; }
-    .ticker-title { background: var(--cyan); color: #000; padding: 0.5vh 1vw; font-weight: 800; font-size: 1vw; z-index: 2; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
-    .ticker-content { display: inline-block; animation: ticker 75s linear infinite; padding-left: 100%; font-size: 1.2vw; color: #fff; }
-    @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
-    .bottom-dock { position: absolute; bottom: 0; left: 0; width: 100vw; height: 8vh; display: flex; align-items: flex-end; z-index: 0; }
-    #equalizerCanvas { width: 100%; height: 100%; }
-
     /* SETTINGS MODAL */
     dialog { margin: auto; padding: 2vw; background: var(--dialog-bg); color: var(--text-color); border: 1px solid var(--cyan); border-radius: 1vw; width: 50vw; max-width: 800px; font-family: 'Assistant', sans-serif; }
     dialog::backdrop { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
@@ -395,7 +385,7 @@
     .bg-holiday-icon.ambient { animation: floatIconAmbient 32s linear infinite; }
     @keyframes floatIconAmbient { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0.05; } 50% { opacity: 0.14; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
 
-    body.shabbat-advanced .header-bar, body.shabbat-advanced .sidebar, body.shabbat-advanced .ticker-wrap, body.shabbat-advanced .info-ribbon, body.shabbat-advanced .zmanim-grid, body.shabbat-advanced .bottom-dock { display: none !important; }
+    body.shabbat-advanced .header-bar, body.shabbat-advanced .sidebar, body.shabbat-advanced .info-ribbon, body.shabbat-advanced .zmanim-grid { display: none !important; }
     body.shabbat-advanced .app-layout { grid-template-rows: 1fr; }
     body.shabbat-advanced .main-content { grid-template-columns: 1fr; padding: 5vh; }
     body.shabbat-advanced .dashboard-area { justify-content: center; transform: scale(1.4); }
@@ -404,8 +394,8 @@
        screen; clicking again restores exactly what was showing before (nothing here is toggled
        permanently - it's all display:none scoped to this one class, layered on top of whatever the
        user's normal component-visibility/shabbat-mode state already was). */
-    body.clock-focus-mode .header-bar, body.clock-focus-mode .sidebar, body.clock-focus-mode .ticker-wrap,
-    body.clock-focus-mode .info-ribbon, body.clock-focus-mode .zmanim-grid, body.clock-focus-mode .bottom-dock,
+    body.clock-focus-mode .header-bar, body.clock-focus-mode .sidebar,
+    body.clock-focus-mode .info-ribbon, body.clock-focus-mode .zmanim-grid,
     body.clock-focus-mode .personal-banner, body.clock-focus-mode .pasuk-banner, body.clock-focus-mode #shabbatCountdown,
     body.clock-focus-mode .shabbat-overlay-zmanim, body.clock-focus-mode .backup-reminder { display: none !important; }
     body.clock-focus-mode .app-layout { grid-template-rows: 1fr; }
@@ -439,7 +429,9 @@
        removed rather than fixed, since keeping it correct alongside the rotation lock isn't meaningful
        (a landscape-only app has no real narrow-viewport case left to design for). */
 
-    .shabbat-countdown { font-size: 3.5vw; font-weight: 900; color: #f1c40f; text-shadow: 0 0 15px rgba(241,196,15,0.8); margin-bottom: 1.5vh; text-align: center; letter-spacing: 0.2vw; display: none; background: rgba(0,0,0,0.5); padding: 1vh 2vw; border-radius: 1vw; border: 1px solid var(--gold); }
+    /* V18: was 3.5vw with 1vh 2vw padding - dominated a third of the screen height on a real device.
+       Slimmed to a readable single-line strip per מתי's request. */
+    .shabbat-countdown { font-size: 1.5vw; font-weight: 800; color: #f1c40f; text-shadow: 0 0 8px rgba(241,196,15,0.6); margin-bottom: 1vh; text-align: center; letter-spacing: 0.05vw; display: none; background: rgba(0,0,0,0.5); padding: 0.5vh 1.5vw; border-radius: 0.6vw; border: 1px solid var(--gold); }
     .bg-texture { background-size: cover; background-position: center; transition: background-image 1s ease; }
     .shab-task-label { font-size: 1.2vw; color: #ddd; }
 
@@ -627,15 +619,7 @@
         <div class="zmanim-grid" id="zmanimGrid"></div>
       </div>
     </div>
-
-    <!-- TICKER -->
-    <div class="ticker-wrap" id="tickerWrap">
-      <div class="ticker-title">מבזקים</div>
-      <div class="ticker-content" id="newsTicker">טוען חדשות...</div>
-    </div>
   </div>
-
-  <div class="bottom-dock" id="bottomDock"><canvas id="equalizerCanvas"></canvas></div>
 
   <div class="undo-toast" id="undoToast"><span id="undoToastMessage"></span><button id="undoToastBtn">↩ בטל</button></div>
 
@@ -1030,14 +1014,6 @@
           <div id="bgThumbs" style="display:flex; gap:0.5vw; flex-wrap:wrap; margin-top:1vh;"></div>
           <button onclick="resetBg()" style="margin-top: 1vh; padding: 0.5vh 1vw; background: #555; color: white; border: none; border-radius: 0.5vw; cursor:pointer;">חזור לרקע המקורי</button>
         </div>
-        <div class="setting-group"><label>מקור חדשות</label>
-          <select id="newsSourceSelect" style="width:100%; margin-top:0.5vh;">
-              <option value="rotter">רוטר - סקופים</option>
-              <option value="jdn">JDN - חדשות חרדים</option>
-              <option value="arutz7">ערוץ 7 - מבזקים</option>
-              <option value="kikar">כיכר השבת</option>
-          </select>
-        </div>
         <div class="setting-group" id="autoStartSetting" style="display:none;"><label>הפעלה אוטומטית (Windows)</label>
           <div class="toggle-switch"><input type="checkbox" id="autoStartToggle" onchange="toggleAutoStart()"><span>הפעל את הדשבורד אוטומטית כשהמחשב נדלק</span></div>
         </div>
@@ -1049,7 +1025,7 @@
       <div class="settings-body">
         <div class="setting-group"><label>אוטומציה והתראות</label>
           <div class="toggle-switch"><input type="checkbox" id="shabbatModeToggle"><span>הפעל "מצב שבת/חג" אוטומטי (כולל ימים טובים)</span></div>
-          <div class="toggle-switch"><input type="checkbox" id="audioModeToggle"><span>הפעל צלצול/הקראה קולית (15 דקות לפני סוזק"ש וכניסת שבת)</span></div>
+          <div class="toggle-switch"><input type="checkbox" id="audioModeToggle"><span>הפעל צליל התראה (15 דקות לפני סוזק"ש וכניסת שבת)</span></div>
           <div class="toggle-switch"><input type="checkbox" id="screensaverToggle"><span>הפעל עמעום מסך אוטומטי (אחרי 5 דק' חוסר פעילות) - כבוי כברירת מחדל</span></div>
           <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh; flex-wrap:wrap;">
             <span>צליל התראה:</span>
@@ -1229,7 +1205,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-22.3';
+    const APP_VERSION = '2026-09-24.1';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1251,7 +1227,7 @@
     }
     const DEFAULT_PASUK_TEXT = '"וְהַבּוֹטֵחַ בַּה\' חֶסֶד יְסוֹבְבֶנּוּ"';
     const DEFAULT_EMERGENCY_CONTACTS = [ { name: 'מגן דוד אדום', phone: '101' }, { name: 'משטרה', phone: '100' }, { name: 'כבאות והצלה', phone: '102' } ];
-    let appSettings = JSON.parse(localStorage.getItem('dashSettings')) || { autoShabbat: true, audioAlerts: true, personalEvents: [], age: 30, newsSource: 'rotter', candleOffset: 20, screensaverEnabled: false, hiddenComponents: [], reminderDaysAhead: 2, pasukText: DEFAULT_PASUK_TEXT, nusach: 'sephardi', emergencyContacts: DEFAULT_EMERGENCY_CONTACTS.slice() };
+    let appSettings = JSON.parse(localStorage.getItem('dashSettings')) || { autoShabbat: true, audioAlerts: true, personalEvents: [], age: 30, candleOffset: 20, screensaverEnabled: false, hiddenComponents: [], reminderDaysAhead: 2, pasukText: DEFAULT_PASUK_TEXT, nusach: 'sephardi', emergencyContacts: DEFAULT_EMERGENCY_CONTACTS.slice() };
     if(!appSettings.emergencyContacts) appSettings.emergencyContacts = DEFAULT_EMERGENCY_CONTACTS.slice();
     if(appSettings.worldClockTz === undefined) appSettings.worldClockTz = '';
     if(appSettings.worldClockLabel === undefined) appSettings.worldClockLabel = '';
@@ -1261,7 +1237,6 @@
     if(!appSettings.minyanTimes) appSettings.minyanTimes = [];
     if(!appSettings.currentDisplayProfile) appSettings.currentDisplayProfile = 'full';
     if(!appSettings.dndUntil) appSettings.dndUntil = 0;
-    if(!appSettings.newsSource) appSettings.newsSource = 'rotter';
     if(!appSettings.candleOffset) appSettings.candleOffset = 20;
     if(!appSettings.havdalahMinutes) appSettings.havdalahMinutes = 20;
     if(!appSettings.preShabbatChecklist) appSettings.preShabbatChecklist = ['טלפון', 'פלטה', 'מעלית שבת'];
@@ -1501,9 +1476,7 @@
       { key: 'ribbon-parasha', label: '  ↳ שניים מקרא ופרשה', ids: ['ribbonItem-parasha'] },
       { key: 'ribbon-shabbatentrance', label: '  ↳ כניסת שבת', ids: ['ribbonItem-shabbatentrance'] },
       { key: 'ribbon-duty', label: '  ↳ תור אחראי משפחתי', ids: ['ribbonItem-duty'] },
-      { key: 'zmanimGrid', label: 'טבלת הזמנים', ids: ['zmanimGrid'] },
-      { key: 'ticker', label: 'מבזקי חדשות', ids: ['tickerWrap'] },
-      { key: 'bottomDock', label: 'הפס התחתון האנימטיבי', ids: ['bottomDock'] }
+      { key: 'zmanimGrid', label: 'טבלת הזמנים', ids: ['zmanimGrid'] }
     ];
 
     function renderComponentToggles() {
@@ -1518,11 +1491,11 @@
     // V10: one-click display profiles, instead of manually toggling each checkbox every time.
     const DISPLAY_PROFILES = {
       full: [],
-      minimal: ['sidebar','ticker','bottomDock','locationToggle','siddurBtn','calendarBtn','qrBtn','shabbatTimesBtn','datePickerBtn','weather','torahBtn','homeBtn'],
+      minimal: ['sidebar','locationToggle','siddurBtn','calendarBtn','qrBtn','shabbatTimesBtn','datePickerBtn','weather','torahBtn','homeBtn'],
       guest: ['sidebar'],
       // V15: simplified view for kids - keeps the clock, zmanim, and task list (fun to check off),
       // hides the more "administrative" buttons/panels that aren't meant for them.
-      kids: ['ticker','bottomDock','weather','locationToggle','calendarBtn','personalDatesBtn','qrBtn','shabbatTimesBtn','datePickerBtn','dndBtn','torahBtn','homeBtn']
+      kids: ['weather','locationToggle','calendarBtn','personalDatesBtn','qrBtn','shabbatTimesBtn','datePickerBtn','dndBtn','torahBtn','homeBtn']
     };
     function applyDisplayProfile(name) {
       appSettings.hiddenComponents = (DISPLAY_PROFILES[name] || []).slice();
@@ -1565,11 +1538,6 @@
       updateDutyWidget(); // has its own condition (needs family members) beyond plain hiddenComponents
     }
 
-    // V15: מבזקים (ticker) + the bottom equalizer are meant for real fullscreen/kiosk display only -
-    // outside fullscreen they're hidden automatically (no manual toggle needed) and the layout
-    // reclaims their space so nothing leaves an empty gap. A component the user explicitly hid via
-    // settings stays hidden either way; this only controls the extra fullscreen-only behavior on
-    // top of that.
     // V16: clock-focus mode - clicking the clock hides every other component and lets the clock+date
     // fill the freed space, using the SAME auto-fit sizing the app already does whenever components
     // are hidden (scaleClockToFit/measureClockBaseline) - no separate sizing logic needed, since
@@ -1604,15 +1572,10 @@
         scaleClockToFit();
       }
     }
+    // V18: used to also toggle the (now-removed) ticker/bottom-dock visibility and the 'no-fs-extras'
+    // layout class that reserved space for them - kept as a thin wrapper around the clock rescale
+    // since fullscreenchange still needs a fresh baseline measurement (see the deferred calls below).
     function applyFullscreenAutoVisibility() {
-      const isFullscreen = !!document.fullscreenElement;
-      const tickerEl = document.getElementById('tickerWrap');
-      const dockEl = document.getElementById('bottomDock');
-      const tickerUserHidden = appSettings.hiddenComponents.includes('ticker');
-      const dockUserHidden = appSettings.hiddenComponents.includes('bottomDock');
-      if(tickerEl) tickerEl.style.display = (isFullscreen && !tickerUserHidden) ? '' : 'none';
-      if(dockEl) dockEl.style.display = (isFullscreen && !dockUserHidden) ? '' : 'none';
-      document.body.classList.toggle('no-fs-extras', !isFullscreen);
       clockBaseline = null;
       scaleClockToFit();
     }
@@ -1653,11 +1616,8 @@
       };
       clockBaselineViewportKey = viewportKey;
 
-      // restore the real current hidden state - ticker/bottomDock are ALSO auto-hidden outside real
-      // fullscreen (see applyFullscreenAutoVisibility), which isn't reflected in hiddenComponents,
-      // so it has to be folded in here too or this restore step would clobber that hide.
-      const fsHidden = !document.fullscreenElement ? ['ticker', 'bottomDock'] : [];
-      COMPONENT_TOGGLES.forEach(c => { const hidden = previouslyHidden.includes(c.key) || fsHidden.includes(c.key); c.ids.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = hidden ? 'none' : ''; }); });
+      // restore the real current hidden state
+      COMPONENT_TOGGLES.forEach(c => { const hidden = previouslyHidden.includes(c.key); c.ids.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = hidden ? 'none' : ''; }); });
       if(mainContent) mainContent.style.gridTemplateColumns = previouslyHidden.includes('sidebar') ? '1fr' : '';
 
       return clockBaseline;
@@ -1988,7 +1948,6 @@
       document.getElementById('vacationLabel').value = appSettings.vacationLabel;
       document.getElementById('vacationDate').value = appSettings.vacationDate;
       if(document.getElementById('nusachSelect')) document.getElementById('nusachSelect').value = appSettings.nusach;
-      if(document.getElementById('newsSourceSelect')) document.getElementById('newsSourceSelect').value = appSettings.newsSource || 'rotter';
       document.getElementById('themeModeSelect').value = appSettings.themeMode || 'dark';
       document.getElementById('chimeSoundSelect').value = appSettings.chimeSound || 'bell';
       document.getElementById('densityCompactToggle').checked = appSettings.densityCompact;
@@ -2032,7 +1991,6 @@
       appSettings.vacationDate = document.getElementById('vacationDate').value;
       updateVacationCountdown();
       if(document.getElementById('nusachSelect')) { appSettings.nusach = document.getElementById('nusachSelect').value; applyNusach(); }
-      if(document.getElementById('newsSourceSelect')) appSettings.newsSource = document.getElementById('newsSourceSelect').value;
       appSettings.hiddenComponents = [...document.querySelectorAll('.comp-toggle')].filter(cb => !cb.checked).map(cb => cb.dataset.key);
       saveSettings(); applyComponentVisibility();
       checkPersonalEvents(); updateTehillimLink(); resetIdleTimer();
@@ -2727,7 +2685,6 @@
       if(alertedZmanim[reminderKey]) return;
       alertedZmanim[reminderKey] = true;
       playChime();
-      speakHebrew('שים לב, הגיע הזמן לספירת העומר של הלילה');
       if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: 'הגיע הזמן לספירת העומר' }); }
     }
     function updateOmerCounter() {
@@ -3311,18 +3268,6 @@
       } catch(e) { el.textContent = ''; }
     }
 
-    async function fetchNews() {
-      const ticker = document.getElementById('newsTicker');
-      const rssUrls = { 'rotter': 'https://rotter.net/rss/rotternews.xml', 'jdn': 'https://www.jdn.co.il/feed/', 'arutz7': 'https://www.inn.co.il/Rss.aspx', 'kikar': 'https://www.kikar.co.il/rss.xml' };
-      const selectedRss = rssUrls[appSettings.newsSource] || rssUrls['rotter'];
-      try {
-        const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(selectedRss)}`);
-        const d = await r.json();
-        if(d.items && d.items.length) ticker.textContent = d.items.slice(0,5).map(i=>i.title).join(' | ♦ | ');
-        else ticker.textContent = 'אין מבזקים זמינים כרגע';
-      } catch(e) { ticker.textContent = 'שגיאה בטעינת חדשות'; }
-    }
-
     async function fetchAllData(lat, lng) {
       currentLat = lat; currentLng = lng;
       const loader = document.getElementById('apiLoader'); if(loader) loader.style.display = 'block';
@@ -3499,7 +3444,6 @@
       }
 
       fetchWeather(lat, lng);
-      fetchNews();
       if(loader) loader.style.display = 'none';
     }
 
@@ -3724,7 +3668,7 @@
       appSettings.chimeSound = original; appSettings.audioAlerts = wasAudioAlerts; appSettings.dndUntil = wasDnd;
     }
     function checkZmanimAlerts(now) {
-      if(isDndActive()) return; // V11: temporary quiet mode silences all zman/candle voice+chime alerts
+      if(isDndActive()) return; // V11: temporary quiet mode silences all zman/candle chime alerts
       if(zmanimDataCache) {
         ['sofZmanShma', 'sofZmanTfilla', 'sunset'].forEach(k => {
           if(zmanimDataCache[k]) {
@@ -3733,10 +3677,9 @@
             if(!alertedZmanim[todayKey]) {
               playChime();
               let l = (k==='sunset') ? 'שקיעת החמה' : (k==='sofZmanTfilla' ? 'סוף זמן תפילה' : 'סוף זמן קריאת שמע');
-              speakHebrew('שים לב, ' + l + ' בעוד חמש עשרה דקות');
-              // V16: a Notification alongside the voice/chime - if the browser silently blocks
-              // unattended audio (common on a kiosk left untouched for hours - see unlockAudioAndSpeech
-              // above), this is a second, non-audio channel for the same reminder.
+              // V16: a Notification alongside the chime - if the browser silently blocks unattended
+              // audio (common on a kiosk left untouched for hours - see unlockAudioAndSpeech above),
+              // this is a second, non-audio channel for the same reminder.
               if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: l + ' בעוד 15 דקות' }); }
               alertedZmanim[todayKey] = true;
             }
@@ -3747,7 +3690,6 @@
               const urgentKey = now.toDateString() + '_' + k + '_urgent';
               if(!alertedZmanim[urgentKey]) {
                 playChime();
-                speakHebrew('דחוף! סוף זמן קריאת שמע בעוד חמש דקות בלבד');
                 if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('⚠️ דחוף - דשבורד יהודי', { body: 'סוף זמן קריאת שמע בעוד 5 דקות בלבד' }); }
                 alertedZmanim[urgentKey] = true;
               }
@@ -3765,7 +3707,6 @@
             const candleKey = nextCandle.start.toISOString() + '_candles';
             if(!alertedZmanim[candleKey]) {
               playChime();
-              speakHebrew('שים לב, הדלקת נרות בעוד חמש עשרה דקות');
               if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: 'הדלקת נרות בעוד 15 דקות' }); }
               alertedZmanim[candleKey] = true;
             }
@@ -4064,9 +4005,26 @@
     }
     ['click', 'touchstart', 'keydown'].forEach(evt => window.addEventListener(evt, unlockAudioAndSpeech, { once: true }));
 
-    const canvas = document.getElementById('equalizerCanvas'); const ctx = canvas.getContext('2d');
-    function resizeCanvas() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; } window.addEventListener('resize', resizeCanvas); resizeCanvas();
-    function renderEq(time) { ctx.clearRect(0,0,canvas.width,canvas.height); for (let i=0; i<70; i++) { let val = (Math.sin(time*0.003+i*0.15)*0.2+0.3)*(Math.cos(time*0.002-i*0.1)*0.3+0.5); let h = Math.max(canvas.height*0.08, val*canvas.height*0.9); let x = i*(canvas.width/70), y = canvas.height-h; let g = ctx.createLinearGradient(0,y,0,canvas.height); g.addColorStop(0, i<35?'#00e5ff':'#f59e0b'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.fillRect(x,y,canvas.width/70-2,h); } requestAnimationFrame(renderEq); }
+    // V18: this dashboard is meant to run as an always-on kiosk display, but on Android the screen was
+    // still dimming/sleeping after a while even with the DEVICE'S OWN "screen timeout" setting set to
+    // never turn off - a plain web page (even one that updates every second) doesn't automatically tell
+    // Android to keep the display awake; that "never sleep" setting mainly protects against the SYSTEM's
+    // own idle timer, not every path that can still dim/lock the screen. The Screen Wake Lock API is the
+    // real, purpose-built fix for exactly this (kiosk/dashboard pages), supported on Chrome/Android since
+    // v84 - explicitly holds the screen awake while the page is visible. The lock is released by the
+    // browser whenever the tab is hidden (tab-switch, app-switch, screen already off), so it has to be
+    // re-requested every time the page becomes visible again, not just once on load.
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => { wakeLock = null; });
+        }
+      } catch (e) { console.warn('Wake Lock request failed:', e); }
+    }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
+    requestWakeLock();
 
     // V3: seed a basic, commonly-accepted shabbat-prep checklist the first time (only if the list is
     // empty and it was never seeded before, so deleting items later doesn't bring them back). Sourced
@@ -4098,7 +4056,7 @@
 
     renderTaskAssigneeOptions(); renderMinyanTimesWidget(); updateDisplayProfileCycleBtnLabel();
     if(isDndActive() && document.getElementById('btnDnd')) document.getElementById('btnDnd').textContent = '🔕 שקט (פעיל)';
-    checkResetTasks(); renderTasks(); renderShabbatTasks(); renderShoppingList(); renderEmergencyContactsWidget(); updateWorldClock(); updateVacationCountdown(); updateDafYomiStreakLabel(); resetIdleTimer(); initCompass(); updateTehillimLink(); applyComponentVisibility(); checkBackupReminder(); checkPrepReminder(); updateConnectionStatus(); initBatteryStatus(); checkSharedShoppingList(); updateDutyWidget(); requestAnimationFrame(update); requestAnimationFrame(renderEq);
+    checkResetTasks(); renderTasks(); renderShabbatTasks(); renderShoppingList(); renderEmergencyContactsWidget(); updateWorldClock(); updateVacationCountdown(); updateDafYomiStreakLabel(); resetIdleTimer(); initCompass(); updateTehillimLink(); applyComponentVisibility(); checkBackupReminder(); checkPrepReminder(); updateConnectionStatus(); initBatteryStatus(); checkSharedShoppingList(); updateDutyWidget(); requestAnimationFrame(update);
     // V3: keep the weather genuinely "live" - refresh it every 30 minutes on top of the daily/location refreshes.
     setInterval(() => fetchWeather(currentLat, currentLng), 30 * 60 * 1000);
   </script>
@@ -4209,22 +4167,6 @@ if ('serviceWorker' in navigator) {
       window.ipcRenderer.send('set-auto-start', toggle.checked);
     }
 
-    // === SETTINGS: News Source ===
-    // BUGFIX (v37): this used to read/write a *separate* localStorage key ('newsSource') from the
-    // one actually used by fetchAllData (appSettings.newsSource inside 'dashSettings'), and called
-    // a loadNews() function that didn't exist anywhere. Now there is a single source of truth.
-    function initNewsSourceSelect() {
-      const sel = document.getElementById('newsSourceSelect');
-      if (!sel) return;
-      sel.value = appSettings.newsSource || 'rotter';
-      sel.addEventListener('change', function() {
-        appSettings.newsSource = sel.value;
-        saveSettings();
-        fetchNews();
-      });
-    }
-
-
     // === Always On Top toggle (Electron only) ===
     let _isAlwaysOnTop = false;
     function toggleAlwaysOnTop() {
@@ -4240,7 +4182,6 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('DOMContentLoaded', function() {
       if (typeof initBgUpload === 'function') initBgUpload();
       if (typeof initAutoStartSetting === 'function') initAutoStartSetting();
-      if (typeof initNewsSourceSelect === 'function') initNewsSourceSelect();
     });
 </script>
 </body>
