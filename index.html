@@ -300,7 +300,13 @@
 
 
     /* DASHBOARD AREA */
-    .dashboard-area { display: flex; flex-direction: column; align-items: center; gap: 1.5vh; }
+    /* V18 BUGFIX: no explicit height/justify-content meant this only ever took up its natural content
+       height and stayed top-aligned - invisible in the normal wide/landscape shape this app is
+       designed for (content roughly fills the available height anyway), but a desktop window that
+       isn't maximized (tall and narrow, e.g. a freshly-installed PWA's default window size) left a
+       large dead empty area below the content instead of centering it. Filling the row and centering
+       vertically fixes that at any window shape without changing anything visible in the normal case. */
+    .dashboard-area { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1.5vh; }
     .personal-banner { display: none; width: 100%; background: linear-gradient(90deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.8) 50%, rgba(245,158,11,0.2) 100%); color: #fff; text-align: center; padding: 0.8vh; border-radius: 1vw; font-size: 1.2vw; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
     /* FLIP CLOCK */
@@ -1210,7 +1216,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-24.3';
+    const APP_VERSION = '2026-09-24.4';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
