@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>דשבורד יומי - V17</title>
+  <title>דשבורד יומי - V17.5</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,15 +129,23 @@
       transition: background 2s ease, --theme-color 2s ease;
     }
 
-    /* V14: force a landscape layout everywhere, on any device/window, per project requirement -
-       this dashboard is designed for landscape and should never render in a squeezed portrait layout.
-       When the real viewport is portrait (phone held upright, a narrow browser window, a tablet in
-       portrait), the whole page is rotated 90deg so it always RENDERS landscape regardless of the
-       physical orientation. This is a pure-CSS technique that works on every platform without relying
-       on the Screen Orientation API (unsupported on iOS Safari, and only usable in fullscreen on
-       Android) - manifest.json's "orientation": "landscape" only affects an installed PWA anyway, not
-       a page opened in a normal browser tab, so this CSS fallback is what actually covers that case. */
-    @media screen and (orientation: portrait) {
+    /* V14: force a landscape layout everywhere on a real phone/tablet, per project requirement - this
+       dashboard is designed for landscape and should never render in a squeezed portrait layout. When
+       the real viewport is portrait (phone held upright, a tablet in portrait), the whole page is
+       rotated 90deg so it always RENDERS landscape regardless of the physical orientation. This is a
+       pure-CSS technique that works on every platform without relying on the Screen Orientation API
+       (unsupported on iOS Safari, and only usable in fullscreen on Android) - manifest.json's
+       "orientation": "landscape" only affects an installed PWA anyway, not a page opened in a normal
+       browser tab, so this CSS fallback is what actually covers that case.
+       V18 BUGFIX: this used to fire on ANY portrait-shaped viewport, including a plain desktop Chrome
+       window - installing this as a desktop PWA (or just resizing a browser window taller than wide)
+       rotated the ENTIRE app 90 degrees with no way to fix it, since a desktop user can't physically
+       "rotate the screen" the way a phone can be turned - a resize just changes a still-rotated box's
+       dimensions. `(hover: none) and (pointer: coarse)` restricts this to actual touch devices (phones/
+       tablets - a mouse/trackpad always reports hover:hover / pointer:fine, regardless of window
+       shape), so a desktop window in a portrait shape now simply renders un-rotated instead - the
+       fix there is to widen the window, which is the natural desktop action, not a CSS trick. */
+    @media screen and (orientation: portrait) and (hover: none) and (pointer: coarse) {
       html {
         position: fixed;
         top: 50%;
@@ -694,7 +702,6 @@
       <button class="btn" onclick="loadBitachonChapter(bitachonCurrentChapter-1)">◀ פרק קודם</button>
       <span id="bitachonChapterLabel" style="font-weight:800; color:var(--gold); font-size:1.1vw;"></span>
       <button class="btn" onclick="loadBitachonChapter(bitachonCurrentChapter+1)">פרק הבא ▶</button>
-      <button onclick="speakHebrew(document.getElementById('bitachonFullText').textContent)" style="background:none; border:2px solid var(--gold); color:var(--gold); cursor:pointer; font-size:1vw; border-radius:0.5vw; padding:0.5vh 1vw;" title="הקרא פרק">🔊 הקרא</button>
     </div>
     <div id="bitachonFullText" style="height:55vh; overflow-y:auto; background:#fff; color:#000; padding:1.5vw; border-radius:1vw; font-size:1.3vw; line-height:1.9; text-align:justify;">טוען...</div>
     <div style="text-align:center; margin-top:1.5vh;"><a id="bitachonSefariaLink" href="https://www.sefaria.org.il/Duties_of_the_Heart%2C_Fourth_Treatise_on_Trust" target="_blank" style="color:var(--cyan);">צפייה מלאה באתר ספריא ⇱</a></div>
@@ -844,7 +851,6 @@
       <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; padding: 0 1vw;">
         <span>חיזוק יומי</span>
         <button onclick="refreshHalacha()" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-size:1vw; transition:0.2s;" title="רענן הלכה">🔄</button>
-        <button onclick="speakHebrew(document.getElementById('halachaText').textContent)" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-size:1vw; transition:0.2s; margin-right:0.5vw;" title="הקרא הלכה">🔊</button>
       </div>
       <div class="halacha-text" id="halachaText">טוען...</div>
 
@@ -880,7 +886,6 @@
       <div id="parashaDetails" style="background: rgba(0,0,0,0.3); padding: 1.2vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0; display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div id="parashaDetailsName" style="font-weight:800; color:var(--gold);"></div>
-          <button onclick="speakHebrew(document.getElementById('parashaDetailsName').textContent + '. קריאת התורה: ' + document.getElementById('parashaTorahRange').textContent + '. הפטרה: ' + document.getElementById('parashaHaftarahRange').textContent)" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-size:1vw;" title="הקרא">🔊</button>
         </div>
         <div>קריאת התורה: <span id="parashaTorahRange"></span></div>
         <div>הפטרה: <span id="parashaHaftarahRange"></span></div>
@@ -954,7 +959,7 @@
   <!-- SETTINGS MODAL -->
 
   <dialog id="settingsModal">
-    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V17)</h2><button class="close-btn" onclick="closeSettings(); document.getElementById('settingsModal').close();">✖</button></div>
+    <div class="modal-header"><h2>⚙️ הגדרות המערכת (V17.5)</h2><button class="close-btn" onclick="closeSettings(); document.getElementById('settingsModal').close();">✖</button></div>
 
     <!-- V15: reorganized from ~19 stacked boxes into a collapsible accordion by topic - much less
          overwhelming to scan, and every control here reads its colors from the shared theme variables
@@ -1205,7 +1210,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-24.1';
+    const APP_VERSION = '2026-09-24.3';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1775,79 +1780,6 @@
       btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
-
-    // V9: more robust across platforms, especially Android - voice lists there load asynchronously and
-    // often need a real wait (not just one getVoices() call), and Hebrew is sometimes reported under
-    // the old locale code "iw" instead of "he". We can't force-install a missing Google TTS Hebrew
-    // pack on Android - only detect it properly and guide the user - but we no longer give up after a
-    // single empty check.
-    function getVoicesAsync(timeoutMs = 3000) {
-      return new Promise(resolve => {
-        let voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) { resolve(voices); return; }
-        const onChange = () => { voices = window.speechSynthesis.getVoices(); if (voices.length > 0) { cleanup(); resolve(voices); } };
-        const timer = setTimeout(() => { cleanup(); resolve(window.speechSynthesis.getVoices()); }, timeoutMs);
-        function cleanup() { clearTimeout(timer); window.speechSynthesis.removeEventListener('voiceschanged', onChange); }
-        window.speechSynthesis.addEventListener('voiceschanged', onChange);
-      });
-    }
-    // V15: guaranteed Hebrew speech regardless of whether the device has a Hebrew voice pack installed
-    // (very common gap on Android without the Google Hebrew TTS pack, and on most iOS/Windows setups).
-    // Native speechSynthesis is tried first when a real Hebrew voice is available (best quality, fully
-    // offline). When none is found, this automatically falls back to fetching real speech audio from
-    // Google Translate's public TTS endpoint (used here the same way every other free public API in
-    // this app is used - no key, no library) and plays it as an <audio> element - so Hebrew speech
-    // always works, even on a device with zero Hebrew voices installed.
-    let fallbackAudioEl = null;
-    function stopFallbackAudio() { if (fallbackAudioEl) { fallbackAudioEl.pause(); fallbackAudioEl = null; } }
-    function speakHebrewViaGoogleTTS(text) {
-      stopFallbackAudio();
-      // The endpoint has a practical length limit, so long text (e.g. a full Chovot HaLevavot chapter)
-      // is split into chunks at sentence/word boundaries and played back-to-back.
-      const chunks = [];
-      let remaining = text.replace(/\s+/g, ' ').trim();
-      while (remaining.length > 0) {
-        if (remaining.length <= 180) { chunks.push(remaining); break; }
-        let cut = remaining.lastIndexOf(' ', 180);
-        if (cut <= 0) cut = 180;
-        chunks.push(remaining.slice(0, cut));
-        remaining = remaining.slice(cut).trim();
-      }
-      let i = 0;
-      function playNext() {
-        if (i >= chunks.length) { fallbackAudioEl = null; return; }
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunks[i])}&tl=he&client=tw-ob`;
-        fallbackAudioEl = new Audio(url);
-        i++;
-        fallbackAudioEl.onended = playNext;
-        fallbackAudioEl.onerror = () => { alert('גם ההקראה החלופית נכשלה - ייתכן שאין חיבור אינטרנט כרגע.'); fallbackAudioEl = null; };
-        fallbackAudioEl.play().catch(() => {});
-      }
-      playNext();
-    }
-    async function speakHebrew(text) {
-      // Stop whichever engine might currently be speaking (native or fallback) - acts as a toggle/stop
-      // when pressed again, same as before.
-      if (window.speechSynthesis && window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
-      if (fallbackAudioEl) { stopFallbackAudio(); return; }
-
-      if (!('speechSynthesis' in window)) { speakHebrewViaGoogleTTS(text); return; }
-
-      const voices = await getVoicesAsync();
-      const heVoice = voices.find(v => /^(he|iw)(-|$)/i.test(v.lang) || (v.name && v.name.toLowerCase().includes('hebrew')));
-
-      if (heVoice) {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'he-IL';
-        u.voice = heVoice;
-        window.speechSynthesis.speak(u);
-      } else {
-        // No local Hebrew voice found on this device - use the guaranteed online fallback instead of
-        // just showing an error, per the "always available" requirement.
-        speakHebrewViaGoogleTTS(text);
-      }
-    }
-
 
     // V7: fullscreen toggle via the standard Fullscreen API. Falls back gracefully with an alert if
     // the browser/context blocks it (e.g. some embedded webviews disallow requestFullscreen entirely).
@@ -3988,20 +3920,17 @@
       const search = document.getElementById('taskSearchInput');
       if(search) search.focus();
     });
-    // V16: broadened from 'click' alone to also unlock on touch/keyboard interaction, and now also
-    // "primes" speechSynthesis with a near-silent utterance. Browsers gate audio/speech that isn't
-    // triggered by a recent user gesture - on a kiosk display that's rarely touched after launch, the
-    // zman/candle-lighting voice reminders (fired minutes or hours later, from a timer, not a click)
-    // could silently fail to produce sound even though the code path ran correctly. Priming once here
-    // is the standard workaround; it does not by itself guarantee every browser allows it, which is why
-    // the Notification fallback below was added as a second, non-audio channel for the same alerts.
+    // V16: broadened from 'click' alone to also unlock on touch/keyboard interaction. Browsers gate
+    // audio that isn't triggered by a recent user gesture - on a kiosk display that's rarely touched
+    // after launch, the zman/candle-lighting chime reminders (fired minutes or hours later, from a
+    // timer, not a click) could silently fail to produce sound even though the code path ran
+    // correctly. Priming once here is the standard workaround; it does not by itself guarantee every
+    // browser allows it, which is why the Notification fallback below was added as a second,
+    // non-audio channel for the same alerts.
     let audioUnlocked = false;
     function unlockAudioAndSpeech() {
       if(audioUnlocked) return; audioUnlocked = true;
       if(!audioContext && appSettings.audioAlerts) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      if('speechSynthesis' in window) {
-        try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); } catch(e) {}
-      }
     }
     ['click', 'touchstart', 'keydown'].forEach(evt => window.addEventListener(evt, unlockAudioAndSpeech, { once: true }));
 
