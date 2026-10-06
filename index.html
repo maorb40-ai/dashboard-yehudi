@@ -335,6 +335,38 @@
     .seconds-group .flip-card { width: calc(3vw * var(--clock-scale)); height: calc(4.5vw * var(--clock-scale)); font-size: calc(3.5vw * var(--clock-scale)); }
 
     /* DATES & INFO PANELS */
+    /* V18.5: full-screen clock overlay (a <dialog> so it always sits above any other open dialog) and
+       alarm UI. All sizes are computed in JS (coFit) from the REAL viewport, not from vw units tied to
+       the dashboard layout - that's what makes it fill any screen, from a phone to a 16" tablet. */
+    dialog#clockOverlay { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-radius: 0; background: #000; color: #fff; overflow: hidden; }
+    dialog#clockOverlay[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding-bottom: 10vh; }
+    dialog#clockOverlay::backdrop { background: #000; }
+    #clockOverlay .co-view { display: none; white-space: nowrap; direction: ltr; font-family: 'Bebas Neue', 'Heebo', sans-serif; line-height: 1; font-size: 100px; }
+    #clockOverlay .co-view.active { display: inline-flex; align-items: baseline; }
+    #clockOverlay .co-sec { font-size: 0.4em; opacity: 0.7; margin-left: 0.12em; }
+    #clockOverlay .co-colon { opacity: 0.9; padding: 0 0.04em; }
+    #clockOverlay .co-card { display: inline-flex; align-items: center; justify-content: center; position: relative; width: 0.62em; height: 0.92em; margin: 0 0.04em; border-radius: 0.07em; background: linear-gradient(#2a2a2a, #111); border: 0.012em solid #333; box-shadow: 0 0.04em 0.12em rgba(0,0,0,0.9); }
+    #clockOverlay .co-card::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 0.012em; background: #000; }
+    #clockOverlay .co-card.small { width: 0.34em; height: 0.5em; font-size: 0.55em; align-self: center; }
+    #clockOverlay.co-night { color: #b45309; }
+    #clockOverlay .co-dates { text-align: center; margin-top: 2vh; }
+    #clockOverlay .co-heb { font-size: min(5vw, 7vh); font-weight: 900; color: var(--gold); }
+    #clockOverlay .co-greg { font-size: min(3vw, 4.2vh); font-weight: 600; opacity: 0.85; }
+    #clockOverlay .co-next { font-size: min(2.6vw, 3.6vh); opacity: 0.65; margin-top: 0.6vh; }
+    #clockOverlay.co-night .co-heb, #clockOverlay.co-night .co-greg, #clockOverlay.co-night .co-next { color: #b45309; }
+    #clockOverlay .co-controls { position: absolute; bottom: 2vh; left: 50%; transform: translateX(-50%); display: flex; gap: 1vw; flex-wrap: wrap; justify-content: center; padding: 1vh 1.5vw; background: rgba(30,30,30,0.85); border-radius: 3vh; transition: opacity 0.4s; max-width: 96vw; }
+    #clockOverlay .co-controls.hidden { opacity: 0; pointer-events: none; }
+    #clockOverlay .co-controls button { background: #333; color: #fff; border: none; border-radius: 2vh; padding: 1vh 2vh; font-size: max(14px, min(2vw, 3vh)); cursor: pointer; }
+    #clockOverlay .co-controls button:hover { background: #555; }
+    dialog#alarmRing { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-radius: 0; background: #7f1d1d; color: #fff; }
+    dialog#alarmRing[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; animation: alarmFlash 1s infinite; }
+    @keyframes alarmFlash { 0%,100% { background: #7f1d1d; } 50% { background: #b91c1c; } }
+    .alarm-row { display: flex; align-items: center; gap: 1vw; padding: 1vh 1vw; border-bottom: 1px solid var(--card-border); }
+    .alarm-row .al-time { font-size: 2.4vw; font-weight: 800; font-family: 'Bebas Neue', sans-serif; direction: ltr; min-width: 7vw; }
+    .alarm-row.off .al-time, .alarm-row.off .al-meta { opacity: 0.45; }
+    .alarm-row .al-meta { flex: 1; font-size: 0.95vw; }
+    .al-day { display: inline-block; width: 1.6vw; min-width: 22px; text-align: center; border-radius: 50%; font-size: 0.8vw; padding: 0.2vh 0; }
+    .al-day.on { background: var(--cyan); color: #000; font-weight: 800; }
     .dates-container { text-align: center; }
     .date-hebrew-text { font-size: 2.2vw; font-weight: 900; color: var(--gold); margin-bottom: 0.2vh; }
     .date-gregorian-text { font-size: 1vw; color: var(--text-color); font-weight: 600; }
@@ -493,6 +525,7 @@
         <button class="btn" id="btnPersonalDates" style="background: linear-gradient(45deg, #be185d, #db2777); color: white; margin-left:1vw;" onclick="openPersonalDatesModal()">📋 תאריכים אישיים</button>
         <button class="btn" id="btnFullscreen" style="background: linear-gradient(45deg, #334155, #1e293b); color: white; margin-left:1vw;" onclick="toggleFullscreen()">⛶ מסך מלא</button>
         <button class="btn" id="btnCheckVersion" style="background: linear-gradient(45deg, #64748b, #475569); color: white; margin-left:1vw;" onclick="checkForUpdate()">🔄 בדוק גרסה עדכנית</button>
+        <button class="btn" id="btnAlarm" style="background: linear-gradient(45deg, #dc2626, #f97316); color: white; margin-left:1vw;" onclick="openAlarmModal()">⏰ שעון מעורר</button>
         <button class="btn" id="btnInstallPWA" style="background: linear-gradient(45deg, #7c3aed, #a855f7); color: white; margin-left:1vw; display:none;" onclick="installPWA()">📲 התקן אפליקציה</button>
         <button class="btn" id="btnQR" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; margin-left:1vw;" onclick="openQrModal()">📱 QR</button>
         <button class="btn" id="btnShabbatTimes" style="background: linear-gradient(45deg, #b45309, #d97706); color: white; margin-left:1vw;" onclick="openShabbatTimesModal()">🕯️ זמני שבת</button>
@@ -609,7 +642,7 @@
         <div class="pasuk-banner" id="pasukBanner" style="font-size: 2.2vw; font-weight: bold; color: var(--cyan); text-shadow: 0 0 15px rgba(0,229,255,0.8); margin-bottom: 1.5vh; text-align: center; letter-spacing: 0.1vw;">"וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ"</div>
         <div id="shabbatCountdown" class="shabbat-countdown"></div>
 
-        <div class="flip-clock-container" onclick="toggleClockFocusMode()" title="לחץ למסך שעון מלא">
+        <div class="flip-clock-container" onclick="openClockOverlay()" title="לחץ למסך שעון מלא">
           <div class="flip-group"><div class="flip-card" id="h1">0</div><div class="flip-card" id="h2">0</div></div>
           <div class="colon">:</div>
           <div class="flip-group"><div class="flip-card" id="m1">0</div><div class="flip-card" id="m2">0</div></div>
@@ -831,6 +864,80 @@
       <button onclick="showTomorrowZmanim()" style="background:var(--gold); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">🌙 מחר</button>
     </div>
     <div id="zmanimDateContent" class="zmanim-grid" style="width:100%;"></div>
+  </dialog>
+
+  <!-- V18.5: FULL-SCREEN CLOCK. Tap the main clock to open; tap the screen to show/hide the controls. -->
+  <dialog id="clockOverlay" onclick="coTap(event)">
+    <div id="coViews">
+      <div class="co-view" id="coDigital"><span id="coHM">00:00</span><span class="co-sec" id="coSec">00</span></div>
+      <div class="co-view" id="coFlip">
+        <span class="co-card" id="cf1">0</span><span class="co-card" id="cf2">0</span><span class="co-colon">:</span><span class="co-card" id="cf3">0</span><span class="co-card" id="cf4">0</span><span class="co-card small" id="cfs1">0</span><span class="co-card small" id="cfs2">0</span>
+      </div>
+      <div class="co-view" id="coAnalog">
+        <svg id="coAnalogSvg" viewBox="-100 -100 200 200" width="400" height="400">
+          <circle r="96" fill="#111" stroke="#f2c94c" stroke-width="2"/>
+          <g id="coTicks"></g>
+          <line id="coHand-h" x1="0" y1="6" x2="0" y2="-50" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+          <line id="coHand-m" x1="0" y1="8" x2="0" y2="-75" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+          <line id="coHand-s" x1="0" y1="14" x2="0" y2="-82" stroke="#f97316" stroke-width="1.6" stroke-linecap="round"/>
+          <circle r="4" fill="#f97316"/>
+        </svg>
+      </div>
+    </div>
+    <div class="co-dates"><div class="co-heb" id="coHeb"></div><div class="co-greg" id="coGreg"></div><div class="co-next" id="coNext"></div></div>
+    <div class="co-controls" id="coControls" onclick="event.stopPropagation(); coKeepControls();">
+      <button onclick="coCycleStyle(-1)" title="סגנון קודם">▶</button>
+      <button id="coStyleLabel" onclick="coCycleStyle(1)">סגנון</button>
+      <button onclick="coCycleStyle(1)" title="סגנון הבא">◀</button>
+      <button onclick="coSize(-0.1)" title="הקטן">A−</button>
+      <button onclick="coSize(0.1)" title="הגדל">A+</button>
+      <button id="coSecBtn" onclick="coToggleSeconds()">⏱ שניות</button>
+      <button onclick="openAlarmModal()">⏰</button>
+      <button onclick="closeClockOverlay()">✖ סגור</button>
+    </div>
+  </dialog>
+
+  <!-- V18.5: ringing alarm (a <dialog> so it appears above everything, even an open settings window) -->
+  <dialog id="alarmRing">
+    <div id="alarmRingTime" style="font-size:min(18vw,30vh); font-family:'Bebas Neue',sans-serif; line-height:1; direction:ltr;">00:00</div>
+    <div id="alarmRingLabel" style="font-size:min(5vw,8vh); font-weight:800; text-align:center; padding:0 4vw;"></div>
+    <div style="display:flex; gap:3vw; flex-wrap:wrap; justify-content:center;">
+      <button id="alarmSnoozeBtn" onclick="snoozeAlarm()" style="font-size:min(3.5vw,6vh); padding:2vh 4vw; border:none; border-radius:3vh; background:#fff; color:#7f1d1d; font-weight:800; cursor:pointer;">💤 נודניק</button>
+      <button onclick="dismissAlarm()" style="font-size:min(3.5vw,6vh); padding:2vh 4vw; border:none; border-radius:3vh; background:#111; color:#fff; font-weight:800; cursor:pointer;">⏹ כבה</button>
+    </div>
+  </dialog>
+
+  <!-- V18.5: ALARM CLOCK manager -->
+  <dialog id="alarmModal" style="width:46vw; max-width:760px; min-width:320px;">
+    <div class="modal-header"><h2>⏰ שעון מעורר</h2><button class="close-btn" onclick="document.getElementById('alarmModal').close()">✖</button></div>
+    <div id="alarmNextInfo" style="font-size:1vw; color:var(--muted-text); margin-bottom:1vh;"></div>
+    <div id="alarmList" style="max-height:34vh; overflow-y:auto;"></div>
+    <div style="margin-top:1.5vh; border-top:1px solid var(--card-border); padding-top:1.5vh;">
+      <div class="panel-title" id="alarmFormTitle">הוספת שעון מעורר</div>
+      <div style="display:flex; gap:1vw; flex-wrap:wrap; align-items:center; margin:1vh 0;">
+        <input type="time" id="alTime" value="07:00" style="font-size:1.6vw; padding:0.5vh 0.8vw;">
+        <input type="text" id="alLabel" placeholder="תווית (למשל: שחרית)" style="flex:1; min-width:10vw; padding:0.8vh 0.8vw;">
+      </div>
+      <div style="display:flex; gap:0.5vw; align-items:center; margin:1vh 0; flex-wrap:wrap;">
+        <span style="font-size:0.9vw;">חזרה (ללא בחירה = פעם אחת):</span>
+        <span id="alDays"></span>
+      </div>
+      <div style="display:flex; gap:1.2vw; flex-wrap:wrap; align-items:center; margin:1vh 0; font-size:0.95vw;">
+        <label>נודניק: <select id="alSnooze"><option value="0">ללא</option><option value="5" selected>5 דק'</option><option value="10">10 דק'</option><option value="15">15 דק'</option></select></label>
+        <label>צליל: <select id="alSound"><option value="digital">דיגיטלי (עולה בהדרגה)</option><option value="bell">פעמון</option><option value="gentle">עדין</option></select></label>
+      </div>
+      <div style="display:flex; gap:1.5vw; flex-wrap:wrap; margin:1vh 0; font-size:0.95vw;">
+        <label><input type="checkbox" id="alSkipShabbat" checked> לא לצלצל בשבת/חג</label>
+        <label><input type="checkbox" id="alGradual" checked> עוצמה עולה בהדרגה</label>
+        <label><input type="checkbox" id="alVibrate" checked> רטט (באנדרואיד)</label>
+      </div>
+      <div style="display:flex; gap:1vw; margin-top:1vh;">
+        <button class="btn" onclick="saveAlarmFromForm()" style="background:var(--cyan); color:#000; font-weight:800;" id="alSaveBtn">➕ הוסף</button>
+        <button class="btn" onclick="resetAlarmForm()" id="alCancelBtn" style="display:none;">בטל עריכה</button>
+        <button class="btn" onclick="testAlarmSound()">▶ נסה צליל</button>
+      </div>
+      <div class="settings-hint" style="margin-top:1vh;">השעון המעורר מצלצל כשהדשבורד פתוח והמסך דלוק (באפליקציית האנדרואיד המסך נשאר דלוק אוטומטית). אם הדשבורד סגור או המכשיר במצב שינה עמוק - לא יצלצל.</div>
+    </div>
   </dialog>
 
   <!-- DND MODAL - new in V11: temporarily silences chime/speech/notification alerts (e.g. during a
@@ -1230,7 +1337,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-09-24.7';
+    const APP_VERSION = '2026-10-06.1';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1482,6 +1589,7 @@
       { key: 'personalDatesBtn', label: 'כפתור תאריכים אישיים', ids: ['btnPersonalDates'] },
       { key: 'fullscreenBtn', label: 'כפתור מסך מלא', ids: ['btnFullscreen'] },
       { key: 'checkVersionBtn', label: 'כפתור בדוק גרסה עדכנית', ids: ['btnCheckVersion'] },
+      { key: 'alarmBtn', label: 'כפתור שעון מעורר', ids: ['btnAlarm'] },
       { key: 'qrBtn', label: 'כפתור QR', ids: ['btnQR'] },
       { key: 'shabbatTimesBtn', label: 'כפתור זמני שבת', ids: ['btnShabbatTimes'] },
       { key: 'datePickerBtn', label: 'כפתור זמנים לתאריך', ids: ['btnDatePicker'] },
@@ -3919,6 +4027,7 @@
         setFlipVal('h1', String(now.getHours()).padStart(2,'0')[0]); setFlipVal('h2', String(now.getHours()).padStart(2,'0')[1]);
         setFlipVal('m1', String(now.getMinutes()).padStart(2,'0')[0]); setFlipVal('m2', String(now.getMinutes()).padStart(2,'0')[1]);
         setFlipVal('s1', String(now.getSeconds()).padStart(2,'0')[0]); setFlipVal('s2', String(now.getSeconds()).padStart(2,'0')[1]);
+        renderClockOverlay(now); alarmTick(now);
         const todayStr = now.toDateString();
         if (todayStr !== lastDateStr) { lastDateStr = todayStr; checkResetTasks(); updateHebrewDateParts(now); updateHalacha(); document.getElementById('gregorianDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); fetchAllData(currentLat, currentLng); updateDutyWidget(); checkPrepReminder(); }
         if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); applyHolidayBgIcon(); updateHalachicDayProgress(); checkOmerNightReminder(now); checkShabbatReminderBanners(now); }
@@ -4019,6 +4128,278 @@
       if(isEmptyAreaClick && document.body.classList.contains('header-auto-hidden')) showHeaderBar();
     });
     scheduleHeaderAutoHide();
+    // ================= V18.5: FULL-SCREEN CLOCK + ALARM CLOCK =================
+    const CO_STYLES = [
+      { key: 'digital', label: '🔢 דיגיטלי' }, { key: 'flip', label: '🃏 כרטיסים' },
+      { key: 'analog', label: '🕒 אנלוגי' }, { key: 'night', label: '🌙 לילה (עמום)' }
+    ];
+    if(!appSettings.clockStyle) appSettings.clockStyle = 'digital';
+    if(!appSettings.clockOverlayScale) appSettings.clockOverlayScale = 1;
+    if(appSettings.clockShowSeconds === undefined) appSettings.clockShowSeconds = true;
+    if(!Array.isArray(appSettings.alarms)) appSettings.alarms = [];
+    const pad2 = n => String(n).padStart(2, '0');
+    let coLast = '', coControlsTimer = null, coEnteredFs = false;
+    function coViewId(style) { return style === 'flip' ? 'coFlip' : style === 'analog' ? 'coAnalog' : 'coDigital'; }
+    function openClockOverlay() {
+      const dlg = document.getElementById('clockOverlay');
+      if(!dlg.open) dlg.showModal();
+      if(!document.getElementById('coTicks').childElementCount) {
+        let t = '';
+        for(let i = 0; i < 60; i++) { const major = i % 5 === 0, a = i * 6 * Math.PI / 180, r1 = major ? 82 : 88, r2 = 93; t += `<line x1="${(Math.sin(a)*r1).toFixed(1)}" y1="${(-Math.cos(a)*r1).toFixed(1)}" x2="${(Math.sin(a)*r2).toFixed(1)}" y2="${(-Math.cos(a)*r2).toFixed(1)}" stroke="${major ? '#f2c94c' : '#666'}" stroke-width="${major ? 2.4 : 1}"/>`; }
+        document.getElementById('coTicks').innerHTML = t;
+      }
+      if(document.documentElement.requestFullscreen && !document.fullscreenElement) { coEnteredFs = true; document.documentElement.requestFullscreen().catch(() => { coEnteredFs = false; }); }
+      coApplyStyle(); coKeepControls();
+    }
+    function closeClockOverlay() { const dlg = document.getElementById('clockOverlay'); if(dlg.open) dlg.close(); }
+    document.getElementById('clockOverlay').addEventListener('close', () => {
+      if(coEnteredFs && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      coEnteredFs = false;
+    });
+    function coApplyStyle() {
+      const dlg = document.getElementById('clockOverlay'), style = appSettings.clockStyle;
+      dlg.classList.toggle('co-night', style === 'night');
+      ['coDigital', 'coFlip', 'coAnalog'].forEach(id => document.getElementById(id).classList.toggle('active', id === coViewId(style)));
+      const meta = CO_STYLES.find(s => s.key === style) || CO_STYLES[0];
+      document.getElementById('coStyleLabel').textContent = meta.label;
+      document.getElementById('coSecBtn').textContent = appSettings.clockShowSeconds ? '⏱ שניות: כן' : '⏱ שניות: לא';
+      dlg.style.filter = style === 'night' ? 'brightness(0.55)' : '';
+      coLast = ''; renderClockOverlay(new Date()); coFit();
+    }
+    function coCycleStyle(dir) {
+      const i = CO_STYLES.findIndex(s => s.key === appSettings.clockStyle);
+      appSettings.clockStyle = CO_STYLES[(i + dir + CO_STYLES.length) % CO_STYLES.length].key;
+      saveSettings(); coApplyStyle(); coKeepControls();
+    }
+    function coSize(delta) { appSettings.clockOverlayScale = Math.min(1, Math.max(0.4, +(appSettings.clockOverlayScale + delta).toFixed(2))); saveSettings(); coFit(); coKeepControls(); }
+    function coToggleSeconds() { appSettings.clockShowSeconds = !appSettings.clockShowSeconds; saveSettings(); coApplyStyle(); coKeepControls(); }
+    function coKeepControls() {
+      const c = document.getElementById('coControls'); c.classList.remove('hidden');
+      clearTimeout(coControlsTimer); coControlsTimer = setTimeout(() => c.classList.add('hidden'), 5000);
+    }
+    function coTap(e) {
+      if(e.target.closest && e.target.closest('.co-controls')) return;
+      const c = document.getElementById('coControls');
+      if(c.classList.contains('hidden')) coKeepControls(); else { clearTimeout(coControlsTimer); c.classList.add('hidden'); }
+    }
+    // Sizes the visible clock to fill the REAL viewport (minus the date lines + a strip for the controls),
+    // by measuring it at a fixed 100px and scaling - works for any font fallback and any screen size.
+    function coFit() {
+      const dlg = document.getElementById('clockOverlay'); if(!dlg.open) return;
+      const style = appSettings.clockStyle, sc = appSettings.clockOverlayScale || 1;
+      const datesH = dlg.querySelector('.co-dates').offsetHeight;
+      const maxW = window.innerWidth * 0.94, maxH = Math.max(80, window.innerHeight * 0.88 - datesH - 20);
+      if(style === 'analog') {
+        const s = Math.max(120, Math.min(maxW, maxH)) * sc, svg = document.getElementById('coAnalogSvg');
+        svg.setAttribute('width', s); svg.setAttribute('height', s);
+        return;
+      }
+      const view = document.getElementById(coViewId(style));
+      view.style.fontSize = '100px';
+      const r = view.getBoundingClientRect();
+      if(!r.width || !r.height) return;
+      view.style.fontSize = (100 * Math.min(maxW / r.width, maxH / r.height) * sc).toFixed(1) + 'px';
+    }
+    function renderClockOverlay(now) {
+      const dlg = document.getElementById('clockOverlay'); if(!dlg.open) return;
+      const hh = pad2(now.getHours()), mm = pad2(now.getMinutes()), ss = pad2(now.getSeconds());
+      const style = appSettings.clockStyle, showSec = appSettings.clockShowSeconds && style !== 'night';
+      const key = hh + mm + ss + style + showSec;
+      if(key === coLast) return; coLast = key;
+      if(style === 'flip') {
+        [['cf1', hh[0]], ['cf2', hh[1]], ['cf3', mm[0]], ['cf4', mm[1]], ['cfs1', ss[0]], ['cfs2', ss[1]]].forEach(([id, v]) => { const el = document.getElementById(id); if(el.textContent !== v) el.textContent = v; });
+        document.getElementById('cfs1').style.display = document.getElementById('cfs2').style.display = showSec ? '' : 'none';
+      } else if(style === 'analog') {
+        const h = (now.getHours() % 12) + now.getMinutes() / 60, m = now.getMinutes() + now.getSeconds() / 60;
+        document.getElementById('coHand-h').setAttribute('transform', `rotate(${h * 30})`);
+        document.getElementById('coHand-m').setAttribute('transform', `rotate(${m * 6})`);
+        document.getElementById('coHand-s').setAttribute('transform', `rotate(${now.getSeconds() * 6})`);
+        document.getElementById('coHand-s').style.display = showSec ? '' : 'none';
+      } else {
+        document.getElementById('coHM').textContent = hh + ':' + mm;
+        const secEl = document.getElementById('coSec'); secEl.textContent = ss; secEl.style.display = showSec ? '' : 'none';
+      }
+      if(ss === '00' || !document.getElementById('coHeb').textContent) {
+        document.getElementById('coHeb').textContent = (document.getElementById('hebrewDate') || {}).textContent || '';
+        document.getElementById('coGreg').textContent = (document.getElementById('gregorianDate') || {}).textContent || '';
+        const nz = document.querySelector('.zman-card.next-zman');
+        const na = getNextAlarm(now);
+        let line = nz ? ('הבא: ' + nz.querySelector('.zman-title').textContent + ' ' + nz.querySelector('.zman-time').textContent) : '';
+        if(na) line += (line ? '   •   ' : '') + '⏰ ' + na.a.time;
+        document.getElementById('coNext').textContent = line;
+      }
+    }
+    window.addEventListener('resize', coFit);
+    window.addEventListener('keydown', e => {
+      if(!document.getElementById('clockOverlay').open) return;
+      if(e.key === 'ArrowLeft') coCycleStyle(1); else if(e.key === 'ArrowRight') coCycleStyle(-1);
+    });
+
+    // ---- alarm clock ----
+    const DAY_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+    let alarmEditingId = null, alarmDraftDays = [], ringingAlarm = null, ringStart = 0, alarmTimer = null, alarmGain = null, alarmLastMinute = '', alarmFired = {};
+    let alarmSnoozes = {}; try { alarmSnoozes = JSON.parse(localStorage.getItem('alarmSnoozes')) || {}; } catch(e) {}
+    const persistSnoozes = () => { try { localStorage.setItem('alarmSnoozes', JSON.stringify(alarmSnoozes)); } catch(e) {} };
+    function isShabbatNow(when) {
+      return (shabbatIntervals || []).some(iv => iv.start <= when && when < iv.end) || document.body.classList.contains('shabbat-active');
+    }
+    function getNextAlarm(now) {
+      let best = null;
+      appSettings.alarms.filter(a => a.enabled).forEach(a => {
+        const [h, m] = a.time.split(':').map(Number);
+        for(let d = 0; d <= 7; d++) {
+          const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, h, m, 0);
+          if(dt <= now) continue;
+          if(a.days.length && !a.days.includes(dt.getDay())) continue;
+          if(a.skipShabbat !== false && isShabbatNow(dt)) continue;
+          if(!best || dt < best.date) best = { a, date: dt };
+          break;
+        }
+      });
+      return best;
+    }
+    function openAlarmModal() { resetAlarmForm(); renderAlarms(); document.getElementById('alarmModal').showModal(); }
+    function renderAlarmDayChips() {
+      document.getElementById('alDays').innerHTML = DAY_LETTERS.map((l, i) =>
+        `<span class="al-day ${alarmDraftDays.includes(i) ? 'on' : ''}" style="cursor:pointer; margin:0 0.15vw; padding:0.5vh 0.6vw;" onclick="toggleAlarmDay(${i})">${l}</span>`).join('');
+    }
+    function toggleAlarmDay(i) { const k = alarmDraftDays.indexOf(i); if(k >= 0) alarmDraftDays.splice(k, 1); else alarmDraftDays.push(i); renderAlarmDayChips(); }
+    function resetAlarmForm() {
+      alarmEditingId = null; alarmDraftDays = [];
+      document.getElementById('alTime').value = '07:00'; document.getElementById('alLabel').value = '';
+      document.getElementById('alSnooze').value = '5'; document.getElementById('alSound').value = 'digital';
+      document.getElementById('alSkipShabbat').checked = true; document.getElementById('alGradual').checked = true; document.getElementById('alVibrate').checked = true;
+      document.getElementById('alarmFormTitle').textContent = 'הוספת שעון מעורר'; document.getElementById('alSaveBtn').textContent = '➕ הוסף';
+      document.getElementById('alCancelBtn').style.display = 'none';
+      renderAlarmDayChips();
+    }
+    function saveAlarmFromForm() {
+      const time = document.getElementById('alTime').value; if(!time) { alert('בחר שעה'); return; }
+      const data = { time, label: document.getElementById('alLabel').value.trim(), days: alarmDraftDays.slice().sort(), enabled: true,
+        snooze: parseInt(document.getElementById('alSnooze').value, 10), sound: document.getElementById('alSound').value,
+        skipShabbat: document.getElementById('alSkipShabbat').checked, gradual: document.getElementById('alGradual').checked, vibrate: document.getElementById('alVibrate').checked };
+      if(alarmEditingId) { const i = appSettings.alarms.findIndex(a => a.id === alarmEditingId); if(i >= 0) appSettings.alarms[i] = Object.assign({}, appSettings.alarms[i], data); }
+      else appSettings.alarms.push(Object.assign({ id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) }, data));
+      saveSettings(); resetAlarmForm(); renderAlarms();
+    }
+    function editAlarm(id) {
+      const a = appSettings.alarms.find(x => x.id === id); if(!a) return;
+      alarmEditingId = id; alarmDraftDays = a.days.slice();
+      document.getElementById('alTime').value = a.time; document.getElementById('alLabel').value = a.label || '';
+      document.getElementById('alSnooze').value = String(a.snooze); document.getElementById('alSound').value = a.sound || 'digital';
+      document.getElementById('alSkipShabbat').checked = a.skipShabbat !== false; document.getElementById('alGradual').checked = a.gradual !== false; document.getElementById('alVibrate').checked = a.vibrate !== false;
+      document.getElementById('alarmFormTitle').textContent = 'עריכת שעון מעורר'; document.getElementById('alSaveBtn').textContent = '💾 שמור';
+      document.getElementById('alCancelBtn').style.display = ''; renderAlarmDayChips();
+    }
+    function toggleAlarm(id) { const a = appSettings.alarms.find(x => x.id === id); if(a) { a.enabled = !a.enabled; saveSettings(); renderAlarms(); } }
+    function deleteAlarm(id) { appSettings.alarms = appSettings.alarms.filter(a => a.id !== id); delete alarmSnoozes[id]; persistSnoozes(); saveSettings(); renderAlarms(); }
+    function renderAlarms() {
+      const list = document.getElementById('alarmList'); list.innerHTML = '';
+      if(!appSettings.alarms.length) list.innerHTML = '<p style="text-align:center; color:var(--muted-text);">אין שעונים מעוררים. הוסף למטה.</p>';
+      appSettings.alarms.slice().sort((a, b) => a.time.localeCompare(b.time)).forEach(a => {
+        const row = document.createElement('div'); row.className = 'alarm-row' + (a.enabled ? '' : ' off');
+        const days = a.days.length ? DAY_LETTERS.map((l, i) => `<span class="al-day ${a.days.includes(i) ? 'on' : ''}">${l}</span>`).join('') : '<span>פעם אחת</span>';
+        row.innerHTML = `<input type="checkbox" ${a.enabled ? 'checked' : ''} onchange="toggleAlarm('${a.id}')" style="width:1.6vw; height:1.6vw; min-width:20px; min-height:20px;"><div class="al-time">${a.time}</div><div class="al-meta"><div class="al-label"></div><div>${days}${a.skipShabbat !== false ? ' <span title="לא מצלצל בשבת/חג">🕯️</span>' : ''}</div></div><button onclick="editAlarm('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:1.2vw;">✏️</button><button onclick="deleteAlarm('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:1.2vw;">🗑️</button>`;
+        row.querySelector('.al-label').textContent = a.label || '';
+        list.appendChild(row);
+      });
+      const na = getNextAlarm(new Date());
+      document.getElementById('alarmNextInfo').textContent = na ? `⏰ הבא: ${na.a.label ? na.a.label + ' - ' : ''}${na.date.toLocaleDateString('he-IL', { weekday: 'long' })} ${na.a.time}` : 'אין שעון מעורר פעיל';
+    }
+    function ensureAlarmAudio() {
+      if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioContext.state === 'suspended') audioContext.resume();
+      if(!alarmGain) { alarmGain = audioContext.createGain(); alarmGain.connect(audioContext.destination); }
+    }
+    function alarmBurst(kind) {
+      const ctx = audioContext, t = ctx.currentTime;
+      const notes = kind === 'bell' ? [[880, 0], [1320, 0.35]] : kind === 'gentle' ? [[528, 0], [660, 0.5], [792, 1.0]] : [[1046, 0], [1046, 0.2], [1046, 0.4], [1046, 0.6]];
+      const dur = kind === 'digital' ? 0.12 : kind === 'bell' ? 1.2 : 0.9, peak = kind === 'digital' ? 0.35 : 0.6;
+      notes.forEach(([f, d]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = kind === 'digital' ? 'square' : 'sine'; o.frequency.value = f; o.connect(g); g.connect(alarmGain);
+        g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(peak, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + dur);
+        o.start(t + d); o.stop(t + d + dur + 0.05);
+      });
+    }
+    function testAlarmSound() { ensureAlarmAudio(); alarmGain.gain.value = 0.8; alarmBurst(document.getElementById('alSound').value); }
+    function ringAlarm(a) {
+      if(ringingAlarm) return;
+      ringingAlarm = a; ringStart = Date.now();
+      const now = new Date();
+      document.getElementById('alarmRingTime').textContent = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+      document.getElementById('alarmRingLabel').textContent = a.label || 'שעון מעורר';
+      document.getElementById('alarmSnoozeBtn').style.display = a.snooze > 0 ? '' : 'none';
+      document.getElementById('alarmSnoozeBtn').textContent = `💤 נודניק ${a.snooze} דק'`;
+      const dlg = document.getElementById('alarmRing'); if(!dlg.open) dlg.showModal();
+      try { ensureAlarmAudio(); let vol = a.gradual === false ? 1 : 0.15; alarmGain.gain.value = vol;
+        const tick = () => { if(!ringingAlarm) return; if(a.gradual !== false) { vol = Math.min(1, vol + 0.06); alarmGain.gain.value = vol; } alarmBurst(a.sound || 'digital'); if(a.vibrate !== false && navigator.vibrate) navigator.vibrate([400, 200, 400]); };
+        tick(); alarmTimer = setInterval(tick, 1500); } catch(e) { console.warn('alarm audio failed', e); }
+      try { if(typeof Notification !== 'undefined' && Notification.permission === 'granted') new Notification('⏰ שעון מעורר', { body: a.label || a.time, requireInteraction: true }); } catch(e) {}
+    }
+    function stopRinging() {
+      clearInterval(alarmTimer); alarmTimer = null; if(navigator.vibrate) navigator.vibrate(0);
+      const dlg = document.getElementById('alarmRing'); if(dlg.open) dlg.close();
+      const a = ringingAlarm; ringingAlarm = null; return a;
+    }
+    function dismissAlarm() {
+      const a = stopRinging(); if(!a) return;
+      delete alarmSnoozes[a.id]; persistSnoozes();
+      if(!a.days.length) { a.enabled = false; saveSettings(); }
+      if(document.getElementById('alarmModal').open) renderAlarms();
+    }
+    function snoozeAlarm() {
+      const a = stopRinging(); if(!a) return;
+      alarmSnoozes[a.id] = Date.now() + (a.snooze || 5) * 60000; persistSnoozes();
+      if(!a.days.length) { a.enabled = false; saveSettings(); }
+    }
+    function alarmTick(now) {
+      const mk = now.toDateString() + '_' + now.getHours() + ':' + now.getMinutes();
+      if(mk !== alarmLastMinute) {
+        alarmLastMinute = mk;
+        const hm = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+        appSettings.alarms.forEach(a => {
+          if(!a.enabled || a.time !== hm || (a.days.length && !a.days.includes(now.getDay()))) return;
+          if(alarmFired[a.id] === mk) return; alarmFired[a.id] = mk;
+          if(a.skipShabbat !== false && isShabbatNow(now)) return;
+          ringAlarm(a);
+        });
+      }
+      const ids = Object.keys(alarmSnoozes);
+      if(ids.length && !ringingAlarm) ids.forEach(id => {
+        if(now.getTime() >= alarmSnoozes[id]) { const a = appSettings.alarms.find(x => x.id === id); delete alarmSnoozes[id]; persistSnoozes(); if(a) ringAlarm(a); }
+      });
+      if(ringingAlarm && Date.now() - ringStart > 5 * 60000) { if(ringingAlarm.snooze > 0) snoozeAlarm(); else dismissAlarm(); }
+    }
+    // Israel's clocks go back at the end of October. Hebcal's times carry their own UTC offset so the
+    // zmanim themselves switch correctly, but everything the app shows as "the time" (the clock, alarms,
+    // countdowns) comes from the DEVICE's own timezone - a tablet stuck on a fixed GMT+3 / manual time
+    // would then be an hour off after the change with no sign anything is wrong. This compares the
+    // device's offset against Asia/Jerusalem's real offset right now and shows a banner on mismatch.
+    function jerusalemOffsetMin(d) {
+      const f = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jerusalem', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const p = Object.fromEntries(f.formatToParts(d).map(x => [x.type, x.value]));
+      return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(d.getTime() / 1000) * 1000) / 60000);
+    }
+    let tzBannerDismissed = false;
+    function checkTimezoneMismatch() {
+      const now = new Date(), mismatch = jerusalemOffsetMin(now) !== -now.getTimezoneOffset();
+      let b = document.getElementById('tzMismatchBanner');
+      if(!mismatch || tzBannerDismissed) { if(b) b.remove(); return; }
+      if(!b) {
+        b = document.createElement('div'); b.id = 'tzMismatchBanner';
+        b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:99999; background:#b91c1c; color:#fff; padding:1vh 2vw; text-align:center; font-weight:800; font-size:max(14px,1.2vw); cursor:pointer;';
+        b.textContent = '⚠️ שעון המכשיר לא תואם לשעון ירושלים (ייתכן שעבר/לא עבר לשעון חורף במכשיר) - השעה בדשבורד עלולה להיות מוזזת. הגדר במכשיר "אזור זמן ותאריך אוטומטיים". לחיצה = הסתר.';
+        b.onclick = () => { tzBannerDismissed = true; b.remove(); };
+        document.body.appendChild(b);
+      }
+    }
+    checkTimezoneMismatch(); setInterval(checkTimezoneMismatch, 10 * 60 * 1000);
+    // The main update() loop is requestAnimationFrame-based, which browsers pause completely while the
+    // page is hidden (background tab, minimized window) - an alarm must still ring then, so it gets its
+    // own setInterval too (also throttled in the background, but never fully stopped). alarmTick dedupes
+    // by minute, so running from both places is safe.
+    setInterval(() => alarmTick(new Date()), 1000);
     // V15: "/" jumps straight to the task search box - skipped while already typing in any field (so
     // a literal "/" character can still be typed normally), and while a <dialog> is open (native
     // <dialog> already closes on Escape by itself, without any extra code needed here).
