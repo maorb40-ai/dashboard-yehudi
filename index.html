@@ -507,6 +507,7 @@
         <div class="greeting" id="greetingText">בוקר טוב</div>
         <div class="edah-badge" id="edahBadge" onclick="cycleNusach()" style="cursor:pointer;" title="לחץ למעבר בין נוסחים">מנהג עדות המזרח</div>
         <div class="weather-info" id="weatherInfo" onclick="openWeatherModal()" style="cursor:pointer;" title="לחץ לתחזית שבועית">טוען מזג אוויר...</div>
+        <div class="weather-info" id="dataFreshness" style="font-size:0.85vw; font-weight:700;" title="מצב עדכון הנתונים החיים (זמנים, חגים, פרשה)"></div>
         <div class="weather-info" id="worldClockInfo" style="display:none;"></div>
         <div class="api-loader" id="apiLoader">מרענן נתונים...</div>
         <div class="weather-info" id="connectionStatus" style="display:none;"></div>
@@ -672,6 +673,8 @@
           <div class="info-item" id="ribbonItem-nextholiday"><span class="label">מועד קרוב</span><span class="value" id="nextHolidayVal">טוען...</span></div>
           <div class="info-item" id="ribbonItem-parasha"><span class="label">שניים מקרא ופרשה</span><a class="value link-val" id="parashaVal" target="_blank">טוען...</a></div>
           <div class="info-item" id="ribbonItem-shabbatentrance"><span class="label">כניסת שבת</span><span class="value" id="shabbatEntranceVal">--</span><span class="value" id="shabbatWeatherVal" style="font-size:0.8vw; font-weight:600;"></span></div>
+          <div class="info-item" id="ribbonItem-shaah"><span class="label">שעה זמנית</span><span class="value" id="shaahVal">--</span><span class="value" id="shaahSub" style="font-size:0.75vw; font-weight:600;"></span></div>
+          <div class="info-item" id="ribbonItem-sunarc" title="מסלול השמש מהזריחה עד השקיעה"><span class="label">שמש</span><span id="sunArcSvg"></span><span class="value" id="sunArcText" style="font-size:0.75vw; font-weight:600;"></span></div>
           <div class="info-item" id="ribbonItem-duty" style="display:none;"><span class="label">אחראי היום</span><span class="value" id="dutyVal">--</span></div>
         </div>
 
@@ -940,6 +943,52 @@
     </div>
   </dialog>
 
+  <!-- V18.6: OMER NUSACH -->
+  <dialog id="omerModal" style="width:42vw; max-width:640px; min-width:320px; text-align:center;">
+    <div class="modal-header"><h2>🌾 ספירת העומר</h2><button class="close-btn" onclick="document.getElementById('omerModal').close()">✖</button></div>
+    <div style="margin-bottom:1vh; font-size:0.95vw;">יום: <input type="number" id="omerDayInput" min="1" max="49" style="width:5vw;" onchange="renderOmerModal(parseInt(this.value,10))"> <span id="omerDayHint" style="color:var(--muted-text);"></span></div>
+    <div id="omerNusachBox" style="font-size:1.7vw; line-height:2; background:#fff; color:#000; border-radius:1vw; padding:2vh 2vw; text-align:center;"></div>
+    <div class="settings-hint" style="margin-top:1vh;">הנוסח הרגיל של ברכת ספירת העומר ונוסח הספירה (זהה בעדות המזרח ובאשכנז). סופרים בלילה אחרי צאת הכוכבים, בעמידה. כדאי לוודא מול הסידור שלך.</div>
+    <div style="display:flex; gap:1vw; justify-content:center; margin-top:1vh; flex-wrap:wrap;">
+      <a class="btn" href="https://www.sefaria.org.il/Psalms.67" target="_blank" style="text-decoration:none;">📖 מזמור "למנצח בנגינות" (תהילים סז)</a>
+      <button class="btn" id="omerMarkBtn" style="background:var(--gold); color:#000; font-weight:800;" onclick="omerMarkCounted()">✅ ספרתי היום</button>
+    </div>
+  </dialog>
+
+  <!-- V18.6: ZEMIROT -->
+  <dialog id="zemirotModal" style="width:40vw; max-width:600px; min-width:320px;">
+    <div class="modal-header"><h2>🎵 זמירות שבת</h2><button class="close-btn" onclick="document.getElementById('zemirotModal').close()">✖</button></div>
+    <div class="settings-hint" style="margin-bottom:1vh;">רשימת זמירות מוכרות. הלחיצה פותחת חיפוש של הטקסט (ויקיטקסט בעברית) או של ביצוע ביוטיוב, בחלון חדש. לאוסף פיוטים וניגוני עדות המזרח: <a href="https://www.pizmonim.org/" target="_blank" style="color:var(--cyan);">pizmonim.org</a></div>
+    <div id="zemirotList" style="max-height:55vh; overflow-y:auto;"></div>
+  </dialog>
+
+  <!-- V18.6: BAR/BAT MITZVAH CALCULATOR -->
+  <dialog id="barMitzvahCalcModal" style="width:40vw; max-width:600px; min-width:320px;">
+    <div class="modal-header"><h2>🎂 מחשבון בר / בת מצווה</h2><button class="close-btn" onclick="document.getElementById('barMitzvahCalcModal').close()">✖</button></div>
+    <div style="display:flex; flex-direction:column; gap:1vh; font-size:1vw;">
+      <label>תאריך לידה (לועזי): <input type="date" id="bmBirth"></label>
+      <label><input type="checkbox" id="bmAfterSunset"> נולד אחרי השקיעה (נחשב ליום העברי הבא)</label>
+      <label><input type="radio" name="bmGender" value="13" checked> בן (13)</label>
+      <label><input type="radio" name="bmGender" value="12"> בת (12)</label>
+      <button class="btn" style="background:var(--cyan); color:#000; font-weight:800;" onclick="calcBarMitzvah()">חשב</button>
+      <div id="bmResult" style="background:rgba(0,0,0,0.3); border-radius:0.6vw; padding:1.2vh 1vw; min-height:6vh; line-height:1.7;"></div>
+      <div class="settings-hint">החישוב מבוסס על התאריך העברי של הלידה, דרך הממיר של Hebcal. במקרי קצה (אדר בשנה מעוברת, ל' בחשוון/כסלו) ההלכה שנויה במחלוקת - התייעץ עם רב.</div>
+    </div>
+  </dialog>
+
+  <!-- V18.6: PRINTABLE ZMANIM SCHEDULE -->
+  <dialog id="printScheduleModal" style="width:70vw; max-width:1100px; min-width:320px;">
+    <div class="modal-header"><h2>🖨️ לוח זמנים להדפסה</h2><button class="close-btn" onclick="document.getElementById('printScheduleModal').close()">✖</button></div>
+    <div style="display:flex; gap:1vw; align-items:center; flex-wrap:wrap; margin-bottom:1vh; font-size:1vw;">
+      <label>טווח: <select id="psRange"><option value="7">7 ימים</option><option value="14">14 ימים</option><option value="30">30 ימים</option></select></label>
+      <label>החל מ: <input type="date" id="psStart"></label>
+      <button class="btn" style="background:var(--cyan); color:#000; font-weight:800;" onclick="buildPrintSchedule()">הצג</button>
+      <button class="btn" onclick="printScheduleNow()">🖨️ הדפס</button>
+      <button class="btn" onclick="copyScheduleText()">📋 העתק כטקסט</button>
+    </div>
+    <div id="psPreview" style="max-height:60vh; overflow:auto; background:#fff; color:#000; border-radius:0.6vw; padding:1vh 1vw; font-size:0.85vw;">בחר טווח ולחץ "הצג".</div>
+  </dialog>
+
   <!-- DND MODAL - new in V11: temporarily silences chime/speech/notification alerts (e.g. during a
        nap), without needing to permanently disable the audio-alerts setting. -->
   <dialog id="dndModal" style="width:auto; max-width:400px; text-align:center;">
@@ -1018,6 +1067,12 @@
       </div>
 
       <button class="btn" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; width:100%; margin-top:2vh;" onclick="document.getElementById('brachaModal').showModal()">🙏 ברכה אחרונה</button>
+      <div style="display:flex; gap:0.6vw; flex-wrap:wrap; margin-top:1vh;">
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #b45309, #d97706); color: white;" onclick="openOmerModal()">🌾 נוסח ספירת העומר</button>
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #7c3aed, #a855f7); color: white;" onclick="document.getElementById('zemirotModal').showModal()">🎵 זמירות שבת</button>
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #be185d, #db2777); color: white;" onclick="openBarMitzvahCalc()">🎂 מחשבון בר/בת מצווה</button>
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #059669, #10b981); color: white;" onclick="openPrintSchedule()">🖨️ לוח זמנים להדפסה</button>
+      </div>
 
       <div class="panel-title" style="margin-top: 2vh;">זמני מניינים</div>
       <div id="minyanTimesWidget" style="display:none; background: rgba(0,0,0,0.3); padding: 1vh; border-radius: 0.5vw; font-size: 0.95vw; color: #e2e8f0;"></div>
@@ -1337,7 +1392,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-10-06.1';
+    const APP_VERSION = '2026-10-06.2';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1608,6 +1663,8 @@
       { key: 'ribbon-nextholiday', label: '  ↳ מועד קרוב', ids: ['ribbonItem-nextholiday'] },
       { key: 'ribbon-parasha', label: '  ↳ שניים מקרא ופרשה', ids: ['ribbonItem-parasha'] },
       { key: 'ribbon-shabbatentrance', label: '  ↳ כניסת שבת', ids: ['ribbonItem-shabbatentrance'] },
+      { key: 'ribbon-shaah', label: '  ↳ שעה זמנית', ids: ['ribbonItem-shaah'] },
+      { key: 'ribbon-sunarc', label: '  ↳ מסלול השמש', ids: ['ribbonItem-sunarc'] },
       { key: 'ribbon-duty', label: '  ↳ תור אחראי משפחתי', ids: ['ribbonItem-duty'] },
       { key: 'zmanimGrid', label: 'טבלת הזמנים', ids: ['zmanimGrid'] }
     ];
@@ -2457,9 +2514,8 @@
         const d = await r.json();
         content.innerHTML = '';
         ZMANIM_KEYS.forEach(item => {
-          let timeStr = '--:--';
-          if(d.times && d.times[item.key]) timeStr = new Date(d.times[item.key]).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
-          content.innerHTML += `<div class="zman-card"><div class="zman-title">${item.label}</div><div class="zman-time">${timeStr}</div></div>`;
+          const dt = d.times ? zmanRaw(d.times, item) : null;
+          content.innerHTML += `<div class="zman-card"><div class="zman-title">${item.label}</div><div class="zman-time">${dt ? fmtHM(dt) : '--:--'}</div></div>`;
         });
       } catch(e) {
         content.innerHTML = '<div class="api-error">שגיאה בטעינת הזמנים לתאריך זה.</div>';
@@ -2835,13 +2891,7 @@
     // V10: "ספרתי" (I counted) button - shows the standard blessing text (a fixed liturgical formula,
     // quoted verbatim like the siddur content elsewhere in this app - not composed by us) and marks
     // today as counted so the button disappears until tomorrow.
-    function countOmerToday() {
-      const el = document.getElementById('omerWidget');
-      const blessingText = 'בָּרוּךְ אַתָּה ה\' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל סְפִירַת הָעוֹמֶר.\n\n' + (el ? el.textContent : '');
-      alert(blessingText);
-      localStorage.setItem('lastOmerCountDate', new Date().toDateString());
-      updateOmerCounter();
-    }
+    function countOmerToday() { openOmerModal(); }
 
     // V10: Kiddush Levana window, computed from the real molad instant Hebcal provides (not guessed).
     // Start = molad + 3 days (the Sephardic custom - Ben Ish Chai/Kaf HaChaim, matching this app's
@@ -3187,21 +3237,45 @@
       { key: 'sofZmanShma', label: 'סוזק"ש (עובדיה)' }, { key: 'sofZmanTfilla', label: 'סוף זמן תפילה' },
       { key: 'chatzot', label: 'חצות היום' }, { key: 'minchaGedola', label: 'מנחה גדולה' },
       { key: 'sunset', label: 'שקיעה' }, { key: 'tzeit7083deg', label: 'צאת שבת (שיטה רגילה)' },
-      { key: 'tzeit72min', label: 'צאת שבת (ר"ת - 72 דק׳)' }
+      { key: 'tzeit72min', label: 'צאת שבת (ר"ת - 72 דק׳)' },
+      // V18.6: solar midnight ("tikkun chatzot" time) - Hebcal's own chatzotNight for a date is the midnight
+      // at the START of that date, so tonight's is the same day's solar noon + 12h (solar midnight is, by
+      // definition, exactly 12 solar hours from solar noon; this matches Hebcal's own pair of values to the
+      // minute, checked against 2026-10-06/07).
+      { key: 'chatzotLayla', label: 'חצות לילה (הלילה)', calc: t => new Date(new Date(t.chatzot).getTime() + 12 * 3600000) }
     ];
 
     let cachedSunset = null, cachedTzeit72 = null, zmanimDataCache = null;
+    let gridTimes = null, gridMode = 'today', offlineMode = false; // the times the zmanim grid is CURRENTLY showing (today's, or tomorrow's after nightfall)
+    const zmanRaw = (times, item) => item.calc ? (times.chatzot ? item.calc(times) : null) : (times[item.key] ? new Date(times[item.key]) : null);
+    const fmtHM = d => d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    // Builds the grid cards from any set of zmanim (live Hebcal data, tomorrow's, or the offline calculation).
+    function renderZmanimGrid(times, opts) {
+      opts = opts || {};
+      const grid = document.getElementById('zmanimGrid'); grid.innerHTML = '';
+      gridTimes = times;
+      if(opts.banner) {
+        const b = document.createElement('div'); b.className = 'api-error'; b.style.color = 'var(--gold)'; b.style.fontWeight = '800'; b.textContent = opts.banner; grid.appendChild(b);
+      }
+      ZMANIM_KEYS.forEach(item => {
+        const d = zmanRaw(times, item);
+        grid.insertAdjacentHTML('beforeend', `<div class="zman-card" id="zman-card-${item.key}"><div class="zman-title">${item.label}</div><div class="zman-time">${d ? fmtHM(d) : '--:--'}</div></div>`);
+      });
+      updateDynamicStyles(); applyNusach(); highlightNextZman(); updateHalachicDayProgress(); updateShaahZmanit(); updateSunArc();
+      scaleClockToFit(); // the grid just changed content, which can change available vertical space
+    }
     // V15: highlights whichever zman card is soonest to happen, so it's obvious at a glance what's
     // coming up next instead of having to scan/compare all the times manually.
     function highlightNextZman() {
       document.querySelectorAll('.zman-card.next-zman').forEach(el => el.classList.remove('next-zman'));
-      if(!zmanimDataCache) return;
+      const times = gridTimes || zmanimDataCache;
+      if(!times) return;
       const now = new Date();
       let bestKey = null, bestDiff = Infinity;
       ZMANIM_KEYS.forEach(item => {
-        const raw = zmanimDataCache[item.key];
-        if(!raw) return;
-        const diff = new Date(raw) - now;
+        const d = zmanRaw(times, item);
+        if(!d) return;
+        const diff = d - now;
         if(diff > 0 && diff < bestDiff) { bestDiff = diff; bestKey = item.key; }
       });
       if(bestKey) { const el = document.getElementById('zman-card-' + bestKey); if(el) el.classList.add('next-zman'); }
@@ -3317,8 +3391,8 @@
         let html = '<table class="events-table"><thead><tr><th>זמן</th>' + selected.map(c => `<th>${c.name}</th>`).join('') + '</tr></thead><tbody>';
         ZMANIM_KEYS.forEach(item => {
           html += `<tr><td>${item.label}</td>` + results.map(r => {
-            const raw = r.times && r.times[item.key];
-            return `<td>${raw ? new Date(raw).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : '--:--'}</td>`;
+            const dt = r.times ? zmanRaw(r.times, item) : null;
+            return `<td>${dt ? fmtHM(dt) : '--:--'}</td>`;
           }).join('') + '</tr>';
         });
         html += '</tbody></table>';
@@ -3390,28 +3464,33 @@
       const todayObj = new Date(); const todayStr = localDateStr(todayObj);
 
       // --- Zmanim (own try/catch: a failure here no longer blocks events/weather/news) ---
+      fetchInFlight = true; lastFetchAttempt = Date.now();
+      let zOk = false, eOk = false;
       try {
         const zRes = await fetch(`https://www.hebcal.com/zmanim?cfg=json&latitude=${lat}&longitude=${lng}&tzid=Asia/Jerusalem&date=${todayStr}`);
-        const zData = await zRes.json(); zmanimDataCache = zData.times;
+        const zData = await zRes.json();
+        if(!zData.times || !zData.times.sunset) throw new Error('zmanim response had no times');
+        zmanimDataCache = zData.times;
         cachedSunset = new Date(zData.times.sunset);
         cachedTzeit72 = zData.times.tzeit72min ? new Date(zData.times.tzeit72min) : new Date(cachedSunset.getTime() + 72*60000);
-
-        const grid = document.getElementById('zmanimGrid'); grid.innerHTML = '';
-        ZMANIM_KEYS.forEach(item => {
-          let timeStr = '--:--';
-          if (item.calc && zData.times.sunset) timeStr = item.calc(zData.times).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit'});
-          else if (zData.times[item.key]) timeStr = new Date(zData.times[item.key]).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit'});
-          grid.innerHTML += `<div class="zman-card" id="zman-card-${item.key}"><div class="zman-title">${item.label}</div><div class="zman-time">${timeStr}</div></div>`;
-        });
-        updateDynamicStyles();
-        applyNusach();
-        highlightNextZman();
-        updateHalachicDayProgress();
-        scaleClockToFit(); // the grid just went from empty to populated, which changes available vertical space
+        gridMode = 'today'; offlineMode = false; zOk = true;
+        renderZmanimGrid(zData.times);
       } catch(e) {
-        console.error('zmanim fetch failed:', e);
-        document.getElementById('zmanimGrid').innerHTML = '<div class="api-error">שגיאה בטעינת זמני היום</div>';
-        scaleClockToFit();
+        console.error('zmanim fetch failed, falling back to offline calculation:', e);
+        // V18.6 (merged from the V16.5 experiment): no internet / Hebcal unreachable - compute the same
+        // zmanim locally from astronomical formulas instead of showing an error. Live Hebcal data always
+        // takes priority whenever the fetch works; this only fills the gap while there's no connection.
+        try {
+          const offlineTimes = computeOfflineZmanim(new Date(), lat, lng);
+          if(!offlineTimes) throw new Error('offline calc returned null');
+          zmanimDataCache = offlineTimes; cachedSunset = new Date(offlineTimes.sunset); cachedTzeit72 = new Date(offlineTimes.tzeit72min);
+          gridMode = 'today'; offlineMode = true;
+          renderZmanimGrid(offlineTimes, { banner: '📴 מצב אופליין - הזמנים מחושבים מקומית (ללא אינטרנט)' });
+        } catch(e2) {
+          console.error('offline zmanim fallback also failed:', e2);
+          document.getElementById('zmanimGrid').innerHTML = '<div class="api-error">שגיאה בטעינת זמני היום</div>';
+          scaleClockToFit();
+        }
       }
 
       // --- Events (parasha, dafyomi, holidays, candle-lighting/havdalah for shabbat & yom-tov mode) ---
@@ -3552,13 +3631,20 @@
         const selichotItem = document.getElementById('ribbonItem-selichot');
         if (selichotItem) selichotItem.classList.toggle('selichot-out-of-season', !(inElul || inAseretYemeiTeshuva));
 
+        eOk = true;
         evaluateShabbatMode();
       } catch(e) {
         console.error('events fetch failed:', e);
         ['dafYomiVal','nextHolidayVal'].forEach(id => { const el = document.getElementById(id); el.textContent = 'שגיאה בטעינה'; el.className = 'value value-error'; });
         document.getElementById('parashaVal').textContent = 'שגיאה בטעינה';
+        // Offline: at least keep Shabbat mode, candle-lighting countdown and alerts working - plain
+        // Friday/Saturday only (a holiday calendar can't be derived without the network, said so on screen).
+        try { buildOfflineShabbatIntervals(lat, lng); evaluateShabbatMode(); } catch(e3) { console.error('offline shabbat intervals failed:', e3); }
       }
 
+      fetchInFlight = false;
+      if(zOk && eOk) { lastFetchOk = Date.now(); }
+      updateDataFreshness();
       fetchWeather(lat, lng);
       if(loader) loader.style.display = 'none';
     }
@@ -4030,7 +4116,7 @@
         renderClockOverlay(now); alarmTick(now);
         const todayStr = now.toDateString();
         if (todayStr !== lastDateStr) { lastDateStr = todayStr; checkResetTasks(); updateHebrewDateParts(now); updateHalacha(); document.getElementById('gregorianDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); fetchAllData(currentLat, currentLng); updateDutyWidget(); checkPrepReminder(); }
-        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); applyHolidayBgIcon(); updateHalachicDayProgress(); checkOmerNightReminder(now); checkShabbatReminderBanners(now); }
+        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); applyHolidayBgIcon(); updateHalachicDayProgress(); checkOmerNightReminder(now); checkShabbatReminderBanners(now); updateShaahZmanit(); updateSunArc(); maybeShowTomorrowZmanim(); }
 
         checkResetShabbatTasks();
 
@@ -4395,6 +4481,285 @@
       }
     }
     checkTimezoneMismatch(); setInterval(checkTimezoneMismatch, 10 * 60 * 1000);
+    // ================= V18.6: ten additions =================
+    var fetchInFlight = false, lastFetchAttempt = 0, lastFetchOk = 0; // read by fetchAllData / the freshness chip
+
+    // ---- (8) offline zmanim, merged in from the V16.5 experiment ----
+    // Hebcal has no bulk endpoint (one day per call), so "years of data embedded" isn't possible; instead the
+    // same zmanim are computed locally from standard NOAA solar equations + the usual proportional-hours
+    // convention - validated against live Hebcal to within a minute. Live data always wins when available.
+    function julianDay(date) { return (date.getTime() / 86400000) + 2440587.5; }
+    function solarPosition(jd) {
+      const T = (jd - 2451545.0) / 36525;
+      const L0 = (280.46646 + T*(36000.76983 + T*0.0003032)) % 360;
+      const M = 357.52911 + T*(35999.05029 - 0.0001537*T), Mrad = M * Math.PI/180;
+      const C = (1.914602 - T*(0.004817+0.000014*T))*Math.sin(Mrad) + (0.019993-0.000101*T)*Math.sin(2*Mrad) + 0.000289*Math.sin(3*Mrad);
+      const omega = 125.04 - 1934.136*T, lambda = L0 + C - 0.00569 - 0.00478*Math.sin(omega*Math.PI/180);
+      const epsilon = 23 + (26 + (21.448 - T*(46.815+T*(0.00059-T*0.001813)))/60)/60 + 0.00256*Math.cos(omega*Math.PI/180);
+      const declRad = Math.asin(Math.sin(epsilon*Math.PI/180) * Math.sin(lambda*Math.PI/180));
+      const y = Math.tan((epsilon/2)*Math.PI/180) ** 2;
+      const eqTime = 4 * (180/Math.PI) * (y*Math.sin(2*L0*Math.PI/180) - 2*0.0167*Math.sin(Mrad) + 4*0.0167*y*Math.sin(Mrad)*Math.cos(2*L0*Math.PI/180) - 0.5*y*y*Math.sin(4*L0*Math.PI/180) - 1.25*0.0167*0.0167*Math.sin(2*Mrad));
+      return { decl: declRad, eqTime };
+    }
+    function solarEvent(date, lat, lng, angleBelowHorizon, isSunrise) {
+      const jd = Math.floor(julianDay(date)) + 0.5 - lng/360;
+      const { decl, eqTime } = solarPosition(jd), latRad = lat * Math.PI/180;
+      const cosH = (Math.sin(-angleBelowHorizon*Math.PI/180) - Math.sin(latRad)*Math.sin(decl)) / (Math.cos(latRad)*Math.cos(decl));
+      if(cosH < -1 || cosH > 1) return null;
+      const H = Math.acos(cosH) * 180/Math.PI;
+      const minutes = isSunrise ? (720 - 4*(lng + H) - eqTime) : (720 - 4*(lng - H) - eqTime);
+      const result = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+      result.setUTCMinutes(minutes);
+      return result;
+    }
+    function computeOfflineZmanim(baseDate, lat, lng) {
+      const d = new Date(Date.UTC(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 12, 0, 0));
+      const sunrise = solarEvent(d, lat, lng, 0.833, true), sunset = solarEvent(d, lat, lng, 0.833, false);
+      const alot = solarEvent(d, lat, lng, 16.1, true), mish = solarEvent(d, lat, lng, 11.5, true);
+      const tzeitMGA = solarEvent(d, lat, lng, 16.1, false), tz7083 = solarEvent(d, lat, lng, 7.083, false);
+      if(!sunrise || !sunset) return null;
+      const shaah = (sunset - sunrise) / 12, add = (s, h, sh) => new Date(s.getTime() + h * sh);
+      const mgaStart = alot || sunrise, mgaEnd = tzeitMGA || sunset, shaahMGA = (mgaEnd - mgaStart) / 12;
+      return {
+        alotHaShachar: (alot || sunrise).toISOString(), misheyakir: (mish || sunrise).toISOString(), sunrise: sunrise.toISOString(),
+        sofZmanShmaMGA: add(mgaStart, 3, shaahMGA).toISOString(), sofZmanShma: add(sunrise, 3, shaah).toISOString(), sofZmanTfilla: add(sunrise, 4, shaah).toISOString(),
+        chatzot: new Date((sunrise.getTime() + sunset.getTime()) / 2).toISOString(), minchaGedola: add(sunrise, 6.5, shaah).toISOString(),
+        sunset: sunset.toISOString(), tzeit7083deg: (tz7083 || sunset).toISOString(), tzeit72min: new Date(sunset.getTime() + 72*60000).toISOString()
+      };
+    }
+    // Offline there's no holiday calendar, but plain Friday-candles -> Saturday-havdalah can still be derived,
+    // which keeps Shabbat mode, the entry countdown and the pre-Shabbat alerts working without a connection.
+    function buildOfflineShabbatIntervals(lat, lng) {
+      const out = [], now = new Date();
+      for(let i = -1; i <= 56; i++) {
+        const fri = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+        if(fri.getDay() !== 5) continue;
+        const f = computeOfflineZmanim(fri, lat, lng), s = computeOfflineZmanim(new Date(fri.getFullYear(), fri.getMonth(), fri.getDate() + 1), lat, lng);
+        if(!f || !s) continue;
+        out.push({ start: new Date(new Date(f.sunset).getTime() - (appSettings.candleOffset || 20) * 60000), end: new Date(new Date(s.sunset).getTime() + (appSettings.havdalahMinutes || 20) * 60000) });
+      }
+      shabbatIntervals = out.filter(iv => iv.end > now);
+    }
+
+    // ---- (4) data-freshness chip + automatic retry/refresh (before this, a failed midnight fetch stayed stale until restart) ----
+    function updateDataFreshness() {
+      const el = document.getElementById('dataFreshness'); if(!el) return;
+      const age = lastFetchOk ? Date.now() - lastFetchOk : Infinity;
+      let txt, color;
+      if(offlineMode) { txt = '📴 אופליין - חישוב מקומי'; color = '#f59e0b'; }
+      else if(!lastFetchOk) { txt = '⏳ טוען נתונים...'; color = '#94a3b8'; }
+      else if(age > 3 * 3600000) { txt = '🟠 נתונים ישנים (עודכן ' + fmtHM(new Date(lastFetchOk)) + ')'; color = '#f59e0b'; }
+      else { txt = '🟢 עודכן ' + fmtHM(new Date(lastFetchOk)); color = '#34d399'; }
+      el.textContent = txt; el.style.color = color;
+    }
+    setInterval(() => {
+      updateDataFreshness();
+      if(fetchInFlight || !lastFetchAttempt) return;
+      const sinceOk = Date.now() - lastFetchOk, sinceTry = Date.now() - lastFetchAttempt;
+      if((lastFetchOk && sinceOk > 3 * 3600000 && sinceTry > 300000) || (!lastFetchOk && sinceTry > 180000)) fetchAllData(currentLat, currentLng);
+    }, 60000);
+    window.addEventListener('online', () => { if(!fetchInFlight && (offlineMode || !lastFetchOk)) fetchAllData(currentLat, currentLng); });
+
+    // ---- (1) tomorrow's zmanim after nightfall ----
+    var tomorrowCache = { date: '', times: null, offline: false };
+    async function getTomorrowTimes() {
+      const t = new Date(), tm = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1), key = localDateStr(tm);
+      if(tomorrowCache.date === key && tomorrowCache.times) return tomorrowCache.times;
+      try {
+        const r = await fetch(`https://www.hebcal.com/zmanim?cfg=json&latitude=${currentLat}&longitude=${currentLng}&tzid=Asia/Jerusalem&date=${key}`);
+        const d = await r.json();
+        if(d.times && d.times.sunset) { tomorrowCache = { date: key, times: d.times, offline: false }; return d.times; }
+      } catch(e) {}
+      const off = computeOfflineZmanim(tm, currentLat, currentLng);
+      if(off) { tomorrowCache = { date: key, times: off, offline: true }; return off; }
+      return null;
+    }
+    async function maybeShowTomorrowZmanim() {
+      if(gridMode !== 'today' || !zmanimDataCache || !zmanimDataCache.tzeit7083deg) return;
+      if(new Date() < new Date(zmanimDataCache.tzeit7083deg)) return;
+      const startDate = localDateStr();
+      const tom = await getTomorrowTimes();
+      if(!tom || gridMode !== 'today' || localDateStr() !== startDate) return;
+      gridMode = 'tomorrow';
+      const tm = new Date(); tm.setDate(tm.getDate() + 1);
+      renderZmanimGrid(tom, { banner: '📅 זמני מחר - ' + tm.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' }) + (tomorrowCache.offline ? ' (חישוב מקומי)' : '') });
+    }
+
+    // ---- (3) proportional hour (sha'ah zmanit) + (7) sun arc ----
+    function updateShaahZmanit() {
+      const el = document.getElementById('shaahVal'), sub = document.getElementById('shaahSub'); if(!el) return;
+      const t = zmanimDataCache;
+      if(!t || !t.sunrise || !t.sunset) { el.textContent = '--'; sub.textContent = ''; return; }
+      const sr = new Date(t.sunrise), ss = new Date(t.sunset), len = (ss - sr) / 12, now = new Date();
+      const mins = Math.floor(len / 60000), secs = Math.round((len % 60000) / 1000);
+      el.textContent = (now >= sr && now < ss) ? `שעה ${Math.min(12, Math.floor((now - sr) / len) + 1)} מ-12` : 'לילה';
+      sub.textContent = `אורך (גר"א): ${mins}:${pad2(secs)} דק'`;
+    }
+    function updateSunArc() {
+      const svgEl = document.getElementById('sunArcSvg'), txt = document.getElementById('sunArcText');
+      if(!svgEl || !zmanimDataCache || !zmanimDataCache.sunrise) return;
+      const sr = new Date(zmanimDataCache.sunrise), ss = new Date(zmanimDataCache.sunset), now = new Date();
+      const isDay = now >= sr && now < ss;
+      const hm = ms => { const m = Math.max(0, Math.round(ms / 60000)); return Math.floor(m / 60) + ':' + pad2(m % 60); };
+      let frac, label = '';
+      if(isDay) { frac = (now - sr) / (ss - sr); label = 'שקיעה בעוד ' + hm(ss - now) + ' ש\''; }
+      else if(now < sr) { frac = 0; label = 'זריחה בעוד ' + hm(sr - now) + ' ש\''; }
+      else {
+        frac = 1;
+        if(tomorrowCache.times && tomorrowCache.date === localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1))) label = 'זריחה בעוד ' + hm(new Date(tomorrowCache.times.sunrise) - now) + ' ש\'';
+        else getTomorrowTimes().then(() => updateSunArc());
+      }
+      const w = 120, R = 52, cx = w / 2, cy = 58, a = Math.PI * (1 - Math.min(1, Math.max(0, frac)));
+      const mx = cx + R * Math.cos(a), my = cy - R * Math.sin(a), col = isDay ? '#f2c94c' : '#94a3b8';
+      svgEl.innerHTML = `<svg viewBox="0 0 ${w} 64" width="${w}" style="height:auto; max-height:5vh; width:min(7vw,${w}px);"><path d="M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="3 3"/><line x1="${cx - R - 8}" y1="${cy}" x2="${cx + R + 8}" y2="${cy}" stroke="#475569" stroke-width="1.5"/><circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="6" fill="${col}"/></svg>`;
+      txt.textContent = label;
+    }
+
+    // ---- (5) Omer: full nusach (blessing + the count sentence for any day 1-49) ----
+    const OM_ONES = ['', 'אֶחָד', 'שְׁנַיִם', 'שְׁלֹשָׁה', 'אַרְבָּעָה', 'חֲמִשָּׁה', 'שִׁשָּׁה', 'שִׁבְעָה', 'שְׁמוֹנָה', 'תִּשְׁעָה'];
+    function omerDaysPhrase(n) {
+      if(n === 1) return 'יוֹם אֶחָד';
+      if(n === 2) return 'שְׁנֵי יָמִים';
+      if(n <= 10) return (n === 10 ? 'עֲשָׂרָה' : OM_ONES[n]) + ' יָמִים';
+      if(n === 11) return 'אַחַד עָשָׂר יוֹם';
+      if(n === 12) return 'שְׁנֵים עָשָׂר יוֹם';
+      if(n <= 19) return OM_ONES[n - 10] + ' עָשָׂר יוֹם';
+      const t = Math.floor(n / 10), u = n % 10;
+      if(u === 0) return ['', '', 'עֶשְׂרִים', 'שְׁלֹשִׁים', 'אַרְבָּעִים'][t] + ' יוֹם';
+      return OM_ONES[u] + ' ' + ['', '', 'וְעֶשְׂרִים', 'וּשְׁלֹשִׁים', 'וְאַרְבָּעִים'][t] + ' יוֹם';
+    }
+    function omerCountSentence(n) {
+      if(n < 7) return `הַיּוֹם ${omerDaysPhrase(n)} לָעֹמֶר.`;
+      const w = Math.floor(n / 7), r = n % 7;
+      const weeks = w === 1 ? 'שָׁבוּעַ אֶחָד' : w === 2 ? 'שְׁנֵי שָׁבוּעוֹת' : OM_ONES[w] + ' שָׁבוּעוֹת';
+      const rem = ['', 'וְיוֹם אֶחָד', 'וּשְׁנֵי יָמִים', 'וּשְׁלֹשָׁה יָמִים', 'וְאַרְבָּעָה יָמִים', 'וַחֲמִשָּׁה יָמִים', 'וְשִׁשָּׁה יָמִים'][r];
+      return `הַיּוֹם ${omerDaysPhrase(n)} שֶׁהֵם ${weeks}${rem ? ' ' + rem : ''} לָעֹמֶר.`;
+    }
+    function currentOmerDay() {
+      const month = currentHebrewMonth || '', day = currentHebrewDayNum;
+      if(month.includes('ניסן') && day >= 16) return day - 15;
+      if(month.includes('אייר')) return 15 + day;
+      if((month.includes('סיון') || month.includes('סיוון')) && day <= 5) return 44 + day;
+      return 0;
+    }
+    function renderOmerModal(n) {
+      n = Math.min(49, Math.max(1, n || 1));
+      document.getElementById('omerDayInput').value = n;
+      document.getElementById('omerNusachBox').innerHTML =
+        '<div>בָּרוּךְ אַתָּה יְהוָה אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר.</div>' +
+        `<div style="margin-top:1vh; font-weight:800;">${omerCountSentence(n)}</div>` +
+        '<div style="margin-top:1vh; font-size:0.8em;">הָרַחֲמָן הוּא יַחֲזִיר לָנוּ עֲבוֹדַת בֵּית הַמִּקְדָּשׁ לִמְקוֹמָהּ, בִּמְהֵרָה בְיָמֵינוּ, אָמֵן סֶלָה.</div>';
+    }
+    function openOmerModal() {
+      const today = currentOmerDay();
+      document.getElementById('omerDayHint').textContent = today ? '(היום - ספירה ' + today + ')' : '(כרגע לא בימי ספירת העומר - אפשר לבחור יום לצפייה)';
+      document.getElementById('omerMarkBtn').style.display = today && localStorage.getItem('lastOmerCountDate') !== new Date().toDateString() ? '' : 'none';
+      renderOmerModal(today || 1);
+      document.getElementById('omerModal').showModal();
+    }
+    function omerMarkCounted() {
+      localStorage.setItem('lastOmerCountDate', new Date().toDateString());
+      updateOmerCounter(); document.getElementById('omerModal').close();
+    }
+
+    // ---- (10) zemirot ----
+    const ZEMIROT = ['שלום עליכם', 'אשת חיל', 'יה רבון עלם', 'מנוחה ושמחה', 'מה ידידות', 'כי אשמרה שבת', 'ידיד נפש', 'יום זה לישראל', 'אל מסתתר בשפריר חביון', 'בני היכלא', 'מזמור לדוד ה\' רועי', 'דרור יקרא', 'צור משלו אכלנו', 'אליהו הנביא', 'המבדיל בין קודש לחול'];
+    document.getElementById('zemirotList').innerHTML = ZEMIROT.map(z => {
+      const q = encodeURIComponent(z);
+      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.8vh 0.5vw; border-bottom:1px solid var(--card-border); font-size:1.1vw;"><span>${z.replace(/'/g, '&#39;')}</span><span style="display:flex; gap:0.6vw;"><a href="https://he.wikisource.org/w/index.php?search=${q}" target="_blank" style="color:var(--cyan);">📜 טקסט</a><a href="https://www.youtube.com/results?search_query=${q}+שבת" target="_blank" style="color:var(--gold);">▶ ביצוע</a></span></div>`;
+    }).join('');
+
+    // ---- (6) bar/bat mitzvah date calculator ----
+    function openBarMitzvahCalc() { document.getElementById('bmResult').textContent = ''; document.getElementById('barMitzvahCalcModal').showModal(); }
+    const bmNormMonth = hm => hm.replace(/Adar II/, 'Adar2').replace(/Adar I/, 'Adar1');
+    async function calcBarMitzvah() {
+      const out = document.getElementById('bmResult'), v = document.getElementById('bmBirth').value;
+      if(!v) { out.textContent = 'בחר תאריך לידה.'; return; }
+      out.textContent = 'מחשב...';
+      const [gy, gm, gd] = v.split('-').map(Number), years = parseInt(document.querySelector('input[name="bmGender"]:checked').value, 10);
+      try {
+        const b = await (await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${gy}&gm=${gm}&gd=${gd}&g2h=1${document.getElementById('bmAfterSunset').checked ? '&gs=on' : ''}`)).json();
+        if(!b.hy) throw new Error('no hebrew date');
+        const ty = b.hy + years;
+        let hm = bmNormMonth(b.hm), note = '';
+        const isLeap = y => (7 * y + 1) % 19 < 7; // standard Hebrew-calendar leap-year rule
+        if(hm === 'Adar' && isLeap(ty)) { hm = 'Adar2'; note = 'נולד באדר (שנה רגילה) ושנת המצווה מעוברת: מוצג אדר ב\' - יש מנהגים שונים, התייעץ עם רב. '; }
+        else if((hm === 'Adar1' || hm === 'Adar2') && !isLeap(ty)) { hm = 'Adar'; note = 'נולד באדר בשנה מעוברת ושנת המצווה רגילה: מוצג אדר - התייעץ עם רב. '; }
+        let r = await (await fetch(`https://www.hebcal.com/converter?cfg=json&hy=${ty}&hm=${hm}&hd=${b.hd}&h2g=1&strict=1`)).json();
+        if(r.error || !r.gy) {
+          r = await (await fetch(`https://www.hebcal.com/converter?cfg=json&hy=${ty}&hm=${hm}&hd=${b.hd}&h2g=1`)).json();
+          note += 'התאריך העברי אינו קיים בשנה זו (למשל ל\' בחשוון/כסלו) - מוצג התאריך הקרוב; התייעץ עם רב. ';
+        }
+        if(!r.gy) throw new Error('no result');
+        const target = new Date(r.gy, r.gm - 1, r.gd), end = new Date(target); end.setDate(end.getDate() + 7);
+        let parashaTxt = '';
+        try {
+          const pe = await (await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&s=on&i=on&start=${localDateStr(target)}&end=${localDateStr(end)}`)).json();
+          const p = (pe.items || []).find(i => i.category === 'parashat' && i.date >= localDateStr(target)) || (pe.items || []).find(i => i.category === 'holiday' && i.subcat === 'shabbat');
+          if(p) parashaTxt = `<div>השבת הקרובה: <b>${p.hebrew}</b> (${new Date(p.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long' })})</div>`;
+        } catch(e) {}
+        const wd = target.toLocaleDateString('he-IL', { weekday: 'long' });
+        out.innerHTML = `<div>תאריך הלידה העברי: <b>${b.hebrew}</b></div><div>${years === 13 ? 'בר מצווה' : 'בת מצווה'} (גיל ${years}): <b>${r.hebrew}</b></div><div>תאריך לועזי: <b>${wd}, ${target.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}</b></div>${parashaTxt}${note ? `<div style="color:var(--gold);">${note}</div>` : ''}`;
+      } catch(e) { console.error(e); out.textContent = 'לא הצלחתי לחשב (בדוק חיבור לאינטרנט).'; }
+    }
+
+    // ---- (9) printable zmanim schedule ----
+    let psLastRows = [], psLastHtml = '';
+    function hebDateStr(d) {
+      let day = '', mon = '';
+      new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long' }).formatToParts(d).forEach(p => {
+        if(p.type === 'day') day = toHebrewNumeral(parseInt(p.value.replace(/\D/g, ''), 10)); else if(p.type === 'month') mon = p.value;
+      });
+      return day + ' ' + mon;
+    }
+    function openPrintSchedule() { document.getElementById('psStart').value = localDateStr(); document.getElementById('printScheduleModal').showModal(); buildPrintSchedule(); }
+    async function buildPrintSchedule() {
+      const days = parseInt(document.getElementById('psRange').value, 10), startStr = document.getElementById('psStart').value || localDateStr();
+      const [sy, sm, sd] = startStr.split('-').map(Number), prev = document.getElementById('psPreview');
+      prev.textContent = 'טוען זמנים...';
+      const dates = Array.from({ length: days }, (_, i) => new Date(sy, sm - 1, sd + i));
+      const timesList = await Promise.all(dates.map(async d => {
+        try {
+          const r = await fetch(`https://www.hebcal.com/zmanim?cfg=json&latitude=${currentLat}&longitude=${currentLng}&tzid=Asia/Jerusalem&date=${localDateStr(d)}`);
+          const j = await r.json(); if(j.times && j.times.sunset) return { t: j.times, off: false };
+        } catch(e) {}
+        const o = computeOfflineZmanim(d, currentLat, currentLng); return o ? { t: o, off: true } : null;
+      }));
+      const cols = [['alotHaShachar', 'עלות'], ['sunrise', 'נץ'], ['sofZmanShma', 'סוזק"ש'], ['sofZmanTfilla', 'סוף תפילה'], ['chatzot', 'חצות'], ['minchaGedola', 'מנחה ג\''], ['sunset', 'שקיעה'], ['tzeit7083deg', 'צאת']];
+      psLastRows = []; let anyOffline = false;
+      let html = '<table style="width:100%; border-collapse:collapse; direction:rtl; text-align:center;"><thead><tr style="background:#e2e8f0;"><th style="border:1px solid #999; padding:3px;">יום</th><th style="border:1px solid #999;">תאריך</th><th style="border:1px solid #999;">אירוע / הדלקה</th>' + cols.map(c => `<th style="border:1px solid #999;">${c[1]}</th>`).join('') + '</tr></thead><tbody>';
+      dates.forEach((d, i) => {
+        const key = localDateStr(d), tt = timesList[i];
+        const evs = (lastEventItems || []).filter(e => e.date.slice(0, 10) === key);
+        const names = evs.filter(e => ['holiday', 'roshchodesh', 'parashat'].includes(e.category)).map(e => e.hebrew).join(' • ');
+        const cdl = evs.filter(e => e.category === 'candles' || e.category === 'havdalah').map(e => (e.category === 'candles' ? 'הדלקה ' : 'הבדלה ') + e.date.slice(11, 16)).join(' ');
+        const timesRow = cols.map(c => tt ? fmtHM(new Date(tt.t[c[0]])) : '--:--');
+        if(tt && tt.off) anyOffline = true;
+        const wd = d.toLocaleDateString('he-IL', { weekday: 'short' }), greg = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' });
+        const shab = d.getDay() === 6 ? 'background:#fef3c7;' : '';
+        html += `<tr style="${shab}"><td style="border:1px solid #999; padding:3px;">${wd}</td><td style="border:1px solid #999;">${hebDateStr(d)} (${greg})</td><td style="border:1px solid #999;">${[names, cdl].filter(Boolean).join(' | ')}</td>${timesRow.map(x => `<td style="border:1px solid #999; direction:ltr;">${x}</td>`).join('')}</tr>`;
+        psLastRows.push([wd, hebDateStr(d) + ' (' + greg + ')', [names, cdl].filter(Boolean).join(' | ')].concat(timesRow));
+      });
+      html += '</tbody></table>';
+      const cityName = (document.getElementById('btnAshkelon') && document.getElementById('btnAshkelon').classList.contains('active')) ? 'אשקלון' : 'המיקום הנוכחי';
+      const head = `<div style="font-weight:800; font-size:1.2em; margin-bottom:4px;">לוח זמנים - ${cityName} (${currentLat.toFixed(2)}, ${currentLng.toFixed(2)})</div>`;
+      const foot = `<div style="font-size:0.85em; margin-top:4px;">${anyOffline ? '* חלק מהזמנים מחושבים מקומית (ללא חיבור). ' : ''}סוזק"ש לפי הגר"א (שיטת עדות המזרח); צאת = 7.083°. נוצר ב-${new Date().toLocaleDateString('he-IL')}.</div>`;
+      psLastHtml = head + html + foot; prev.innerHTML = psLastHtml;
+    }
+    function printScheduleNow() {
+      if(!psLastHtml) return;
+      const f = document.createElement('iframe'); f.style.cssText = 'position:fixed; width:0; height:0; border:0; right:0; bottom:0;';
+      document.body.appendChild(f);
+      const doc = f.contentWindow.document; doc.open();
+      doc.write('<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="UTF-8"><title>לוח זמנים</title><style>@page{size:landscape;margin:10mm;} body{font-family:Arial,sans-serif;font-size:11px;color:#000;} td,th{padding:3px;}</style></head><body>' + psLastHtml + '</body></html>');
+      doc.close();
+      setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 60000); }, 400);
+    }
+    function copyScheduleText() {
+      if(!psLastRows.length) return;
+      const txt = psLastRows.map(r => r.join('\t')).join('\n');
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => alert('הועתק - אפשר להדביק באקסל/וורד/וואטסאפ'), () => alert('ההעתקה נכשלה בדפדפן זה'));
+    }
     // The main update() loop is requestAnimationFrame-based, which browsers pause completely while the
     // page is hidden (background tab, minimized window) - an alarm must still ring then, so it gets its
     // own setInterval too (also throttled in the background, but never fully stopped). alarmTick dedupes
