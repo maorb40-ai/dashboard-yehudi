@@ -242,6 +242,9 @@
        grows as far as both dimensions actually allow - no overflow possible by construction. Collapsing
        the grid row (rather than just display:none on .header-bar) is what actually frees the space - a
        display:none child alone would still leave the row's minmax(8vh,...) minimum reserved. */
+    #headerToggleBtn { position: fixed; top: 0.6vh; left: 0.5vw; z-index: 9500; width: max(26px, 2.2vw); height: max(26px, 2.2vw); border-radius: 50%; border: 1px solid var(--card-border); background: rgba(30,30,30,0.7); color: var(--text-color); font-size: max(12px, 1vw); cursor: pointer; opacity: 0.55; transition: opacity 0.2s; padding: 0; line-height: 1; }
+    #headerToggleBtn:hover { opacity: 1; }
+    body.clock-focus-mode #headerToggleBtn, body.shabbat-advanced #headerToggleBtn { display: none; }
     body.header-auto-hidden .header-bar { display: none; }
     body.header-auto-hidden .app-layout { grid-template-rows: 1fr; }
     @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
@@ -349,6 +352,17 @@
     #clockOverlay .co-card::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 0.012em; background: #000; }
     #clockOverlay .co-card.small { width: 0.34em; height: 0.5em; font-size: 0.55em; align-self: center; }
     #clockOverlay.co-night { color: #b45309; }
+    #clockOverlay #coSeg svg.seg { height: 1em; width: auto; margin: 0 0.03em; transform: skewX(-6deg); }
+    #clockOverlay #coSeg svg.seg.colon { margin: 0; }
+    #clockOverlay #coSeg .co-segsec { display: inline-flex; font-size: 0.45em; margin-left: 0.15em; align-self: flex-end; }
+    #clockOverlay[data-style="led"] { --segc: #ff2a2a; --segoff: #2b0b0b; }
+    #clockOverlay[data-style="ledgreen"] { --segc: #39ff14; --segoff: #0b2a0b; }
+    #clockOverlay svg.seg .on { fill: var(--segc); filter: drop-shadow(0 0 3px var(--segc)); }
+    #clockOverlay svg.seg .off { fill: var(--segoff); }
+    #clockOverlay[data-style="neon"] #coDigital { color: #22d3ee; text-shadow: 0 0 0.05em #22d3ee, 0 0 0.15em #0891b2, 0 0 0.35em #0e7490; }
+    #clockOverlay[data-style="gold"] #coDigital span { background: linear-gradient(#fde68a, #f59e0b 55%, #92400e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    #clockOverlay[data-style="outline"] #coDigital { color: transparent; -webkit-text-stroke: 0.02em #fff; }
+    #clockOverlay[data-style="thin"] #coDigital { font-family: 'Segoe UI Light', 'Heebo', 'Helvetica Neue', sans-serif; font-weight: 200; letter-spacing: 0.02em; }
     #clockOverlay .co-dates { text-align: center; margin-top: 2vh; }
     #clockOverlay .co-heb { font-size: min(5vw, 7vh); font-weight: 900; color: var(--gold); }
     #clockOverlay .co-greg { font-size: min(3vw, 4.2vh); font-weight: 600; opacity: 0.85; }
@@ -499,6 +513,7 @@
 <body>
 
   <div class="bg-texture"></div>
+  <button id="headerToggleBtn" onclick="toggleHeaderBar()" title="הסתר את סרגל הכפתורים">▲</button>
   <div id="bgIconsContainer"></div>
 
   <div class="app-layout">
@@ -691,11 +706,6 @@
     <button onclick="dismissPrepReminder()" style="background:#555; color:#fff;">הסתר להיום</button>
   </div>
 
-  <div class="backup-reminder" id="backupReminderBanner">
-    <div>💾 עברו כמה שבועות מאז הגיבוי האחרון. שווה לייצא גיבוי עדכני.</div>
-    <button onclick="exportBackup(); document.getElementById('backupReminderBanner').style.display='none';" style="background:var(--cyan); color:#000;">גבה עכשיו</button>
-    <button onclick="dismissBackupReminder()" style="background:#555; color:#fff;">הסתר להיום</button>
-  </div>
 
 
   <!-- SIDDUR MODAL -->
@@ -873,6 +883,7 @@
   <dialog id="clockOverlay" onclick="coTap(event)">
     <div id="coViews">
       <div class="co-view" id="coDigital"><span id="coHM">00:00</span><span class="co-sec" id="coSec">00</span></div>
+      <div class="co-view" id="coSeg"></div>
       <div class="co-view" id="coFlip">
         <span class="co-card" id="cf1">0</span><span class="co-card" id="cf2">0</span><span class="co-colon">:</span><span class="co-card" id="cf3">0</span><span class="co-card" id="cf4">0</span><span class="co-card small" id="cfs1">0</span><span class="co-card small" id="cfs2">0</span>
       </div>
@@ -890,7 +901,7 @@
     <div class="co-dates"><div class="co-heb" id="coHeb"></div><div class="co-greg" id="coGreg"></div><div class="co-next" id="coNext"></div></div>
     <div class="co-controls" id="coControls" onclick="event.stopPropagation(); coKeepControls();">
       <button onclick="coCycleStyle(-1)" title="סגנון קודם">▶</button>
-      <button id="coStyleLabel" onclick="coCycleStyle(1)">סגנון</button>
+      <select id="coStyleSelect" onchange="coSetStyle(this.value)" style="background:#333; color:#fff; border:none; border-radius:2vh; padding:1vh 1.5vh; font-size:max(14px, min(2vw, 3vh));"></select>
       <button onclick="coCycleStyle(1)" title="סגנון הבא">◀</button>
       <button onclick="coSize(-0.1)" title="הקטן">A−</button>
       <button onclick="coSize(0.1)" title="הגדל">A+</button>
@@ -1392,7 +1403,7 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-10-06.2';
+    const APP_VERSION = '2026-10-13.1';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1863,8 +1874,27 @@
 
     // Grows/shrinks the clock proportionally to how much MORE space is freed up compared to the
     // all-visible baseline - so scale is always exactly 1 by default, and only grows from there.
+    // V18.7: with the header bar hidden the clock is sized by measuring ITSELF against the space that's
+    // really available (the same direct-fit idea fitClockToFullScreen uses), instead of the ratio against
+    // the "everything visible" baseline: that ratio was capped by an unchanged width ratio and only ever
+    // reached ~1.06x, even though the clock itself only occupies a fraction of the column's width. Because
+    // it's min(width, height) of the clock's real size, it cannot overflow.
+    function scaleClockToFill() {
+      const root = document.documentElement, dashArea = document.querySelector('.dashboard-area'), clockWrap = document.querySelector('.flip-clock-container');
+      if(!dashArea || !clockWrap) return;
+      root.style.setProperty('--clock-scale', '1');
+      const rect = clockWrap.getBoundingClientRect();
+      if(!rect.width || !rect.height) return;
+      const siblings = [...dashArea.children].filter(el => el !== clockWrap && getComputedStyle(el).display !== 'none');
+      const sibH = siblings.reduce((sum, el) => sum + el.getBoundingClientRect().height, 0);
+      const gap = parseFloat(getComputedStyle(dashArea).rowGap) || 0;
+      const availH = Math.max(50, dashArea.clientHeight - sibH - gap * siblings.length - dashArea.clientHeight * 0.03);
+      const availW = dashArea.clientWidth * 0.94;
+      root.style.setProperty('--clock-scale', Math.max(1, Math.min(Math.min(availW / rect.width, availH / rect.height), 3)).toFixed(3));
+    }
     function scaleClockToFit() {
       if(document.body.classList.contains('shabbat-advanced')) return; // that mode has its own dedicated zoom
+      if(document.body.classList.contains('header-auto-hidden') && !document.body.classList.contains('clock-focus-mode')) { scaleClockToFill(); return; }
       const root = document.documentElement;
       const dashArea = document.querySelector('.dashboard-area');
       const clockWrap = document.querySelector('.flip-clock-container');
@@ -2213,16 +2243,8 @@
     // V15: everything lives only in this browser's localStorage - no server, no sync - so a periodic
     // nudge to export a backup is the only real protection against losing it all. Reminds at most
     // once/day, and only once every 14 days since the last actual export.
-    const BACKUP_REMINDER_DAYS = 14;
-    function checkBackupReminder() {
-      const today = new Date().toDateString();
-      if(localStorage.getItem('backupReminderDismissedDate') === today) return;
-      const last = localStorage.getItem('lastBackupExport');
-      const daysSince = last ? (Date.now() - new Date(last).getTime()) / 86400000 : Infinity;
-      if(daysSince >= BACKUP_REMINDER_DAYS) {
-        document.getElementById('backupReminderBanner').style.display = 'block';
-      }
-    }
+    // V18.7: the periodic "time for a backup" popup was removed at מתי's request - he backs up manually
+    // (Settings > גיבוי ומתקדם) when he wants to.
     // V15: gentle Thursday nudge toward the "הכנות לשבת" tab - dismissible per day, like the backup
     // reminder above.
     function checkPrepReminder() {
@@ -2239,10 +2261,6 @@
       const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes('tab-prep'));
       if(btn) switchTab('tab-prep', btn);
       dismissPrepReminder();
-    }
-    function dismissBackupReminder() {
-      localStorage.setItem('backupReminderDismissedDate', new Date().toDateString());
-      document.getElementById('backupReminderBanner').style.display = 'none';
     }
     function importBackup(file) {
       const reader = new FileReader();
@@ -4178,46 +4196,25 @@
     }
     window.addEventListener('mousemove', resetIdleTimer); window.addEventListener('touchstart', resetIdleTimer); window.addEventListener('keydown', resetIdleTimer);
 
-    // V18: header bar auto-hides 10s after being shown, growing the clock into the reclaimed space via
-    // the existing scaleClockToFit() (see the CSS comment above for why a blanket transform:scale on
-    // .main-content was tried first and reverted) - active in every display mode, not just kiosk
-    // fullscreen. A click on an empty background area (not on a button/control) brings it back and
-    // restarts the 10s countdown; clicking a real control is unaffected since those already have their
-    // own onclick handlers and this only acts when the click target IS one of the plain background
-    // containers themselves (nothing more specific caught the click first).
-    let headerHideTimer = null;
-    function scheduleHeaderAutoHide() {
-      clearTimeout(headerHideTimer);
-      headerHideTimer = setTimeout(hideHeaderBar, 10000);
-    }
-    function hideHeaderBar() {
-      if(document.body.classList.contains('header-auto-hidden')) return;
-      if(document.body.classList.contains('clock-focus-mode') || document.body.classList.contains('shabbat-advanced')) return; // those already hide the header their own way
-      document.body.classList.add('header-auto-hidden');
-      // Deliberately NOT nulling clockBaseline here (unlike showHeaderBar below): measureClockBaseline's
-      // own "show everything" sweep only covers COMPONENT_TOGGLES-tracked elements, which the header bar
-      // isn't one of - if it were re-measured while header-auto-hidden is already applied, the baseline
-      // itself would already reflect the header-less height, making the ratio always come out to 1 (no
-      // growth at all). Reusing the existing baseline (captured while the header was genuinely visible)
-      // is what lets the ratio correctly reflect the extra space just freed up.
+    // V18.7: the header bar no longer hides by itself - מתי asked for a manual button instead. A small
+    // floating button (always visible, top-left corner) toggles it, and the choice is remembered. While
+    // it's hidden the clock grows into the freed space (scaleClockToFill, see scaleClockToFit).
+    function applyHeaderHidden(hidden, save) {
+      document.body.classList.toggle('header-auto-hidden', hidden);
+      const btn = document.getElementById('headerToggleBtn');
+      if(btn) { btn.textContent = hidden ? '▼' : '▲'; btn.title = hidden ? 'הצג את סרגל הכפתורים' : 'הסתר את סרגל הכפתורים'; }
+      if(save) { appSettings.headerHidden = hidden; saveSettings(); }
       scaleClockToFit();
     }
-    function showHeaderBar() {
-      document.body.classList.remove('header-auto-hidden');
-      clockBaseline = null;
-      scaleClockToFit();
-      scheduleHeaderAutoHide();
-    }
-    document.addEventListener('click', (e) => {
-      const emptyAreaClasses = ['bg-texture', 'app-layout', 'dashboard-area', 'main-content'];
-      const isEmptyAreaClick = e.target === document.body || emptyAreaClasses.includes(e.target.className);
-      if(isEmptyAreaClick && document.body.classList.contains('header-auto-hidden')) showHeaderBar();
-    });
-    scheduleHeaderAutoHide();
+    function toggleHeaderBar() { applyHeaderHidden(!document.body.classList.contains('header-auto-hidden'), true); }
+    setTimeout(() => applyHeaderHidden(!!appSettings.headerHidden, false), 400);
     // ================= V18.5: FULL-SCREEN CLOCK + ALARM CLOCK =================
     const CO_STYLES = [
       { key: 'digital', label: '🔢 דיגיטלי' }, { key: 'flip', label: '🃏 כרטיסים' },
-      { key: 'analog', label: '🕒 אנלוגי' }, { key: 'night', label: '🌙 לילה (עמום)' }
+      { key: 'analog', label: '🕒 אנלוגי' }, { key: 'night', label: '🌙 לילה (עמום)' },
+      { key: 'led', label: '🔴 LED אדום (7 מקטעים)' }, { key: 'ledgreen', label: '🟢 LED ירוק (7 מקטעים)' },
+      { key: 'neon', label: '💠 ניאון' }, { key: 'gold', label: '🥇 זהב' },
+      { key: 'outline', label: '⚪ קווי מתאר' }, { key: 'thin', label: '✒️ דק ואלגנטי' }
     ];
     if(!appSettings.clockStyle) appSettings.clockStyle = 'digital';
     if(!appSettings.clockOverlayScale) appSettings.clockOverlayScale = 1;
@@ -4225,7 +4222,8 @@
     if(!Array.isArray(appSettings.alarms)) appSettings.alarms = [];
     const pad2 = n => String(n).padStart(2, '0');
     let coLast = '', coControlsTimer = null, coEnteredFs = false;
-    function coViewId(style) { return style === 'flip' ? 'coFlip' : style === 'analog' ? 'coAnalog' : 'coDigital'; }
+    document.getElementById('coStyleSelect').innerHTML = CO_STYLES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+    function coViewId(style) { return style === 'flip' ? 'coFlip' : style === 'analog' ? 'coAnalog' : (style === 'led' || style === 'ledgreen') ? 'coSeg' : 'coDigital'; }
     function openClockOverlay() {
       const dlg = document.getElementById('clockOverlay');
       if(!dlg.open) dlg.showModal();
@@ -4245,13 +4243,26 @@
     function coApplyStyle() {
       const dlg = document.getElementById('clockOverlay'), style = appSettings.clockStyle;
       dlg.classList.toggle('co-night', style === 'night');
-      ['coDigital', 'coFlip', 'coAnalog'].forEach(id => document.getElementById(id).classList.toggle('active', id === coViewId(style)));
-      const meta = CO_STYLES.find(s => s.key === style) || CO_STYLES[0];
-      document.getElementById('coStyleLabel').textContent = meta.label;
+      ['coDigital', 'coFlip', 'coAnalog', 'coSeg'].forEach(id => document.getElementById(id).classList.toggle('active', id === coViewId(style)));
+      dlg.dataset.style = style;
+      document.getElementById('coStyleSelect').value = style;
       document.getElementById('coSecBtn').textContent = appSettings.clockShowSeconds ? '⏱ שניות: כן' : '⏱ שניות: לא';
       dlg.style.filter = style === 'night' ? 'brightness(0.55)' : '';
       coLast = ''; renderClockOverlay(new Date()); coFit();
     }
+    function coSetStyle(key) { appSettings.clockStyle = key; saveSettings(); coApplyStyle(); coKeepControls(); }
+    // 7-segment digits drawn as SVG polygons (no font needed): lit segments vs dim "ghost" segments.
+    const SEG_MAP = { 0: 'abcdef', 1: 'bc', 2: 'abdeg', 3: 'abcdg', 4: 'bcfg', 5: 'acdfg', 6: 'acdefg', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg' };
+    const SEG_PTS = (() => {
+      const h = (x, y, L, t) => `${x + t/2},${y} ${x + L - t/2},${y} ${x + L},${y + t/2} ${x + L - t/2},${y + t} ${x + t/2},${y + t} ${x},${y + t/2}`;
+      const v = (x, y, L, t) => `${x},${y + t/2} ${x + t/2},${y} ${x + t},${y + t/2} ${x + t},${y + L - t/2} ${x + t/2},${y + L} ${x},${y + L - t/2}`;
+      return { a: h(8, 0, 40, 9), g: h(8, 45.5, 40, 9), d: h(8, 91, 40, 9), f: v(0, 5, 41, 9), b: v(47, 5, 41, 9), e: v(0, 50, 41, 9), c: v(47, 50, 41, 9) };
+    })();
+    function segDigit(ch) {
+      const on = SEG_MAP[ch] || '';
+      return '<svg class="seg" viewBox="0 0 56 100">' + Object.keys(SEG_PTS).map(k => `<polygon class="${on.includes(k) ? 'on' : 'off'}" points="${SEG_PTS[k]}"/>`).join('') + '</svg>';
+    }
+    const SEG_COLON = '<svg class="seg colon" viewBox="0 0 20 100"><rect class="on" x="6" y="28" width="9" height="9"/><rect class="on" x="6" y="63" width="9" height="9"/></svg>';
     function coCycleStyle(dir) {
       const i = CO_STYLES.findIndex(s => s.key === appSettings.clockStyle);
       appSettings.clockStyle = CO_STYLES[(i + dir + CO_STYLES.length) % CO_STYLES.length].key;
@@ -4301,6 +4312,8 @@
         document.getElementById('coHand-m').setAttribute('transform', `rotate(${m * 6})`);
         document.getElementById('coHand-s').setAttribute('transform', `rotate(${now.getSeconds() * 6})`);
         document.getElementById('coHand-s').style.display = showSec ? '' : 'none';
+      } else if(style === 'led' || style === 'ledgreen') {
+        document.getElementById('coSeg').innerHTML = segDigit(hh[0]) + segDigit(hh[1]) + SEG_COLON + segDigit(mm[0]) + segDigit(mm[1]) + (showSec ? '<span class="co-segsec">' + segDigit(ss[0]) + segDigit(ss[1]) + '</span>' : '');
       } else {
         document.getElementById('coHM').textContent = hh + ':' + mm;
         const secEl = document.getElementById('coSec'); secEl.textContent = ss; secEl.style.display = showSec ? '' : 'none';
@@ -4844,7 +4857,7 @@
 
     renderTaskAssigneeOptions(); renderMinyanTimesWidget(); updateDisplayProfileCycleBtnLabel();
     if(isDndActive() && document.getElementById('btnDnd')) document.getElementById('btnDnd').textContent = '🔕 שקט (פעיל)';
-    checkResetTasks(); renderTasks(); renderShabbatTasks(); renderShoppingList(); renderEmergencyContactsWidget(); updateWorldClock(); updateVacationCountdown(); updateDafYomiStreakLabel(); resetIdleTimer(); initCompass(); updateTehillimLink(); applyComponentVisibility(); checkBackupReminder(); checkPrepReminder(); updateConnectionStatus(); initBatteryStatus(); checkSharedShoppingList(); updateDutyWidget(); requestAnimationFrame(update);
+    checkResetTasks(); renderTasks(); renderShabbatTasks(); renderShoppingList(); renderEmergencyContactsWidget(); updateWorldClock(); updateVacationCountdown(); updateDafYomiStreakLabel(); resetIdleTimer(); initCompass(); updateTehillimLink(); applyComponentVisibility(); checkPrepReminder(); updateConnectionStatus(); initBatteryStatus(); checkSharedShoppingList(); updateDutyWidget(); requestAnimationFrame(update);
     // V3: keep the weather genuinely "live" - refresh it every 30 minutes on top of the daily/location refreshes.
     setInterval(() => fetchWeather(currentLat, currentLng), 30 * 60 * 1000);
   </script>
