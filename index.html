@@ -1403,7 +1403,27 @@
     // V18: lets מתי confirm the browser is actually running the latest pushed version instead of
     // guessing - bumped by hand on every deploy alongside version.json (kept as a separate tiny file
     // so checking it doesn't mean re-downloading/parsing this whole page).
-    const APP_VERSION = '2026-10-13.1';
+    // V18.8: inside the Android app (WebView) a blob "download" does nothing by itself - every export
+    // (settings backup, task/shopping lists, calendar .ics...) builds a blob and clicks an <a download>.
+    // When the native wrapper provides AndroidBridge, route exactly those clicks to it; in a normal
+    // browser nothing changes.
+    if(window.AndroidBridge && AndroidBridge.saveFile) {
+      // The callers revoke the blob URL right after click(), before an async fetch of it could run - so
+      // keep our own url -> Blob map (the Blob object itself outlives the revoked URL).
+      const origCreateUrl = URL.createObjectURL.bind(URL), blobByUrl = new Map();
+      URL.createObjectURL = b => { const u = origCreateUrl(b); blobByUrl.set(u, b); return u; };
+      const origAnchorClick = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function() {
+        const blob = this.download && blobByUrl.get(this.href);
+        if(blob) {
+          const name = this.download; blobByUrl.delete(this.href);
+          const fr = new FileReader(); fr.onload = () => AndroidBridge.saveFile(name, String(fr.result).split(',')[1] || '', blob.type || 'application/octet-stream'); fr.readAsDataURL(blob);
+          return;
+        }
+        return origAnchorClick.call(this);
+      };
+    }
+    const APP_VERSION = '2026-10-13.2';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -3492,6 +3512,7 @@
         cachedSunset = new Date(zData.times.sunset);
         cachedTzeit72 = zData.times.tzeit72min ? new Date(zData.times.tzeit72min) : new Date(cachedSunset.getTime() + 72*60000);
         gridMode = 'today'; offlineMode = false; zOk = true;
+        crossCheckZmanim(zData.times, lat, lng);
         renderZmanimGrid(zData.times);
       } catch(e) {
         console.error('zmanim fetch failed, falling back to offline calculation:', e);
@@ -4511,19 +4532,25 @@
       const epsilon = 23 + (26 + (21.448 - T*(46.815+T*(0.00059-T*0.001813)))/60)/60 + 0.00256*Math.cos(omega*Math.PI/180);
       const declRad = Math.asin(Math.sin(epsilon*Math.PI/180) * Math.sin(lambda*Math.PI/180));
       const y = Math.tan((epsilon/2)*Math.PI/180) ** 2;
-      const eqTime = 4 * (180/Math.PI) * (y*Math.sin(2*L0*Math.PI/180) - 2*0.0167*Math.sin(Mrad) + 4*0.0167*y*Math.sin(Mrad)*Math.cos(2*L0*Math.PI/180) - 0.5*y*y*Math.sin(4*L0*Math.PI/180) - 1.25*0.0167*0.0167*Math.sin(2*Mrad));
+      const e = 0.016708634 - T*(0.000042037 + 0.0000001267*T);
+      const eqTime = 4 * (180/Math.PI) * (y*Math.sin(2*L0*Math.PI/180) - 2*e*Math.sin(Mrad) + 4*e*y*Math.sin(Mrad)*Math.cos(2*L0*Math.PI/180) - 0.5*y*y*Math.sin(4*L0*Math.PI/180) - 1.25*e*e*Math.sin(2*Mrad));
       return { decl: declRad, eqTime };
     }
+    // V18.8 accuracy fix: the sun's declination/equation-of-time used to be evaluated ONCE at (roughly) solar
+    // midnight, ~6 hours away from the sunrise/sunset it was used for - declination moves up to ~0.4 deg/day,
+    // which is up to ~1 minute of error near the equinoxes. Now iterated: evaluate at the estimated event time,
+    // recompute, repeat (converges in 3-4 passes). Returns null where the sun never reaches that depression.
     function solarEvent(date, lat, lng, angleBelowHorizon, isSunrise) {
-      const jd = Math.floor(julianDay(date)) + 0.5 - lng/360;
-      const { decl, eqTime } = solarPosition(jd), latRad = lat * Math.PI/180;
-      const cosH = (Math.sin(-angleBelowHorizon*Math.PI/180) - Math.sin(latRad)*Math.sin(decl)) / (Math.cos(latRad)*Math.cos(decl));
-      if(cosH < -1 || cosH > 1) return null;
-      const H = Math.acos(cosH) * 180/Math.PI;
-      const minutes = isSunrise ? (720 - 4*(lng + H) - eqTime) : (720 - 4*(lng - H) - eqTime);
-      const result = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-      result.setUTCMinutes(minutes);
-      return result;
+      const midnightUTC = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()), latRad = lat * Math.PI/180;
+      let minutes = isSunrise ? 360 - 4*lng : 1080 - 4*lng;
+      for(let i = 0; i < 5; i++) {
+        const { decl, eqTime } = solarPosition((midnightUTC + minutes * 60000) / 86400000 + 2440587.5);
+        const cosH = (Math.sin(-angleBelowHorizon*Math.PI/180) - Math.sin(latRad)*Math.sin(decl)) / (Math.cos(latRad)*Math.cos(decl));
+        if(cosH < -1 || cosH > 1) return null;
+        const H = Math.acos(cosH) * 180/Math.PI;
+        minutes = isSunrise ? (720 - 4*(lng + H) - eqTime) : (720 - 4*(lng - H) - eqTime);
+      }
+      return new Date(midnightUTC + Math.round(minutes * 60000));
     }
     function computeOfflineZmanim(baseDate, lat, lng) {
       const d = new Date(Date.UTC(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 12, 0, 0));
@@ -4532,7 +4559,9 @@
       const tzeitMGA = solarEvent(d, lat, lng, 16.1, false), tz7083 = solarEvent(d, lat, lng, 7.083, false);
       if(!sunrise || !sunset) return null;
       const shaah = (sunset - sunrise) / 12, add = (s, h, sh) => new Date(s.getTime() + h * sh);
-      const mgaStart = alot || sunrise, mgaEnd = tzeitMGA || sunset, shaahMGA = (mgaEnd - mgaStart) / 12;
+      // V18.8 accuracy fix: Hebcal's MGA day runs from 72 FIXED minutes before sunrise to 72 after sunset (not the
+      // 16.1-degree dawn used before here, which made the offline MGA sof-zman-shma up to 8 minutes off).
+      const mgaStart = new Date(sunrise.getTime() - 72 * 60000), mgaEnd = new Date(sunset.getTime() + 72 * 60000), shaahMGA = (mgaEnd - mgaStart) / 12;
       return {
         alotHaShachar: (alot || sunrise).toISOString(), misheyakir: (mish || sunrise).toISOString(), sunrise: sunrise.toISOString(),
         sofZmanShmaMGA: add(mgaStart, 3, shaahMGA).toISOString(), sofZmanShma: add(sunrise, 3, shaah).toISOString(), sofZmanTfilla: add(sunrise, 4, shaah).toISOString(),
@@ -4555,6 +4584,18 @@
     }
 
     // ---- (4) data-freshness chip + automatic retry/refresh (before this, a failed midnight fetch stayed stale until restart) ----
+    // V18.8: every live fetch is cross-checked against the local astronomical calculation (sunrise + sunset).
+    // They normally agree within ~30s (Hebcal rounds to whole minutes); a bigger gap means something is off
+    // (wrong location/date from the API, a corrupted response...) and the chip says so instead of silently
+    // showing a wrong time.
+    var zmanimDeviationSec = 0;
+    function crossCheckZmanim(times, lat, lng) {
+      try {
+        const o = computeOfflineZmanim(new Date(), lat, lng); if(!o) { zmanimDeviationSec = 0; return; }
+        zmanimDeviationSec = Math.max(...['sunrise', 'sunset'].map(k => Math.abs(new Date(o[k]) - new Date(times[k])) / 1000));
+        if(zmanimDeviationSec > 150) console.warn('zmanim deviation vs local calculation:', Math.round(zmanimDeviationSec), 's');
+      } catch(e) { zmanimDeviationSec = 0; }
+    }
     function updateDataFreshness() {
       const el = document.getElementById('dataFreshness'); if(!el) return;
       const age = lastFetchOk ? Date.now() - lastFetchOk : Infinity;
@@ -4563,6 +4604,7 @@
       else if(!lastFetchOk) { txt = '⏳ טוען נתונים...'; color = '#94a3b8'; }
       else if(age > 3 * 3600000) { txt = '🟠 נתונים ישנים (עודכן ' + fmtHM(new Date(lastFetchOk)) + ')'; color = '#f59e0b'; }
       else { txt = '🟢 עודכן ' + fmtHM(new Date(lastFetchOk)); color = '#34d399'; }
+      if(!offlineMode && zmanimDeviationSec > 150) { txt += ' ⚠️ סטיית זמנים ' + Math.round(zmanimDeviationSec / 60) + " דק'"; color = '#f59e0b'; el.title = 'הזמנים מ-Hebcal שונים מהחישוב המקומי - ייתכן שמיקום/תאריך לא נכונים'; }
       el.textContent = txt; el.style.color = color;
     }
     setInterval(() => {
