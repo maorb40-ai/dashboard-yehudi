@@ -330,6 +330,8 @@
        plain vw units alone don't respond to that, since they're relative to the viewport, not the
        space freed up around the clock. */
     :root { --clock-scale: 1; }
+    /* V18.9: while the clock is being MEASURED its transitions must be off - see withClockMeasure(). */
+    body.clock-measuring .flip-clock-container, body.clock-measuring .flip-card, body.clock-measuring .colon { transition: none !important; }
     .flip-clock-container { display: flex; gap: calc(1vw * var(--clock-scale)); align-items: center; direction: ltr; transition: transform 1s ease; cursor: pointer; }
     .flip-group { display: flex; gap: calc(0.4vw * var(--clock-scale)); }
     .flip-card { position: relative; background: linear-gradient(to bottom, #2a2a2a 0%, #111 100%); border-radius: calc(0.6vw * var(--clock-scale)); border: 2px solid #333; box-shadow: 0 0.5vw 1.5vw rgba(0,0,0,0.9); width: calc(6.5vw * var(--clock-scale)); height: calc(9vw * var(--clock-scale)); display: flex; justify-content: center; align-items: center; font-family: 'Bebas Neue', sans-serif; font-size: calc(7vw * var(--clock-scale)); color: #e0e0e0; transition: width 0.4s ease, height 0.4s ease, font-size 0.4s ease; }
@@ -1423,7 +1425,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-10-13.2';
+    const APP_VERSION = '2026-10-19.1';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1817,7 +1819,22 @@
     // jump geometrically, even though visually everything else vanished. A dedicated full-screen fit
     // measures directly against the CURRENT viewport instead of that baseline, so the clock actually
     // grows to fill the freed screen rather than a fraction of it.
+    // V18.9 BUGFIX ("the clock slowly shrinks by itself on the tablet"): every re-fit resets --clock-scale to 1 and
+    // then MEASURES the clock - but the cards animate width/height/font-size (0.4s) and the container transform
+    // (1s), so the measurement returned the still-animating, near-previous (large) size instead of the true 1x
+    // size, which makes the computed scale come out ~1 and snaps the clock small. Re-fits fire on their own all
+    // day (data refresh every 3h, the switch to tomorrow's zmanim after nightfall, alerts...), so it looked like
+    // the clock shrank by itself. Transitions are now switched off for the duration of a measurement, and the
+    // layout is forced to settle before reading sizes.
+    function withClockMeasure(fn) {
+      document.body.classList.add('clock-measuring');
+      void document.body.offsetWidth;
+      try { fn(); } finally { void document.body.offsetWidth; setTimeout(() => document.body.classList.remove('clock-measuring'), 60); }
+    }
     function fitClockToFullScreen() {
+      withClockMeasure(fitClockToFullScreenImpl);
+    }
+    function fitClockToFullScreenImpl() {
       const clockWrap = document.querySelector('.flip-clock-container');
       const dashArea = document.querySelector('.dashboard-area');
       if(!clockWrap || !dashArea) return;
@@ -1899,7 +1916,8 @@
     // the "everything visible" baseline: that ratio was capped by an unchanged width ratio and only ever
     // reached ~1.06x, even though the clock itself only occupies a fraction of the column's width. Because
     // it's min(width, height) of the clock's real size, it cannot overflow.
-    function scaleClockToFill() {
+    function scaleClockToFill() { withClockMeasure(scaleClockToFillImpl); }
+    function scaleClockToFillImpl() {
       const root = document.documentElement, dashArea = document.querySelector('.dashboard-area'), clockWrap = document.querySelector('.flip-clock-container');
       if(!dashArea || !clockWrap) return;
       root.style.setProperty('--clock-scale', '1');
@@ -1913,7 +1931,8 @@
       root.style.setProperty('--clock-scale', Math.max(1, Math.min(Math.min(availW / rect.width, availH / rect.height), 3)).toFixed(3));
     }
     function scaleClockToFit() {
-      if(document.body.classList.contains('shabbat-advanced')) return; // that mode has its own dedicated zoom
+      if(document.body.classList.contains('shabbat-advanced')) return;
+      if(!document.body.classList.contains('clock-measuring')) { withClockMeasure(scaleClockToFit); return; } // that mode has its own dedicated zoom
       if(document.body.classList.contains('header-auto-hidden') && !document.body.classList.contains('clock-focus-mode')) { scaleClockToFill(); return; }
       const root = document.documentElement;
       const dashArea = document.querySelector('.dashboard-area');
