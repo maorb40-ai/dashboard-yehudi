@@ -377,6 +377,26 @@
     dialog#alarmRing { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-radius: 0; background: #7f1d1d; color: #fff; }
     dialog#alarmRing[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; animation: alarmFlash 1s infinite; }
     @keyframes alarmFlash { 0%,100% { background: #7f1d1d; } 50% { background: #b91c1c; } }
+    #upcomingEventChip { background: rgba(242,201,76,0.12); border: 1px solid var(--gold); border-radius: 1vw; padding: 0.2vh 0.7vw; }
+    dialog#tableMode { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-radius: 0; background: #fdf6e3; color: #2b2118; overflow: hidden; }
+    dialog#tableMode[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2vh; text-align: center; }
+    dialog#tableMode::backdrop { background: #fdf6e3; }
+    #tmClock { font-family: 'Bebas Neue', sans-serif; font-size: min(9vw, 14vh); line-height: 1; direction: ltr; color: #7c4a03; }
+    #tmHeb { font-size: min(5vw, 8vh); font-weight: 900; color: #92400e; }
+    #tmParasha { font-size: min(4.2vw, 6.5vh); font-weight: 800; }
+    #tmTimes { display: flex; gap: 4vw; flex-wrap: wrap; justify-content: center; }
+    #tmTimes .tm-item { background: #fff7e0; border: 2px solid #d9a441; border-radius: 2vh; padding: 1.6vh 3vw; min-width: 18vw; }
+    #tmTimes .tm-label { font-size: min(2.2vw, 3.6vh); font-weight: 700; color: #6b4a1a; }
+    #tmTimes .tm-val { font-family: 'Bebas Neue', sans-serif; font-size: min(8vw, 12vh); line-height: 1.05; direction: ltr; color: #2b2118; }
+    #tmTimes .tm-sub { font-size: min(2vw, 3.2vh); color: #6b4a1a; }
+    #tmWeather { font-size: min(2.4vw, 3.8vh); color: #4a3a1c; }
+    #tmButtons { position: absolute; bottom: 2vh; display: flex; gap: 2vw; }
+    #tmButtons button { font-size: max(14px, min(2vw, 3vh)); padding: 1vh 2.5vh; border-radius: 2vh; border: none; background: #e7d3a5; color: #2b2118; cursor: pointer; }
+    #tableModeBtn { display: none; position: fixed; bottom: 1.5vh; left: 0.8vw; z-index: 9000; width: max(40px, 3.2vw); height: max(40px, 3.2vw); border-radius: 50%; border: 1px solid var(--gold); background: rgba(30,30,30,0.8); font-size: max(18px, 1.6vw); cursor: pointer; padding: 0; }
+    body.shabbat-active #tableModeBtn { display: block; }
+    .learn-row { display: flex; justify-content: space-between; align-items: center; gap: 1vw; padding: 1vh 0.5vw; border-bottom: 1px solid var(--card-border); font-size: 1.05vw; }
+    .learn-row .l-title { color: var(--muted-text); }
+    .learn-row a { color: var(--cyan); font-weight: 700; text-decoration: none; }
     .alarm-row { display: flex; align-items: center; gap: 1vw; padding: 1vh 1vw; border-bottom: 1px solid var(--card-border); }
     .alarm-row .al-time { font-size: 2.4vw; font-weight: 800; font-family: 'Bebas Neue', sans-serif; direction: ltr; min-width: 7vw; }
     .alarm-row.off .al-time, .alarm-row.off .al-meta { opacity: 0.45; }
@@ -524,6 +544,7 @@
         <div class="greeting" id="greetingText">בוקר טוב</div>
         <div class="edah-badge" id="edahBadge" onclick="cycleNusach()" style="cursor:pointer;" title="לחץ למעבר בין נוסחים">מנהג עדות המזרח</div>
         <div class="weather-info" id="weatherInfo" onclick="openWeatherModal()" style="cursor:pointer;" title="לחץ לתחזית שבועית">טוען מזג אוויר...</div>
+        <div class="weather-info" id="upcomingEventChip" onclick="openPersonalDatesModal()" style="display:none; cursor:pointer; font-size:0.9vw; font-weight:700; color:var(--gold);" title="האירוע האישי הקרוב - לחץ לכל התאריכים"></div>
         <div class="weather-info" id="dataFreshness" style="font-size:0.85vw; font-weight:700;" title="מצב עדכון הנתונים החיים (זמנים, חגים, פרשה)"></div>
         <div class="weather-info" id="worldClockInfo" style="display:none;"></div>
         <div class="api-loader" id="apiLoader">מרענן נתונים...</div>
@@ -656,6 +677,7 @@
         <div class="personal-banner" id="preShabbatChecklistBanner" style="display:none; background: linear-gradient(90deg, rgba(6,182,212,0.2) 0%, rgba(6,182,212,0.8) 50%, rgba(6,182,212,0.2) 100%);"></div>
         <div class="personal-banner" id="havdalahChecklistBanner" style="display:none; background: linear-gradient(90deg, rgba(124,58,237,0.2) 0%, rgba(124,58,237,0.8) 50%, rgba(124,58,237,0.2) 100%);"></div>
         <div class="personal-banner" id="seudahShlishitBanner" style="display:none;"></div>
+        <div class="personal-banner" id="yahrzeitCandleBanner" style="display:none; background: linear-gradient(90deg, rgba(180,83,9,0.25) 0%, rgba(217,119,6,0.9) 50%, rgba(180,83,9,0.25) 100%);"></div>
 
         <div class="pasuk-banner" id="pasukBanner" style="font-size: 2.2vw; font-weight: bold; color: var(--cyan); text-shadow: 0 0 15px rgba(0,229,255,0.8); margin-bottom: 1.5vh; text-align: center; letter-spacing: 0.1vw;">"וְהַבּוֹטֵחַ בַּה' חֶסֶד יְסוֹבְבֶנּוּ"</div>
         <div id="shabbatCountdown" class="shabbat-countdown"></div>
@@ -865,7 +887,9 @@
     <div style="text-align:left; margin-bottom:1vh; display:flex; gap:1vw;">
       <button onclick="window.print()" style="background:var(--cyan); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">🖨️ הדפס</button>
       <button onclick="exportICS()" style="background:var(--gold); border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">📅 ייצוא ליומן (ICS)</button>
+      <button onclick="shareShabbatWhatsApp()" style="background:#25d366; color:#000; border:none; padding:0.7vh 1.5vw; cursor:pointer; font-weight:bold; border-radius:0.5vw;">💬 שלח בוואטסאפ</button>
     </div>
+    <div id="shabbatWeatherBox" style="background:rgba(0,0,0,0.25); border-radius:0.6vw; padding:0.8vh 1vw; margin-bottom:1vh; font-size:0.95vw; line-height:1.6;"></div>
     <div id="shabbatTimesContent" style="height:55vh; overflow-y:auto; padding:0 0.5vw;">טוען...</div>
   </dialog>
 
@@ -1002,6 +1026,40 @@
     <div id="psPreview" style="max-height:60vh; overflow:auto; background:#fff; color:#000; border-radius:0.6vw; padding:1vh 1vw; font-size:0.85vw;">בחר טווח ולחץ "הצג".</div>
   </dialog>
 
+  <!-- V18.10: DAILY LEARNING (real data from Sefaria's calendars API) -->
+  <dialog id="learningModal" style="width:44vw; max-width:680px; min-width:320px;">
+    <div class="modal-header"><h2>📚 לימוד יומי</h2><button class="close-btn" onclick="document.getElementById('learningModal').close()">✖</button></div>
+    <div id="learningList" style="max-height:60vh; overflow-y:auto;">טוען...</div>
+    <div class="settings-hint" style="margin-top:1vh;">הנתונים מ-Sefaria (לוח הלימוד של היום). תהילים לפי היום בחודש: <a href="https://he.chabad.org/dailystudy/tehillim.htm" target="_blank" style="color:var(--cyan);">חב"ד ⇱</a></div>
+  </dialog>
+
+  <!-- V18.10: BIRKAT HALEVANA -->
+  <dialog id="moonModal" style="width:44vw; max-width:680px; min-width:320px;">
+    <div class="modal-header"><h2>🌙 ברכת הלבנה</h2><button class="close-btn" onclick="document.getElementById('moonModal').close()">✖</button></div>
+    <div id="moonContent" style="line-height:1.9; font-size:1vw;"></div>
+  </dialog>
+
+  <!-- V18.10: SHABBAT CHECKLIST (checkable, resets by itself for the next Shabbat) -->
+  <dialog id="shabChecklistModal" style="width:40vw; max-width:600px; min-width:320px;">
+    <div class="modal-header"><h2>✅ רשימת שבת</h2><button class="close-btn" onclick="document.getElementById('shabChecklistModal').close()">✖</button></div>
+    <div id="shabChecklistContent"></div>
+    <div class="settings-hint" style="margin-top:1vh;">הרשימות נערכות בהגדרות (צ'ק-ליסטים אוטומטיים לשבת). הסימונים מתאפסים אוטומטית לקראת השבת הבאה.</div>
+  </dialog>
+
+  <!-- V18.10: TABLE MODE - large, bright screen for the Shabbat meal -->
+  <dialog id="tableMode" onclick="if(event.target===this) closeTableMode()">
+    <div id="tmClock"></div>
+    <div id="tmHeb"></div>
+    <div id="tmParasha"></div>
+    <div id="tmTimes"></div>
+    <div id="tmWeather"></div>
+    <div id="tmButtons">
+      <button onclick="shareShabbatWhatsApp()">💬 שלח בוואטסאפ</button>
+      <button onclick="closeTableMode()">✖ סגור</button>
+    </div>
+  </dialog>
+  <button id="tableModeBtn" onclick="openTableMode()" title="מצב סעודה">🍷</button>
+
   <!-- DND MODAL - new in V11: temporarily silences chime/speech/notification alerts (e.g. during a
        nap), without needing to permanently disable the audio-alerts setting. -->
   <dialog id="dndModal" style="width:auto; max-width:400px; text-align:center;">
@@ -1085,6 +1143,12 @@
         <button class="btn" style="flex:1; background: linear-gradient(45deg, #7c3aed, #a855f7); color: white;" onclick="document.getElementById('zemirotModal').showModal()">🎵 זמירות שבת</button>
         <button class="btn" style="flex:1; background: linear-gradient(45deg, #be185d, #db2777); color: white;" onclick="openBarMitzvahCalc()">🎂 מחשבון בר/בת מצווה</button>
         <button class="btn" style="flex:1; background: linear-gradient(45deg, #059669, #10b981); color: white;" onclick="openPrintSchedule()">🖨️ לוח זמנים להדפסה</button>
+      </div>
+      <div style="display:flex; gap:0.6vw; flex-wrap:wrap; margin-top:0.8vh;">
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #0e7490, #06b6d4); color: white;" onclick="openLearningModal()">📚 לימוד יומי</button>
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #1e3a8a, #3b82f6); color: white;" onclick="openMoonModal()">🌙 ברכת הלבנה</button>
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #15803d, #22c55e); color: white;" onclick="openShabChecklist()">✅ רשימת שבת</button>
+        <button class="btn" style="flex:1; background: linear-gradient(45deg, #b45309, #f59e0b); color: white;" onclick="openTableMode()">🍷 מצב סעודה</button>
       </div>
 
       <div class="panel-title" style="margin-top: 2vh;">זמני מניינים</div>
@@ -1233,6 +1297,23 @@
               <option value="double">ביפ כפול</option>
             </select>
             <button onclick="previewChime(document.getElementById('chimeSoundSelect').value)" style="background:#555; color:#fff; border:none; padding:0.4vh 1vw; border-radius:0.4vw; cursor:pointer;">▶ נגן לדוגמה</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:1vw; margin-top:1vh; flex-wrap:wrap;">
+            <span>להתריע לפני:</span>
+            <select id="alertLeadSelect" onchange="appSettings.alertLead=parseInt(this.value,10); saveSettings();">
+              <option value="5">5 דק'</option><option value="10">10 דק'</option><option value="15">15 דק'</option><option value="20">20 דק'</option><option value="30">30 דק'</option>
+            </select>
+            <label><input type="checkbox" class="alert-key" value="sofZmanShma" onchange="saveAlertKeys()"> סוף זמן ק"ש</label>
+            <label><input type="checkbox" class="alert-key" value="sofZmanTfilla" onchange="saveAlertKeys()"> סוף זמן תפילה</label>
+            <label><input type="checkbox" class="alert-key" value="minchaGedola" onchange="saveAlertKeys()"> מנחה גדולה</label>
+            <label><input type="checkbox" class="alert-key" value="sunset" onchange="saveAlertKeys()"> שקיעה</label>
+          </div>
+          <div class="settings-hint">סוף זמן ק"ש מותאם לנוסח שנבחר (עדות המזרח/תימן: גר"א, אשכנז: מג"א).</div>
+          <div style="display:flex; align-items:center; gap:0.8vw; margin-top:1vh; flex-wrap:wrap;">
+            <label><input type="checkbox" id="chimeByTimeToggle" onchange="appSettings.chimeByTime=this.checked; saveSettings();"> צליל שונה לפי שעה:</label>
+            <span>בוקר</span><select id="chimeMorningSelect" onchange="appSettings.chimeMorning=this.value; saveSettings();"><option value="bell">פעמון</option><option value="gentle">עדין</option><option value="double">ביפ כפול</option></select>
+            <span>צהריים</span><select id="chimeAfternoonSelect" onchange="appSettings.chimeAfternoon=this.value; saveSettings();"><option value="bell">פעמון</option><option value="gentle">עדין</option><option value="double">ביפ כפול</option></select>
+            <span>ערב</span><select id="chimeEveningSelect" onchange="appSettings.chimeEvening=this.value; saveSettings();"><option value="bell">פעמון</option><option value="gentle">עדין</option><option value="double">ביפ כפול</option></select>
           </div>
         </div>
         <div class="setting-group"><label>נוסח/מנהג</label>
@@ -1425,7 +1506,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-10-25.2';
+    const APP_VERSION = '2026-10-25.3';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -2192,6 +2273,12 @@
       if(document.getElementById('nusachSelect')) document.getElementById('nusachSelect').value = appSettings.nusach;
       document.getElementById('themeModeSelect').value = appSettings.themeMode || 'dark';
       document.getElementById('chimeSoundSelect').value = appSettings.chimeSound || 'bell';
+      document.getElementById('alertLeadSelect').value = String(appSettings.alertLead || 15);
+      { const ks = appSettings.alertKeys || ['sofZmanShma', 'sofZmanTfilla', 'sunset']; document.querySelectorAll('.alert-key').forEach(c => c.checked = ks.includes(c.value)); }
+      document.getElementById('chimeByTimeToggle').checked = !!appSettings.chimeByTime;
+      document.getElementById('chimeMorningSelect').value = appSettings.chimeMorning || 'bell';
+      document.getElementById('chimeAfternoonSelect').value = appSettings.chimeAfternoon || 'gentle';
+      document.getElementById('chimeEveningSelect').value = appSettings.chimeEvening || 'double';
       document.getElementById('densityCompactToggle').checked = appSettings.densityCompact;
       document.getElementById('ambientTimeOfDayToggle').checked = appSettings.ambientTimeOfDay;
       document.getElementById('ambientShabbatMotifToggle').checked = appSettings.ambientShabbatMotif;
@@ -3102,8 +3189,9 @@
         const banner = document.getElementById('preShabbatChecklistBanner');
         const key = nextCandle.start.toISOString();
         if(diffMins > 0 && diffMins <= 90 && localStorage.getItem('preShabbatChecklistBanner_dismissedKey') !== key) {
-          const items = (appSettings.preShabbatChecklist || []).map(i => `☐ ${i}`).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
-          banner.innerHTML = `לקראת כניסת שבת: ${items} <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('preShabbatChecklistBanner')">✖</span>`;
+          const st = shabChecklistState(key);
+          const items = (appSettings.preShabbatChecklist || []).map((i, ix) => `${st.pre.includes(ix) ? '☑' : '☐'} ${i}`).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+          banner.innerHTML = `לקראת כניסת שבת: ${items} <span style="cursor:pointer; text-decoration:underline; margin-right:1vw;" onclick="openShabChecklist()">סמן</span> <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('preShabbatChecklistBanner')">✖</span>`;
           banner.dataset.key = key;
           banner.style.display = 'block';
         } else if(diffMins <= 0 || diffMins > 90) { banner.style.display = 'none'; }
@@ -3114,8 +3202,9 @@
         const havdalahBanner = document.getElementById('havdalahChecklistBanner');
         const key = activeOrNext.end.toISOString();
         if(diffToEnd > 0 && diffToEnd <= 15 && localStorage.getItem('havdalahChecklistBanner_dismissedKey') !== key) {
-          const items = (appSettings.havdalahChecklist || []).map(i => `☐ ${i}`).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
-          havdalahBanner.innerHTML = `לקראת יציאת שבת/חג: ${items} <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('havdalahChecklistBanner')">✖</span>`;
+          const stH = shabChecklistState(activeOrNext.start ? activeOrNext.start.toISOString() : 'end' + key);
+          const items = (appSettings.havdalahChecklist || []).map((i, ix) => `${stH.hav.includes(ix) ? '☑' : '☐'} ${i}`).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+          havdalahBanner.innerHTML = `לקראת יציאת שבת/חג: ${items} <span style="cursor:pointer; text-decoration:underline; margin-right:1vw;" onclick="openShabChecklist()">סמן</span> <span style="cursor:pointer; margin-right:1vw;" onclick="dismissShabbatBanner('havdalahChecklistBanner')">✖</span>`;
           havdalahBanner.dataset.key = key;
           havdalahBanner.style.display = 'block';
         } else { havdalahBanner.style.display = 'none'; }
@@ -3907,10 +3996,17 @@
       gentle: () => [{ freq: 440, type: 'sine', delay: 0, dur: 1.2 }, { freq: 554.37, type: 'sine', delay: 0.3, dur: 1.2 }],
       double: () => [{ freq: 880, type: 'square', delay: 0, dur: 0.25 }, { freq: 880, type: 'square', delay: 0.35, dur: 0.25 }]
     };
-    function playChime() {
+    // V18.10: optional different chime for morning / afternoon / evening alerts (so the sound itself tells
+    // you which prayer time is coming without looking at the screen).
+    function chooseChime() {
+      if(!appSettings.chimeByTime) return appSettings.chimeSound || 'bell';
+      const h = new Date().getHours();
+      return h < 12 ? (appSettings.chimeMorning || 'bell') : h < 17 ? (appSettings.chimeAfternoon || 'gentle') : (appSettings.chimeEvening || 'double');
+    }
+    function playChime(forceName) {
       if(isDndActive() || !appSettings.audioAlerts || !audioContext) return;
       if(audioContext.state === 'suspended') audioContext.resume();
-      const preset = CHIME_PRESETS[appSettings.chimeSound] || CHIME_PRESETS.bell;
+      const preset = CHIME_PRESETS[forceName || chooseChime()] || CHIME_PRESETS.bell;
       preset().forEach(note => {
         const osc = audioContext.createOscillator(), gain = audioContext.createGain();
         osc.connect(gain); gain.connect(audioContext.destination);
@@ -3923,33 +4019,38 @@
     }
     function previewChime(name) {
       if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const original = appSettings.chimeSound;
-      appSettings.chimeSound = name;
       const wasAudioAlerts = appSettings.audioAlerts, wasDnd = appSettings.dndUntil;
       appSettings.audioAlerts = true; appSettings.dndUntil = 0;
-      playChime();
-      appSettings.chimeSound = original; appSettings.audioAlerts = wasAudioAlerts; appSettings.dndUntil = wasDnd;
+      playChime(name);
+      appSettings.audioAlerts = wasAudioAlerts; appSettings.dndUntil = wasDnd;
     }
     function checkZmanimAlerts(now) {
       if(isDndActive()) return; // V11: temporary quiet mode silences all zman/candle chime alerts
       if(zmanimDataCache) {
-        ['sofZmanShma', 'sofZmanTfilla', 'sunset'].forEach(k => {
-          if(zmanimDataCache[k]) {
-            const zman = new Date(zmanimDataCache[k]), diffMins = (zman - now) / 60000;
-            if(diffMins > 14 && diffMins <= 15.5) { const todayKey = now.toDateString() + '_' + k;
+        // V18.10: lead time and the set of zmanim are user settings now; "sof zman shma" follows the chosen
+        // nusach (GRA for Edot HaMizrach/Teiman, MGA for Ashkenaz) - the same one the starred card shows.
+        const lead = appSettings.alertLead || 15;
+        const enabledKeys = appSettings.alertKeys || ['sofZmanShma', 'sofZmanTfilla', 'sunset'];
+        const prefShma = (NUSACH_PREFERRED_ZMANIM[appSettings.nusach] || NUSACH_PREFERRED_ZMANIM.sephardi).shma;
+        const ALERT_NAMES = { sofZmanShma: 'סוף זמן קריאת שמע', sofZmanTfilla: 'סוף זמן תפילה', minchaGedola: 'תחילת זמן מנחה גדולה', sunset: 'שקיעת החמה' };
+        enabledKeys.forEach(k => {
+          const src = k === 'sofZmanShma' ? prefShma : k;
+          if(zmanimDataCache[src]) {
+            const zman = new Date(zmanimDataCache[src]), diffMins = (zman - now) / 60000;
+            if(diffMins > lead - 1 && diffMins <= lead + 0.5) { const todayKey = now.toDateString() + '_' + k;
             if(!alertedZmanim[todayKey]) {
               playChime();
-              let l = (k==='sunset') ? 'שקיעת החמה' : (k==='sofZmanTfilla' ? 'סוף זמן תפילה' : 'סוף זמן קריאת שמע');
+              const l = ALERT_NAMES[k] || k;
               // V16: a Notification alongside the chime - if the browser silently blocks unattended
               // audio (common on a kiosk left untouched for hours - see unlockAudioAndSpeech above),
               // this is a second, non-audio channel for the same reminder.
-              if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: l + ' בעוד 15 דקות' }); }
+              if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: l + ' בעוד ' + lead + ' דקות' }); }
               alertedZmanim[todayKey] = true;
             }
             }
             // V17: a second, more urgent alert 5 minutes before sof zman krias shema specifically - the
-            // most time-critical of these three, since it can't be made up once missed.
-            if(k === 'sofZmanShma' && diffMins > 4 && diffMins <= 5.5) {
+            // most time-critical of these, since it can't be made up once missed (skipped when the lead is 5).
+            if(k === 'sofZmanShma' && lead > 6 && diffMins > 4 && diffMins <= 5.5) {
               const urgentKey = now.toDateString() + '_' + k + '_urgent';
               if(!alertedZmanim[urgentKey]) {
                 playChime();
@@ -3966,11 +4067,12 @@
         const nextCandle = shabbatIntervals.find(iv => iv.start && iv.start > now);
         if(nextCandle) {
           const diffMins = (nextCandle.start - now) / 60000;
-          if(diffMins > 14 && diffMins <= 15.5) {
+          const candleLead = Math.max(15, appSettings.alertLead || 15); // candle-lighting needs real lead time
+          if(diffMins > candleLead - 1 && diffMins <= candleLead + 0.5) {
             const candleKey = nextCandle.start.toISOString() + '_candles';
             if(!alertedZmanim[candleKey]) {
               playChime();
-              if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: 'הדלקת נרות בעוד 15 דקות' }); }
+              if(typeof Notification !== 'undefined' && Notification.permission === 'granted') { new Notification('דשבורד יהודי', { body: 'הדלקת נרות בעוד ' + candleLead + ' דקות' }); }
               alertedZmanim[candleKey] = true;
             }
           }
@@ -4177,7 +4279,7 @@
         renderClockOverlay(now); alarmTick(now);
         const todayStr = now.toDateString();
         if (todayStr !== lastDateStr) { lastDateStr = todayStr; checkResetTasks(); updateHebrewDateParts(now); updateHalacha(); document.getElementById('gregorianDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); fetchAllData(currentLat, currentLng); updateDutyWidget(); checkPrepReminder(); }
-        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); applyHolidayBgIcon(); updateHalachicDayProgress(); checkOmerNightReminder(now); checkShabbatReminderBanners(now); updateShaahZmanit(); updateSunArc(); maybeShowTomorrowZmanim(); }
+        if(now.getSeconds() === 0) { evaluateShabbatMode(); updateDynamicStyles(); checkZmanimAlerts(now); updateWorldClock(); highlightNextZman(); updateAutoTheme(); applyHolidayBgIcon(); updateHalachicDayProgress(); checkOmerNightReminder(now); checkShabbatReminderBanners(now); updateShaahZmanit(); updateSunArc(); maybeShowTomorrowZmanim(); refreshEventsInfo(); updateYahrzeitCandle(now); if(document.getElementById('tableMode').open) renderTableMode(); }
 
         checkResetShabbatTasks();
 
@@ -4251,6 +4353,214 @@
     }
     function toggleHeaderBar() { applyHeaderHidden(!document.body.classList.contains('header-auto-hidden'), true); }
     setTimeout(() => applyHeaderHidden(!!appSettings.headerHidden, false), 400);
+    // ================= V18.10: ten more additions =================
+    const isYahrzeitType = t => /אזכרה|יארצייט|יאהרצייט|נשמה/.test(t || '');
+
+    // ---- (1)+(2) next personal event chip + yahrzeit candle reminder ----
+    // Hebrew-dated events need real calendar arithmetic (month lengths, leap years) to know "how many days
+    // until" across month boundaries - done through Hebcal's converter (cached per day), never guessed.
+    const HEB_MONTHS = [[/אדר\s*א/, 'Adar1'], [/אדר\s*ב/, 'Adar2'], [/אדר/, 'Adar'], [/ניסן/, 'Nisan'], [/אייר/, 'Iyyar'], [/סיו/, 'Sivan'], [/תמוז/, 'Tamuz'], [/אלול/, 'Elul'], [/תשרי/, 'Tishrei'], [/חשו|חשוון|מרחשוון/, 'Cheshvan'], [/כסלו/, 'Kislev'], [/טבת/, 'Tevet'], [/שבט/, 'Shvat'], [/אב/, 'Av']];
+    let evInfo = { key: '', list: [] }, evBusy = false;
+    async function refreshEventsInfo() {
+      const evs = appSettings.personalEvents || [], today = localDateStr();
+      const key = today + '|' + JSON.stringify(evs);
+      if(evInfo.key === key || evBusy) return;
+      evBusy = true;
+      try {
+        const out = [], now = new Date(), t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let hy = null;
+        for(const e of evs) {
+          let date = null;
+          if(e.dateType === 'gregorian') {
+            const d = daysUntilGregorian(e.gday, e.gmonth); date = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + d);
+          } else {
+            const hd = hebrewNumeralToNumber(e.day), mm = HEB_MONTHS.find(m => m[0].test(e.month || ''));
+            if(!hd || !mm) continue;
+            if(hy === null) { const g = await (await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${t0.getFullYear()}&gm=${t0.getMonth() + 1}&gd=${t0.getDate()}&g2h=1`)).json(); hy = g.hy; }
+            for(const y of [hy, hy + 1]) {
+              const r = await (await fetch(`https://www.hebcal.com/converter?cfg=json&hy=${y}&hm=${mm[1]}&hd=${hd}&h2g=1&strict=1`)).json();
+              if(r.gy) { const d = new Date(r.gy, r.gm - 1, r.gd); if(d >= t0) { date = d; break; } }
+            }
+          }
+          if(date) out.push({ e, date, days: Math.round((date - t0) / 86400000) });
+        }
+        evInfo = { key, list: out.sort((a, b) => a.days - b.days) };
+      } catch(err) { console.warn('events info failed', err); evInfo = { key: '', list: evInfo.list }; }
+      evBusy = false;
+      renderUpcomingChip(); updateYahrzeitCandle(new Date());
+    }
+    function renderUpcomingChip() {
+      const chip = document.getElementById('upcomingEventChip'); if(!chip) return;
+      const n = evInfo.list.find(x => x.days <= 60);
+      if(!n) { chip.style.display = 'none'; return; }
+      const icon = isYahrzeitType(n.e.type) ? '🕯️' : /יום הולדת|בר מצו|בת מצו/.test(n.e.type) ? '🎂' : '📅';
+      chip.textContent = `${icon} ${n.e.type} ל${n.e.name} - ${n.days === 0 ? 'היום' : n.days === 1 ? 'מחר' : 'בעוד ' + n.days + ' ימים'}`;
+      chip.style.display = '';
+    }
+    function updateYahrzeitCandle(now) {
+      const banner = document.getElementById('yahrzeitCandleBanner'); if(!banner) return;
+      const tomorrowYz = evInfo.list.filter(x => x.days === 1 && isYahrzeitType(x.e.type));
+      const sunset = zmanimDataCache && zmanimDataCache.sunset ? new Date(zmanimDataCache.sunset) : null;
+      if(!tomorrowYz.length || !sunset || now < new Date(sunset.getTime() - 120 * 60000)) { banner.style.display = 'none'; return; }
+      const fri = now.getDay() === 5;
+      banner.innerHTML = tomorrowYz.map(x => `🕯️ הערב מדליקים נר נשמה ל${x.e.name} (האזכרה מחר)`).join(' | ') + (fri ? ' - ערב שבת: מדליקים לפני הדלקת נרות שבת' : '');
+      banner.style.display = 'block';
+      tomorrowYz.forEach(x => {
+        const k = 'yc_' + localDateStr(x.date) + '_' + x.e.name;
+        if(!alertedZmanim[k] && now >= new Date(sunset.getTime() - 30 * 60000)) {
+          alertedZmanim[k] = true; playChime();
+          if(typeof Notification !== 'undefined' && Notification.permission === 'granted') new Notification('🕯️ נר נשמה', { body: 'הערב מדליקים נר נשמה ל' + x.e.name });
+        }
+      });
+    }
+    setTimeout(refreshEventsInfo, 2500);
+
+    // ---- (3) alert settings helper ----
+    function saveAlertKeys() { appSettings.alertKeys = [...document.querySelectorAll('.alert-key')].filter(c => c.checked).map(c => c.value); saveSettings(); }
+
+    // ---- (4) checkable Shabbat checklist, resets by itself per Shabbat ----
+    function currentShabbatKey() {
+      const now = new Date(), iv = (shabbatIntervals || []).find(v => v.end > now);
+      return iv && iv.start ? iv.start.toISOString() : (iv ? 'end' + iv.end.toISOString() : 'none');
+    }
+    function shabChecklistState(key) {
+      let st = null; try { st = JSON.parse(localStorage.getItem('shabChecklistState')); } catch(e) {}
+      if(!st || st.key !== key) { st = { key, pre: [], hav: [] }; try { localStorage.setItem('shabChecklistState', JSON.stringify(st)); } catch(e) {} }
+      return st;
+    }
+    function openShabChecklist() { renderShabChecklist(); document.getElementById('shabChecklistModal').showModal(); }
+    function renderShabChecklist() {
+      const key = currentShabbatKey(), st = shabChecklistState(key);
+      const section = (title, list, arr, which) => `<div class="panel-title" style="margin-top:1vh;">${title} <span style="color:var(--muted-text); font-size:0.8em;">(${arr.length}/${list.length})</span></div>` +
+        (list.length ? list.map((t, i) => `<label style="display:flex; align-items:center; gap:0.8vw; padding:0.8vh 0.4vw; font-size:1.2vw; cursor:pointer;"><input type="checkbox" style="width:1.6vw; height:1.6vw; min-width:20px; min-height:20px;" ${arr.includes(i) ? 'checked' : ''} onchange="toggleShabChecklist('${which}', ${i}, this.checked)"> <span style="${arr.includes(i) ? 'text-decoration:line-through; opacity:0.6;' : ''}"></span></label>`).join('') : '<div style="color:var(--muted-text);">אין פריטים - אפשר להוסיף בהגדרות.</div>');
+      const box = document.getElementById('shabChecklistContent');
+      box.innerHTML = section('לפני כניסת שבת', appSettings.preShabbatChecklist || [], st.pre, 'pre') + section('לפני הבדלה / יציאת שבת', appSettings.havdalahChecklist || [], st.hav, 'hav');
+      const spans = box.querySelectorAll('label span');
+      [...(appSettings.preShabbatChecklist || []), ...(appSettings.havdalahChecklist || [])].forEach((t, i) => { if(spans[i]) spans[i].textContent = t; });
+    }
+    function toggleShabChecklist(which, idx, on) {
+      const st = shabChecklistState(currentShabbatKey()), arr = st[which];
+      const i = arr.indexOf(idx); if(on && i < 0) arr.push(idx); if(!on && i >= 0) arr.splice(i, 1);
+      try { localStorage.setItem('shabChecklistState', JSON.stringify(st)); } catch(e) {}
+      renderShabChecklist(); checkShabbatReminderBanners(new Date());
+    }
+
+    // ---- (5) Birkat HaLevana ----
+    function openMoonModal() {
+      const box = document.getElementById('moonContent'), now = new Date();
+      const fmt = d => d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+      let html = '';
+      if(!moladItems.length) html = '<p>אין נתוני מולד זמינים כרגע (דורש חיבור לאינטרנט).</p>';
+      else {
+        const molads = moladItems.map(i => new Date(i.molad.instant)).sort((a, b) => a - b);
+        const cur = molads.filter(m => m <= now).pop(), next = molads.find(m => m > now);
+        const ref = cur && now < new Date(cur.getTime() + 15 * 86400000) ? cur : next;
+        if(ref) {
+          const s3 = new Date(ref.getTime() + 3 * 86400000), s7 = new Date(ref.getTime() + 7 * 86400000), e15 = new Date(ref.getTime() + 15 * 86400000);
+          const state = now > e15 ? 'עבר' : now >= s3 ? 'אפשר לברך עכשיו (לפי מנהג עדות המזרח)' : 'עוד לא הגיע הזמן';
+          html += `<div style="font-weight:800; color:var(--gold);">${state}</div>
+            <div>המולד: ${ref.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}, ${fmtHM(ref)}</div>
+            <div>מ-${fmt(s3)} (3 ימים אחרי המולד - מנהג עדות המזרח) ועד ${fmt(e15)} (15 ימים)</div>
+            <div style="color:var(--muted-text);">לנוהגים כמנהג אשכנז - מ-${fmt(s7)} (7 ימים אחרי המולד).</div>`;
+        }
+      }
+      html += `<hr style="border-color:var(--card-border);"><ul style="margin:0.5vh 1vw; padding-right:1.2vw;"><li>מברכים בלילה, בחוץ תחת שמיים פתוחים, כשהירח נראה.</li><li>נהוג לברך במוצאי שבת, כשעוד לבושים בבגדי שבת - אם החלון עדיין פתוח.</li></ul>
+        <a class="btn" href="https://www.sefaria.org.il/search?q=%D7%91%D7%A8%D7%9B%D7%AA%20%D7%94%D7%9C%D7%91%D7%A0%D7%94" target="_blank" style="display:inline-block; text-decoration:none; margin-top:0.5vh;">📖 נוסח הברכה (ספריא)</a>
+        <div class="settings-hint" style="margin-top:1vh;">נוסח הברכה עצמו מופיע בסידור שלך - לא הקלדתי אותו כאן כדי לא להכניס טעות בנוסח.</div>`;
+      box.innerHTML = html; document.getElementById('moonModal').showModal();
+    }
+
+    // ---- (6) daily learning - Sefaria's calendars API (real data, CORS-enabled) ----
+    async function openLearningModal() {
+      const box = document.getElementById('learningList'); box.textContent = 'טוען...'; document.getElementById('learningModal').showModal();
+      const dayKey = 'learnCache_' + localDateStr();
+      try {
+        let data = null; try { data = JSON.parse(localStorage.getItem(dayKey)); } catch(e) {}
+        if(!data) {
+          const r = await fetch('https://www.sefaria.org/api/calendars?timezone=Asia/Jerusalem'); data = await r.json();
+          try { Object.keys(localStorage).filter(k => k.startsWith('learnCache_')).forEach(k => localStorage.removeItem(k)); localStorage.setItem(dayKey, JSON.stringify(data)); } catch(e) {}
+        }
+        const want = ['Daf Yomi', 'Daily Mishnah', 'Daily Rambam', 'Daily Rambam (3 Chapters)', 'Halakhah Yomit', 'Tanakh Yomi', 'Arukh HaShulchan Yomi', 'Yerushalmi Yomi', 'Daf a Week', '929', 'Tanya Yomi'];
+        const rows = want.map(w => data.calendar_items.find(i => i.title.en === w)).filter(Boolean);
+        box.innerHTML = rows.map(i => `<div class="learn-row"><span class="l-title">${i.title.he}</span><a href="https://www.sefaria.org.il/${i.url}" target="_blank">${i.displayValue.he} ⇱</a></div>`).join('') || 'אין נתונים';
+      } catch(e) { box.textContent = 'לא הצלחתי לטעון (בדוק חיבור לאינטרנט).'; }
+    }
+
+    // ---- (9) Shabbat weather (Open-Meteo daily forecast for the Friday/Saturday of the next Shabbat) ----
+    let shabWeatherCache = { at: 0, text: '', key: '' };
+    function currentShabbatDates() {
+      const now = new Date(), iv = (shabbatIntervals || []).find(v => v.end > now);
+      if(iv) return [iv.start ? new Date(iv.start) : new Date(iv.end.getTime() - 86400000), new Date(iv.end)];
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()), add = (5 - d.getDay() + 7) % 7;
+      const fri = new Date(d.getFullYear(), d.getMonth(), d.getDate() + add); return [fri, new Date(fri.getFullYear(), fri.getMonth(), fri.getDate() + 1)];
+    }
+    async function getShabbatWeatherText() {
+      const [d1, d2] = currentShabbatDates(), k1 = localDateStr(d1), k2 = localDateStr(d2), key = k1 + k2 + currentLat;
+      if(shabWeatherCache.key === key && Date.now() - shabWeatherCache.at < 3600000) return shabWeatherCache.text;
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLng}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FJerusalem&forecast_days=10`);
+        const j = await r.json(), dd = j.daily; if(!dd) throw new Error('no daily');
+        const line = (k, label) => { const i = dd.time.indexOf(k); if(i < 0) return ''; const w = WEATHER_CODES[dd.weathercode[i]] || ['🌡️', '']; return `${label}: ${w[0]} ${w[1]}, ⁦${Math.round(dd.temperature_2m_min[i])}°-${Math.round(dd.temperature_2m_max[i])}°C⁩, גשם ${dd.precipitation_probability_max[i] == null ? '--' : dd.precipitation_probability_max[i]}%`; };
+        const text = [line(k1, d1.getDay() === 6 ? 'שבת' : 'יום ו׳'), k2 !== k1 ? line(k2, d2.getDay() === 6 ? 'שבת' : 'יום ' + DAY_LETTERS[d2.getDay()] + '׳') : ''].filter(Boolean).join('  •  ');
+        shabWeatherCache = { at: Date.now(), text, key }; return text;
+      } catch(e) { return ''; }
+    }
+    async function fillShabbatWeatherBox() {
+      const box = document.getElementById('shabbatWeatherBox'); if(!box) return;
+      box.textContent = 'טוען תחזית...';
+      const t = await getShabbatWeatherText(); box.innerHTML = t ? '🌤️ <b>תחזית לשבת</b> - ' + t : 'תחזית לשבת לא זמינה (עדיין מחוץ לטווח או ללא חיבור).';
+    }
+    {
+      const orig = openShabbatTimesModal;
+      openShabbatTimesModal = function() { orig(); fillShabbatWeatherBox(); };
+    }
+
+    // ---- (7) table mode + (8) WhatsApp share ----
+    function shabbatSummary() {
+      const now = new Date(), iv = (shabbatIntervals || []).find(v => v.end > now);
+      if(!iv) return null;
+      const hm = appSettings.havdalahMinutes || 20, rt = new Date(iv.end.getTime() + (72 - hm) * 60000);
+      return { iv, rt, active: iv.start ? now >= iv.start : true };
+    }
+    async function renderTableMode() {
+      const now = new Date(), sm = shabbatSummary();
+      document.getElementById('tmClock').textContent = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+      document.getElementById('tmHeb').textContent = (document.getElementById('hebrewDate') || {}).textContent || '';
+      const par = (document.getElementById('parashaVal') || {}).textContent || '';
+      document.getElementById('tmParasha').textContent = par && !/טוען|שגיאה|אין פרשה/.test(par) ? par : '';
+      const box = document.getElementById('tmTimes');
+      if(!sm) { box.innerHTML = '<div class="tm-item"><div class="tm-label">אין נתוני שבת זמינים</div></div>'; }
+      else {
+        const items = [];
+        if(sm.iv.start) items.push(`<div class="tm-item"><div class="tm-label">${sm.active ? 'כניסת שבת/חג (נכנס)' : 'כניסת שבת/חג'}</div><div class="tm-val">${fmtHM(sm.iv.start)}</div><div class="tm-sub">${sm.iv.start.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })}</div></div>`);
+        items.push(`<div class="tm-item"><div class="tm-label">יציאת שבת/חג</div><div class="tm-val">${fmtHM(sm.iv.end)}</div><div class="tm-sub">${appSettings.havdalahMinutes || 20} דק' אחרי השקיעה • ר"ת ${fmtHM(sm.rt)}</div></div>`);
+        box.innerHTML = items.join('');
+      }
+      document.getElementById('tmWeather').textContent = shabWeatherCache.text || '';
+      if(!shabWeatherCache.text) getShabbatWeatherText().then(t => { if(t) document.getElementById('tmWeather').textContent = '🌤️ ' + t; });
+      else document.getElementById('tmWeather').textContent = '🌤️ ' + shabWeatherCache.text;
+    }
+    function openTableMode() {
+      const dlg = document.getElementById('tableMode'); if(!dlg.open) dlg.showModal();
+      ['torahModal'].forEach(id => { const m = document.getElementById(id); if(m && m.open) m.close(); });
+      renderTableMode();
+    }
+    function closeTableMode() { const d = document.getElementById('tableMode'); if(d.open) d.close(); }
+    async function shareShabbatWhatsApp() {
+      const sm = shabbatSummary(); if(!sm) { alert('אין נתוני שבת זמינים כרגע.'); return; }
+      const par = (document.getElementById('parashaVal') || {}).textContent || '';
+      const wx = await getShabbatWeatherText();
+      const city = (document.getElementById('btnAshkelon') && document.getElementById('btnAshkelon').classList.contains('active')) ? 'אשקלון' : 'המיקום שלנו';
+      const lines = ['שבת שלום! 🕯️', par && !/טוען|שגיאה|אין פרשה/.test(par) ? par : '', `${city}:`,
+        sm.iv.start ? `כניסת שבת: ${fmtHM(sm.iv.start)} (${sm.iv.start.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })})` : '',
+        `יציאת שבת: ${fmtHM(sm.iv.end)} (ר"ת ${fmtHM(sm.rt)})`, wx ? '🌤️ ' + wx : ''].filter(Boolean);
+      const text = lines.join('\n');
+      if(window.AndroidBridge && AndroidBridge.shareText) { AndroidBridge.shareText(text); return; }
+      if(navigator.share) { try { await navigator.share({ text }); return; } catch(e) { if(e && e.name === 'AbortError') return; } }
+      window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    }
+
+    // ---- (10) is chooseChime() above ----
     // ================= V18.5: FULL-SCREEN CLOCK + ALARM CLOCK =================
     const CO_STYLES = [
       { key: 'digital', label: '🔢 דיגיטלי' }, { key: 'flip', label: '🃏 כרטיסים' },
