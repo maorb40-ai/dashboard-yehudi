@@ -1425,7 +1425,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-10-25.1';
+    const APP_VERSION = '2026-10-25.2';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -3596,7 +3596,7 @@
              // The bracket is the "shnayim mikra" daily portion: ONE aliyah of next Shabbat's parasha per weekday
              // (Sunday = first ... Friday = sixth, Shabbat = seventh). It used to read just "(עליה ראשונה)" with no
              // hint what it meant, which looked like part of the parasha's name - now spelled out.
-             let aliyahText = (!isSpecialReading && dayOfWeek < 6) ? ` - שניים מקרא להיום: עלייה ${ALIYOT_NAMES[dayOfWeek]}` : '';
+             let aliyahText = ''; // per מתי: the ribbon shows ONLY the parasha name (the daily shnayim-mikra aliyah label was removed)
              parasha = shabbatReading.hebrew + (isSpecialReading ? ' (קריאה מיוחדת - לא פרשת השבוע)' : aliyahText);
              // V9: real Torah/Haftarah verse ranges from Hebcal's own leyning data (not a summary we
              // write ourselves - avoids ever presenting invented Torah content as authoritative).
