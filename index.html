@@ -565,6 +565,8 @@
         <button class="btn" id="btnFullscreen" style="background: linear-gradient(45deg, #334155, #1e293b); color: white; margin-left:1vw;" onclick="toggleFullscreen()">⛶ מסך מלא</button>
         <button class="btn" id="btnCheckVersion" style="background: linear-gradient(45deg, #64748b, #475569); color: white; margin-left:1vw;" onclick="checkForUpdate()">🔄 בדוק גרסה עדכנית</button>
         <button class="btn" id="btnAlarm" style="background: linear-gradient(45deg, #dc2626, #f97316); color: white; margin-left:1vw;" onclick="openAlarmModal()">⏰ שעון מעורר</button>
+        <button class="btn" id="btnWhatsApp" style="background: linear-gradient(45deg, #128c7e, #25d366); color: white; margin-left:1vw;" onclick="openWaModal()">💬 שליחה בוואטסאפ</button>
+        <button class="btn" id="btnVerify" style="background: linear-gradient(45deg, #1d4ed8, #0ea5e9); color: white; margin-left:1vw;" onclick="openVerifyModal()">✅ בדיקת נכונות</button>
         <button class="btn" id="btnInstallPWA" style="background: linear-gradient(45deg, #7c3aed, #a855f7); color: white; margin-left:1vw; display:none;" onclick="installPWA()">📲 התקן אפליקציה</button>
         <button class="btn" id="btnQR" style="background: linear-gradient(45deg, #0891b2, #06b6d4); color: white; margin-left:1vw;" onclick="openQrModal()">📱 QR</button>
         <button class="btn" id="btnShabbatTimes" style="background: linear-gradient(45deg, #b45309, #d97706); color: white; margin-left:1vw;" onclick="openShabbatTimesModal()">🕯️ זמני שבת</button>
@@ -1024,6 +1026,37 @@
       <button class="btn" onclick="copyScheduleText()">📋 העתק כטקסט</button>
     </div>
     <div id="psPreview" style="max-height:60vh; overflow:auto; background:#fff; color:#000; border-radius:0.6vw; padding:1vh 1vw; font-size:0.85vw;">בחר טווח ולחץ "הצג".</div>
+  </dialog>
+
+  <!-- V18.11: WHATSAPP SENDER (daily zmanim + Shabbat times, editable preview, optional saved recipient) -->
+  <dialog id="waModal" style="width:46vw; max-width:700px; min-width:320px;">
+    <div class="modal-header"><h2>💬 שליחה בוואטסאפ</h2><button class="close-btn" onclick="document.getElementById('waModal').close()">✖</button></div>
+    <div style="display:flex; gap:1.2vw; flex-wrap:wrap; font-size:1vw; margin-bottom:1vh;">
+      <label><input type="checkbox" id="waDaily" checked onchange="renderWaPreview()"> 🕒 זמני היום</label>
+      <label><input type="checkbox" id="waShabbat" checked onchange="renderWaPreview()"> 🕯️ זמני שבת/חג</label>
+      <label><input type="checkbox" id="waHalacha" checked onchange="renderWaPreview()"> 📖 תחנון/סליחות ופרשה</label>
+      <label><input type="checkbox" id="waWeather" onchange="renderWaPreview()"> 🌤️ תחזית שבת</label>
+    </div>
+    <textarea id="waPreview" rows="14" style="width:100%; box-sizing:border-box; font-size:1vw; direction:rtl; background:var(--input-bg); color:var(--input-text); border:1px solid var(--input-border); border-radius:0.5vw; padding:0.8vh 0.8vw;"></textarea>
+    <div style="display:flex; gap:1vw; align-items:center; flex-wrap:wrap; margin-top:1vh; font-size:1vw;">
+      <label>למספר (לא חובה): <input type="tel" id="waNumber" placeholder="050-1234567" style="width:11vw; direction:ltr;" onchange="saveWaNumber()"></label>
+      <button class="btn" style="background:#25d366; color:#000; font-weight:800;" onclick="sendWaNow()">📤 שלח</button>
+      <button class="btn" onclick="copyWaText()">📋 העתק</button>
+    </div>
+    <div class="settings-hint" style="margin-top:0.8vh;">ללא מספר נפתח תפריט השיתוף/וואטסאפ לבחירת איש קשר או קבוצה. עם מספר - נפתחת שיחה ישירה (המספר נשמר במכשיר). אפשר לערוך את הטקסט לפני השליחה.</div>
+  </dialog>
+
+  <!-- V18.11: SELF-VERIFICATION REPORT -->
+  <dialog id="verifyModal" style="width:56vw; max-width:900px; min-width:320px;">
+    <div class="modal-header"><h2>✅ בדיקת נכונות המידע</h2><button class="close-btn" onclick="document.getElementById('verifyModal').close()">✖</button></div>
+    <div id="verifySummary" style="font-size:1.2vw; font-weight:800; margin-bottom:1vh;"></div>
+    <div id="verifyBody" style="max-height:58vh; overflow-y:auto; font-size:0.95vw; line-height:1.6;"></div>
+    <div style="display:flex; gap:1vw; flex-wrap:wrap; margin-top:1vh;">
+      <button class="btn" style="background:var(--cyan); color:#000; font-weight:800;" onclick="openVerifyModal()">🔄 בדוק שוב</button>
+      <button class="btn" onclick="copyVerifyReport()">📋 העתק דוח</button>
+      <button class="btn" style="background:#25d366; color:#000;" onclick="shareVerifyReport()">💬 שלח דוח בוואטסאפ</button>
+    </div>
+    <div class="settings-hint" style="margin-top:0.8vh;">הבדיקה משווה את מה שמוצג למקורות עצמאיים: חישוב אסטרונומי מקומי, Hebcal (קריאה חדשה עכשיו), ממיר התאריכים של Hebcal ו-Sefaria. ✅ תקין · ⚠️ סטייה קטנה / לא ניתן לבדוק · ❌ אי-התאמה שדורשת בדיקה.</div>
   </dialog>
 
   <!-- V18.10: DAILY LEARNING (real data from Sefaria's calendars API) -->
@@ -1506,7 +1539,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-10-25.3';
+    const APP_VERSION = '2026-10-25.4';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -1759,6 +1792,8 @@
       { key: 'fullscreenBtn', label: 'כפתור מסך מלא', ids: ['btnFullscreen'] },
       { key: 'checkVersionBtn', label: 'כפתור בדוק גרסה עדכנית', ids: ['btnCheckVersion'] },
       { key: 'alarmBtn', label: 'כפתור שעון מעורר', ids: ['btnAlarm'] },
+      { key: 'waBtn', label: 'כפתור שליחה בוואטסאפ', ids: ['btnWhatsApp'] },
+      { key: 'verifyBtn', label: 'כפתור בדיקת נכונות', ids: ['btnVerify'] },
       { key: 'qrBtn', label: 'כפתור QR', ids: ['btnQR'] },
       { key: 'shabbatTimesBtn', label: 'כפתור זמני שבת', ids: ['btnShabbatTimes'] },
       { key: 'datePickerBtn', label: 'כפתור זמנים לתאריך', ids: ['btnDatePicker'] },
@@ -3715,10 +3750,11 @@
           // Selichot, cascading from the same flag below) IS said on a fast day - fast days are
           // specifically NOT among the Tachanun-omitted days. Verified live against Tzom Gedaliah
           // 2026-09-14, which was showing "לא אומרים" before this fix.
-          const isFastDayTitle = t => /^(Tzom|Ta[’']anit|Asara|Tish[’']a)/.test(t || '');
+          // V18.11: Tachanun is no longer derived from Hebcal's holiday CATEGORIES (see tachanunInfo below for why:
+          // that wrongly included modern days like Sigd / Yom HaZikaron / Yom HaAliyah and missed erev Rosh
+          // Hashana, erev Yom Kippur, Pesach Sheni, Sivan 1-12...). Only the Daf Yomi is read from the items here.
           eData.items.filter(i => i.date === todayStr).forEach(i => {
             if(i.category === 'dafyomi') { dafYomi = i.hebrew; dafYomiLink = toHebrewSefariaLink(i.link) || ''; }
-            if((i.category === 'holiday' || i.category === 'roshchodesh' || i.category === 'minor') && !isFastDayTitle(i.title)) noTachanun = true;
           });
 
           // New in V1: build shabbat/yom-tov entry-exit intervals from real candle-lighting & havdalah
@@ -3733,16 +3769,11 @@
           shabbatIntervals = intervals;
         }
 
-        if (todayObj.getDay() === 6 || (todayObj.getDay() === 5 && todayObj.getHours() >= 12)) noTachanun = true;
-        if (currentHebrewMonth && currentHebrewMonth.includes('ניסן')) noTachanun = true;
-        // V18 BUGFIX: Tachanun is omitted for the entire month of Tishrei EXCEPT the ordinary weekdays
-        // of Aseret Yemei Teshuva (3-9 Tishrei, where it IS said) - same "whole month" pattern already
-        // used above for Nissan. Days 1-2 (Rosh Hashana) and 10+ (Yom Kippur through the rest of the
-        // month - Sukkot, Shmini Atzeret, Simchat Torah, and the ordinary days around them) are all
-        // no-Tachanun. Previously this only fired when Hebcal flagged TODAY itself as a holiday-category
-        // item, which missed the ordinary days between Yom Kippur and Sukkot (e.g. 11-14 Tishrei) -
-        // found live the day after Yom Kippur 2026 (11 Tishrei), which was wrongly showing "אומרים".
-        if (currentHebrewMonth && currentHebrewMonth.includes('תשרי') && (currentHebrewDayNum <= 2 || currentHebrewDayNum >= 10)) noTachanun = true;
+        // V18.11: one complete rule table (tachanunInfo) decides, from the Hebrew date itself. Friday: not said at
+        // Mincha (from noon on), said at Shacharit.
+        const tInfo = tachanunInfo(todayObj);
+        noTachanun = tInfo.no || (tInfo.fridayMincha && todayObj.getHours() >= 12);
+        document.getElementById('tachanunVal').title = tInfo.why;
 
         const dafYomiEl = document.getElementById('dafYomiVal');
         dafYomiEl.textContent = dafYomi;
@@ -4546,17 +4577,268 @@
       renderTableMode();
     }
     function closeTableMode() { const d = document.getElementById('tableMode'); if(d.open) d.close(); }
-    async function shareShabbatWhatsApp() {
-      const sm = shabbatSummary(); if(!sm) { alert('אין נתוני שבת זמינים כרגע.'); return; }
-      const par = (document.getElementById('parashaVal') || {}).textContent || '';
-      const wx = await getShabbatWeatherText();
-      const city = (document.getElementById('btnAshkelon') && document.getElementById('btnAshkelon').classList.contains('active')) ? 'אשקלון' : 'המיקום שלנו';
-      const lines = ['שבת שלום! 🕯️', par && !/טוען|שגיאה|אין פרשה/.test(par) ? par : '', `${city}:`,
-        sm.iv.start ? `כניסת שבת: ${fmtHM(sm.iv.start)} (${sm.iv.start.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })})` : '',
-        `יציאת שבת: ${fmtHM(sm.iv.end)} (ר"ת ${fmtHM(sm.rt)})`, wx ? '🌤️ ' + wx : ''].filter(Boolean);
-      const text = lines.join('\n');
+    function shareShabbatWhatsApp() { openWaModal('shabbat'); } // the Shabbat-times modal and table-mode buttons open the sender with only Shabbat ticked
+
+    // ================= V18.11: WhatsApp sender + Tachanun rule table + self-verification =================
+    const cityLabel = () => (document.getElementById('btnAshkelon') && document.getElementById('btnAshkelon').classList.contains('active')) ? 'אשקלון' : 'המיקום הנוכחי';
+    const cleanTxt = id => { const t = ((document.getElementById(id) || {}).textContent || '').trim(); return /טוען|שגיאה|אין פרשה|^--$/.test(t) ? '' : t; };
+
+    // The Hebrew date -> "is Tachanun said" rule table (Eretz Yisrael, Sephardic practice per Shulchan Aruch 131).
+    // Derived ONLY from the Hebrew date + weekday, not from Hebcal's holiday categories (those also include
+    // modern days such as Sigd / Yom HaZikaron which don't cancel Tachanun, and miss erev Rosh Hashana, erev
+    // Yom Kippur, Pesach Sheni and Sivan 1-12). Yom HaAtzma'ut / Yom Yerushalayim are deliberately NOT included:
+    // whether to omit Tachanun then is a live dispute (Rabbinate vs. other poskim) - an app must not decide it.
+    function hebKey(m) {
+      m = String(m || '').toLowerCase();
+      if(/adar\s*i$|adar\s*1|adar rishon/.test(m) || m === 'adar i') return 'adar1';
+      if(/adar\s*ii|adar\s*2|adar sheni/.test(m)) return 'adar2';
+      if(m.startsWith('adar')) return 'adar';
+      const t = [['tish', 'tishrei'], ['hes', 'cheshvan'], ['che', 'cheshvan'], ['kis', 'kislev'], ['tev', 'tevet'], ['she', 'shevat'], ["sh'", 'shevat'], ['nis', 'nisan'], ['iy', 'iyar'], ['siv', 'sivan'], ['tam', 'tamuz'], ['av', 'av'], ['elu', 'elul']];
+      for(const [p, k] of t) if(m.startsWith(p)) return k;
+      return m;
+    }
+    function hebParts(d) {
+      const o = {}; new Intl.DateTimeFormat('en-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' }).formatToParts(d).forEach(p => { o[p.type] = p.value; });
+      return { day: parseInt(o.day, 10), month: hebKey(o.month), year: parseInt(o.year, 10) };
+    }
+    // core rule table on already-known Hebrew parts (also used by the verification button with parts from Hebcal's converter)
+    function tachanunFromParts(h, dow, kislev29) {
+      const m = h.month, day = h.day;
+      if(dow === 6) return { no: true, why: 'שבת' };
+      if(day === 1 || day === 30) return { no: true, why: 'ראש חודש' };
+      if(m === 'nisan') return { no: true, why: 'חודש ניסן' };
+      if(m === 'iyar' && day === 14) return { no: true, why: 'פסח שני' };
+      if(m === 'iyar' && day === 18) return { no: true, why: 'ל"ג בעומר' };
+      if(m === 'sivan' && day <= 12) return { no: true, why: 'ראש חודש סיון עד י"ב סיון (ימי שבועות)' };
+      if(m === 'av' && day === 9) return { no: true, why: 'תשעה באב' };
+      if(m === 'av' && day === 15) return { no: true, why: 'ט"ו באב' };
+      if(m === 'elul' && day === 29) return { no: true, why: 'ערב ראש השנה' };
+      if(m === 'tishrei' && day <= 2) return { no: true, why: 'ראש השנה' };
+      if(m === 'tishrei' && day === 9) return { no: true, why: 'ערב יום כיפור' };
+      if(m === 'tishrei' && day >= 10) return { no: true, why: 'יום כיפור, סוכות ושאר חודש תשרי' };
+      if(m === 'kislev' && day >= 25) return { no: true, why: 'חנוכה' };
+      if(m === 'tevet' && (day === 2 || (day === 3 && kislev29))) return { no: true, why: 'חנוכה' };
+      if(m === 'shevat' && day === 15) return { no: true, why: 'ט"ו בשבט' };
+      if((m === 'adar' || m === 'adar1' || m === 'adar2') && (day === 14 || day === 15)) return { no: true, why: day === 14 ? 'פורים' : 'שושן פורים' };
+      if(dow === 5) return { no: false, why: 'אומרים בשחרית; במנחה של ערב שבת לא אומרים', fridayMincha: true };
+      return { no: false, why: 'יום רגיל' };
+    }
+    function tachanunInfo(d) {
+      const h = hebParts(d);
+      // Chanukah ends on 3 Tevet only when Kislev had 29 days (then Tevet 1 comes right after Kislev 29)
+      const kislev29 = h.month === 'tevet' && h.day === 3 && hebParts(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 3)).day === 29;
+      return tachanunFromParts(h, d.getDay(), kislev29);
+    }
+    function selichotFromParts(h, dow) { return dow !== 6 && (h.month === 'elul' || (h.month === 'tishrei' && h.day >= 3 && h.day <= 9)); }
+
+    // ---- WhatsApp sender ----
+    function waDailyText() {
+      const t = zmanimDataCache; if(!t) return '';
+      const d = new Date();
+      const hd = cleanTxt('hebrewDate') || '', gd = d.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const f = k => t[k] ? fmtHM(new Date(t[k])) : '--:--';
+      const lines = [`🕒 *זמני היום - ${hd}*`, gd, `📍 ${cityLabel()}`, '',
+        `עלות השחר: ${f('alotHaShachar')}`, `טלית ותפילין: ${f('misheyakir')}`, `זריחה: ${f('sunrise')}`,
+        `סוף זמן ק"ש (גר"א): ${f('sofZmanShma')}`, `סוף זמן ק"ש (מג"א): ${f('sofZmanShmaMGA')}`, `סוף זמן תפילה: ${f('sofZmanTfilla')}`,
+        `חצות היום: ${f('chatzot')}`, `מנחה גדולה: ${f('minchaGedola')}`, `שקיעה: ${f('sunset')}`,
+        `צאת הכוכבים: ${f('tzeit7083deg')}`, `צאת הכוכבים (ר"ת): ${f('tzeit72min')}`];
+      if(t.chatzot) lines.push(`חצות לילה: ${fmtHM(new Date(new Date(t.chatzot).getTime() + 12 * 3600000))}`);
+      return lines.join('\n');
+    }
+    function waHalachaText() {
+      const out = [], tv = cleanTxt('tachanunVal'), par = cleanTxt('parashaVal'), sel = document.getElementById('ribbonItem-selichot');
+      if(par) out.push('📜 ' + par);
+      if(tv) out.push('תחנון: ' + tv);
+      if(sel && !sel.classList.contains('selichot-out-of-season')) out.push('סליחות: ' + cleanTxt('selichotVal'));
+      return out.join('\n');
+    }
+    async function waShabbatText(withWeather) {
+      const sm = shabbatSummary(); if(!sm) return '';
+      const par = cleanTxt('parashaVal'), lines = [par ? `🕯️ *שבת שלום! ${par}*` : '🕯️ *שבת שלום!*', `📍 ${cityLabel()}`, ''];
+      if(sm.iv.start) lines.push(`כניסת שבת: ${fmtHM(sm.iv.start)} (${sm.iv.start.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })})`);
+      lines.push(`יציאת שבת: ${fmtHM(sm.iv.end)} (${appSettings.havdalahMinutes || 20} דק' אחרי השקיעה)`, `יציאת שבת (ר"ת): ${fmtHM(sm.rt)}`);
+      if(withWeather) { const wx = await getShabbatWeatherText(); if(wx) lines.push('', '🌤️ ' + wx); }
+      return lines.join('\n');
+    }
+    let waRenderSeq = 0;
+    async function renderWaPreview() {
+      const seq = ++waRenderSeq, parts = [];
+      if(document.getElementById('waDaily').checked) { const x = waDailyText(); if(x) parts.push(x); }
+      if(document.getElementById('waShabbat').checked) { const x = await waShabbatText(document.getElementById('waWeather').checked); if(x) parts.push(x); }
+      if(document.getElementById('waHalacha').checked) { const x = waHalachaText(); if(x) parts.push(x); }
+      if(seq !== waRenderSeq) return;
+      document.getElementById('waPreview').value = parts.join('\n\n──────────\n\n') || 'אין נתונים זמינים לשליחה כרגע.';
+    }
+    function openWaModal(preset) {
+      document.getElementById('waNumber').value = appSettings.waNumber || '';
+      if(preset === 'shabbat') { document.getElementById('waDaily').checked = false; document.getElementById('waShabbat').checked = true; document.getElementById('waHalacha').checked = true; document.getElementById('waWeather').checked = true; }
+      else if(preset === 'daily') { document.getElementById('waDaily').checked = true; document.getElementById('waShabbat').checked = false; document.getElementById('waHalacha').checked = true; document.getElementById('waWeather').checked = false; }
+      document.getElementById('waModal').showModal();
+      renderWaPreview();
+    }
+    function saveWaNumber() { appSettings.waNumber = document.getElementById('waNumber').value.trim(); saveSettings(); }
+    function normalizeWaNumber(raw) {
+      let n = String(raw || '').replace(/[^\d+]/g, '').replace(/^\+/, '');
+      if(!n) return '';
+      if(n.startsWith('00')) n = n.slice(2); else if(n.startsWith('0')) n = '972' + n.slice(1);
+      return /^\d{9,15}$/.test(n) ? n : '';
+    }
+    function sendWaNow() {
+      const text = document.getElementById('waPreview').value.trim(); if(!text) return;
+      const rawNum = document.getElementById('waNumber').value.trim(), num = normalizeWaNumber(rawNum);
+      if(rawNum && !num) { alert('המספר לא תקין. אפשר: 050-1234567 או 972501234567'); return; }
+      if(rawNum) saveWaNumber();
+      if(num) { window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, '_blank'); return; }
       if(window.AndroidBridge && AndroidBridge.shareText) { AndroidBridge.shareText(text); return; }
-      if(navigator.share) { try { await navigator.share({ text }); return; } catch(e) { if(e && e.name === 'AbortError') return; } }
+      if(navigator.share) { navigator.share({ text }).catch(() => {}); return; }
+      window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    }
+    function copyWaText() {
+      const text = document.getElementById('waPreview').value;
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => alert('הועתק'), () => { document.getElementById('waPreview').select(); alert('סמן והעתק ידנית (Ctrl+C)'); });
+    }
+
+    // ---- self-verification ----
+    let verifyRows = [];
+    const VK = ['alotHaShachar', 'misheyakir', 'sunrise', 'sofZmanShmaMGA', 'sofZmanShma', 'sofZmanTfilla', 'chatzot', 'minchaGedola', 'sunset', 'tzeit7083deg', 'tzeit72min'];
+    const VK_LABEL = Object.fromEntries(ZMANIM_KEYS.map(z => [z.key, z.label]));
+    const ICON = { ok: '✅', warn: '⚠️', bad: '❌', info: 'ℹ️' };
+    async function getJson(url) { const r = await fetch(url, { cache: 'no-store' }); if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
+    const normHeb = s => String(s || '').replace(/[֑-ׇ]/g, '').replace(/[״"'׳]/g, '').replace(/^פרשת\s*/, '').split(/\s+/).filter(w => w && w !== 'דף').join(' ');
+    async function runVerification() {
+      const rows = []; const add = (group, label, status, detail) => rows.push({ group, label, status, detail: detail || '' });
+      const now = new Date(), todayKey = localDateStr(now), lat = currentLat, lng = currentLng;
+
+      // 1. clock / timezone / data age
+      const offDev = -now.getTimezoneOffset(), offJer = jerusalemOffsetMin(now);
+      add('שעון ואזור זמן', 'אזור הזמן של המכשיר', offDev === offJer ? 'ok' : 'bad', offDev === offJer ? `תואם לשעון ירושלים (GMT${offJer >= 0 ? '+' : ''}${offJer / 60})` : `המכשיר על GMT${offDev / 60} וירושלים על GMT${offJer / 60} - הגדר תאריך ושעה אוטומטיים`);
+      let srv = null;
+      try { srv = await getJson(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${todayKey}&end=${todayKey}&s=off`); } catch(e) { add('שעון ואזור זמן', 'שעון המכשיר מול שרת', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+      if(srv && srv.date) { const skew = Math.abs(Date.now() - new Date(srv.date).getTime()) / 1000; add('שעון ואזור זמן', 'דיוק שעון המכשיר', skew < 60 ? 'ok' : skew < 180 ? 'warn' : 'bad', skew < 60 ? `סטייה של ${Math.round(skew)} שניות מול שרת Hebcal` : `השעון סוטה ב-${Math.round(skew)} שניות מהשעון האמיתי - כל הזמנים/התראות מושפעים`); }
+      const ageMin = lastFetchOk ? Math.round((Date.now() - lastFetchOk) / 60000) : null;
+      add('שעון ואזור זמן', 'עדכון הנתונים החיים', offlineMode ? 'warn' : ageMin === null ? 'warn' : ageMin < 180 ? 'ok' : 'warn', offlineMode ? 'מצב אופליין - מוצג חישוב מקומי' : ageMin === null ? 'עוד לא נטען' : `עודכן לפני ${ageMin} דקות`);
+      add('שעון ואזור זמן', 'מיקום', 'info', `${cityLabel()} (${lat.toFixed(4)}, ${lng.toFixed(4)}), אזור זמן Asia/Jerusalem`);
+
+      // 2. Hebrew date vs Hebcal's converter
+      let conv = null;
+      try {
+        conv = await getJson(`https://www.hebcal.com/converter?cfg=json&gy=${now.getFullYear()}&gm=${now.getMonth() + 1}&gd=${now.getDate()}&g2h=1`);
+        const shownKey = hebKey(hebParts(now).month), convKey = hebKey(conv.hm);
+        const sameDay = conv.hd === currentHebrewDayNum, sameMonth = shownKey === convKey || (shownKey.startsWith('adar') && convKey.startsWith('adar'));
+        add('תאריך', 'תאריך עברי מוצג מול Hebcal', sameDay && sameMonth ? 'ok' : 'bad', `מוצג: ${cleanTxt('hebrewDate')} | Hebcal: ${conv.hebrew}`);
+      } catch(e) { add('תאריך', 'תאריך עברי מול Hebcal', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+
+      // 3. zmanim: displayed vs fresh Hebcal vs independent astronomy
+      let live = null;
+      try { live = (await getJson(`https://www.hebcal.com/zmanim?cfg=json&latitude=${lat}&longitude=${lng}&tzid=Asia/Jerusalem&date=${todayKey}`)).times; } catch(e) { add('זמני היום', 'קריאה חדשה מ-Hebcal', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+      const astro = computeOfflineZmanim(now, lat, lng);
+      const shown = {}; document.querySelectorAll('.zman-card').forEach(c => { shown[c.id.replace('zman-card-', '')] = c.querySelector('.zman-time').textContent.trim(); });
+      const gridIsToday = gridMode === 'today';
+      let mism = [], worst = 0, worstKey = '';
+      VK.forEach(k => {
+        const dispTxt = shown[k];
+        if(live && gridIsToday && dispTxt && dispTxt !== '--:--' && dispTxt !== fmtHM(new Date(live[k]))) mism.push(`${VK_LABEL[k]}: מוצג ${dispTxt}, Hebcal ${fmtHM(new Date(live[k]))}`);
+        const ref = live ? new Date(live[k]) : null;
+        if(ref && astro) { const dv = Math.abs(new Date(astro[k]) - ref) / 1000; if(dv > worst) { worst = dv; worstKey = k; } }
+      });
+      if(live) {
+        if(!gridIsToday) add('זמני היום', 'הטבלה מציגה זמני מחר (אחרי צאת הכוכבים)', 'info', 'ההשוואה לטבלה נעשית רק כשמוצגים זמני היום');
+        else add('זמני היום', 'הטבלה המוצגת מול Hebcal (קריאה חדשה)', mism.length ? 'bad' : 'ok', mism.length ? mism.join(' • ') : 'כל 11 הזמנים בטבלה זהים לנתונים העדכניים מ-Hebcal');
+        add('זמני היום', 'Hebcal מול חישוב אסטרונומי עצמאי', worst <= 75 ? 'ok' : worst <= 150 ? 'warn' : 'bad', `הפער הגדול ביותר: ${Math.round(worst)} שניות (${VK_LABEL[worstKey] || ''}) - עיגול של דקה הוא תקין`);
+        const ss = new Date(live.sunset), ch = new Date(live.chatzot), sr = new Date(live.sunrise);
+        const midOk = Math.abs((sr.getTime() + ss.getTime()) / 2 - ch.getTime()) < 90000;
+        const order = VK.map(k => new Date(live[k]).getTime()); const mgaNote = new Date(live.sofZmanShmaMGA) < new Date(live.sofZmanShma);
+        add('זמני היום', 'עקביות פנימית', midOk && mgaNote ? 'ok' : 'warn', `חצות באמצע בין נץ לשקיעה: ${midOk ? 'כן' : 'לא'} • ק"ש מג"א לפני גר"א: ${mgaNote ? 'כן' : 'לא'}`);
+      }
+
+      // 4. Shabbat / candle lighting / havdalah vs independent calculation
+      const iv = (shabbatIntervals || []).find(v => v.end > now);
+      if(!iv) add('שבת וחגים', 'כניסה/יציאה', 'warn', 'אין נתוני שבת טעונים');
+      else {
+        if(iv.start) {
+          const a = computeOfflineZmanim(iv.start, lat, lng), exp = new Date(new Date(a.sunset).getTime() - (appSettings.candleOffset || 20) * 60000), dv = Math.abs(iv.start - exp) / 1000;
+          add('שבת וחגים', `הדלקת נרות (${iv.start.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })})`, dv <= 90 ? 'ok' : iv.start.getDay() === 6 ? 'info' : 'warn', `מוצג ${fmtHM(iv.start)} • חישוב עצמאי (שקיעה פחות ${appSettings.candleOffset || 20} דק') ${fmtHM(exp)}`);
+        }
+        const b = computeOfflineZmanim(new Date(iv.end.getTime() - 3600000), lat, lng), expE = new Date(new Date(b.sunset).getTime() + (appSettings.havdalahMinutes || 20) * 60000), dvE = Math.abs(iv.end - expE) / 1000;
+        add('שבת וחגים', 'יציאת שבת/חג', dvE <= 90 ? 'ok' : 'warn', `מוצג ${fmtHM(iv.end)} • חישוב עצמאי (שקיעה ועוד ${appSettings.havdalahMinutes || 20} דק') ${fmtHM(expE)}`);
+      }
+
+      // 5. Tachanun / Selichot from the Hebrew date given by Hebcal's converter (second, independent date source)
+      const tShown = cleanTxt('tachanunVal'), sRow = document.getElementById('ribbonItem-selichot');
+      if(conv) {
+        let kislev29 = false;
+        if(hebKey(conv.hm) === 'tevet' && conv.hd === 3) { try { const p = await getJson(`https://www.hebcal.com/converter?cfg=json&gy=${now.getFullYear()}&gm=${now.getMonth() + 1}&gd=${now.getDate() - 3}&g2h=1`); kislev29 = p.hd === 29; } catch(e) {} }
+        const ti = tachanunFromParts({ day: conv.hd, month: hebKey(conv.hm) }, now.getDay(), kislev29);
+        const expectNo = ti.no || (ti.fridayMincha && now.getHours() >= 12), expectTxt = expectNo ? 'לא אומרים' : 'אומרים';
+        add('הלכה יומית', 'תחנון', tShown === expectTxt ? 'ok' : 'bad', `מוצג: ${tShown || '--'} • לפי הכללים: ${expectTxt} (${ti.why})`);
+        // cross-check the rule table against Hebcal's own list of today's events (catches a missing/incorrect rule)
+        const noTachEvents = /^(Rosh Chodesh|Chanukah|Purim|Shushan Purim|Pesach|Sukkot|Shavuot|Shmini Atzeret|Simchat|Rosh Hashana|Yom Kippur|Lag BaOmer|Tu B’Shvat|Tu BiShvat|Tu B’Av|Tu BAv|Tish.a B.Av$|Pesach Sheni|CH.M|Erev Rosh Hashana|Erev Yom Kippur|Leil)/;
+        const conflicting = (conv.events || []).filter(e => noTachEvents.test(e) && !/^Leil|Fast|Ta.anit|Asara|Tzom/.test(e));
+        if(conflicting.length && !ti.no) add('הלכה יומית', 'תחנון - הצלבה עם אירועי Hebcal', 'warn', `Hebcal מציין: ${conflicting.join(', ')} אך הכללים אומרים תחנון - כדאי לוודא עם רב`);
+        else add('הלכה יומית', 'תחנון - הצלבה עם אירועי Hebcal', 'ok', (conv.events || []).length ? `אירועי Hebcal להיום: ${(conv.events || []).join(', ')}` : 'אין אירועים מיוחדים להיום');
+        const expSel = selichotFromParts({ day: conv.hd, month: hebKey(conv.hm) }, now.getDay());
+        const selVisible = sRow && !sRow.classList.contains('selichot-out-of-season') && getComputedStyle(sRow).display !== 'none';
+        const selShown = selVisible ? cleanTxt('selichotVal') : null;
+        const selOk = expSel ? selShown === 'אומרים' : (selShown === null || selShown === 'לא אומרים');
+        add('הלכה יומית', 'סליחות', selOk ? 'ok' : 'bad', `מוצג: ${selShown === null ? 'מוסתר (מחוץ לעונה)' : selShown} • לפי הכללים: ${expSel ? 'אומרים' : 'לא אומרים / מחוץ לעונה'}`);
+      } else add('הלכה יומית', 'תחנון וסליחות', 'warn', 'לא ניתן לבדוק בלי תאריך עברי מ-Hebcal');
+      add('הלכה יומית', 'הערה', 'info', 'יום העצמאות ויום ירושלים: מחלוקת אם לדלג על תחנון - האפליקציה לא מכריעה ומציגה "אומרים"');
+
+      // 6. parasha & daf yomi: displayed vs Hebcal (fresh) and Sefaria
+      try {
+        const sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() + ((6 - now.getDay() + 7) % 7)), sk = localDateStr(sat);
+        const he = await getJson(`https://www.hebcal.com/hebcal?v=1&cfg=json&s=on&i=on&start=${sk}&end=${sk}`);
+        const item = (he.items || []).find(i => i.category === 'parashat');
+        const shownPar = normHeb(cleanTxt('parashaVal').replace(/\s*\(.*\)\s*$/, ''));
+        if(item) { const expPar = normHeb(item.hebrew); add('לימוד', 'פרשת השבוע מול Hebcal', shownPar.includes(expPar) || expPar.includes(shownPar) ? 'ok' : 'bad', `מוצג: ${cleanTxt('parashaVal') || '--'} • Hebcal לשבת ${sk}: ${item.hebrew}`); }
+        else add('לימוד', 'פרשת השבוע מול Hebcal', 'info', `בשבת ${sk} אין פרשה רגילה (חג/קריאה מיוחדת) • מוצג: ${cleanTxt('parashaVal') || '--'}`);
+      } catch(e) { add('לימוד', 'פרשת השבוע מול Hebcal', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+      try {
+        const cal = await getJson('https://www.sefaria.org/api/calendars?timezone=Asia/Jerusalem');
+        const daf = cal.calendar_items.find(i => i.title.en === 'Daf Yomi'), par = cal.calendar_items.find(i => i.title.en === 'Parashat Hashavua');
+        const shownDaf = normHeb(cleanTxt('dafYomiVal'));
+        if(daf) { const expD = normHeb(daf.displayValue.he); add('לימוד', 'דף יומי מול Sefaria', shownDaf === expD || shownDaf.includes(expD) || expD.includes(shownDaf) ? 'ok' : 'bad', `מוצג: ${cleanTxt('dafYomiVal') || '--'} • Sefaria: ${daf.displayValue.he}`); }
+        if(par) { const sp = normHeb(par.displayValue.he), shownP = normHeb(cleanTxt('parashaVal').replace(/\s*\(.*\)\s*$/, '')); add('לימוד', 'פרשת השבוע מול Sefaria (מקור שני)', shownP.includes(sp) || sp.includes(shownP) ? 'ok' : 'warn', `מוצג: ${cleanTxt('parashaVal') || '--'} • Sefaria: ${par.displayValue.he}`); }
+      } catch(e) { add('לימוד', 'דף יומי/פרשה מול Sefaria', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+
+      // 7. next holiday: confirm its date really carries that event in Hebcal's converter
+      try {
+        const nh = (lastEventItems || []).find(i => i.date > todayKey && (i.category === 'holiday' || i.category === 'roshchodesh') && !/Selichot/.test(i.title || ''));
+        if(nh) {
+          const [y, m, d] = nh.date.slice(0, 10).split('-').map(Number);
+          const c2 = await getJson(`https://www.hebcal.com/converter?cfg=json&gy=${y}&gm=${m}&gd=${d}&g2h=1`);
+          const has = (c2.events || []).some(e => e === nh.title || e.startsWith(nh.title) || nh.title.startsWith(e));
+          add('לימוד', 'המועד הקרוב', has ? 'ok' : 'warn', `${nh.hebrew} ב-${nh.date.slice(0, 10)} • מוצג: ${cleanTxt('nextHolidayVal')}`);
+        }
+      } catch(e) {}
+      return rows;
+    }
+    async function openVerifyModal() {
+      const dlg = document.getElementById('verifyModal'); if(!dlg.open) dlg.showModal();
+      document.getElementById('verifySummary').textContent = '⏳ בודק... (כמה שניות)'; document.getElementById('verifyBody').innerHTML = '';
+      let rows; try { rows = await runVerification(); } catch(e) { document.getElementById('verifySummary').textContent = '❌ הבדיקה נכשלה: ' + e.message; return; }
+      verifyRows = rows;
+      const bad = rows.filter(r => r.status === 'bad').length, warn = rows.filter(r => r.status === 'warn').length, okc = rows.filter(r => r.status === 'ok').length;
+      const sm = document.getElementById('verifySummary');
+      sm.textContent = bad ? `❌ נמצאו ${bad} אי-התאמות (${warn} אזהרות, ${okc} תקינים)` : warn ? `⚠️ ${okc} בדיקות תקינות, ${warn} אזהרות / לא ניתנות לבדיקה` : `✅ הכול תקין - ${okc} בדיקות עברו`;
+      sm.style.color = bad ? '#ef4444' : warn ? '#f59e0b' : '#34d399';
+      let html = '', last = '';
+      rows.forEach(r => {
+        if(r.group !== last) { html += `<div class="panel-title" style="margin-top:1vh;">${r.group}</div>`; last = r.group; }
+        html += `<div style="display:flex; gap:0.6vw; padding:0.4vh 0.3vw; border-bottom:1px solid var(--card-border);"><span>${ICON[r.status]}</span><span style="flex:0 0 28%; font-weight:700;"></span><span style="flex:1; color:var(--muted-text);"></span></div>`;
+      });
+      const box = document.getElementById('verifyBody'); box.innerHTML = html;
+      const rowEls = box.querySelectorAll('div[style*="border-bottom"]'); rows.forEach((r, i) => { const sp = rowEls[i].querySelectorAll('span'); sp[1].textContent = r.label; sp[2].textContent = r.detail; });
+    }
+    function verifyReportText() {
+      const bad = verifyRows.filter(r => r.status === 'bad').length, warn = verifyRows.filter(r => r.status === 'warn').length;
+      return [`בדיקת נכונות - ${new Date().toLocaleString('he-IL')}`, bad ? `❌ ${bad} אי-התאמות, ${warn} אזהרות` : warn ? `⚠️ ${warn} אזהרות` : '✅ הכול תקין', ''].concat(verifyRows.map(r => `${ICON[r.status]} ${r.label}: ${r.detail}`)).join('\n');
+    }
+    function copyVerifyReport() { (navigator.clipboard ? navigator.clipboard.writeText(verifyReportText()) : Promise.reject()).then(() => alert('הדוח הועתק'), () => alert('ההעתקה נכשלה')); }
+    function shareVerifyReport() {
+      const text = verifyReportText();
+      if(window.AndroidBridge && AndroidBridge.shareText) { AndroidBridge.shareText(text); return; }
+      if(navigator.share) { navigator.share({ text }).catch(() => {}); return; }
       window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
     }
 
