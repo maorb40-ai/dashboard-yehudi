@@ -377,6 +377,38 @@
     dialog#alarmRing { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-radius: 0; background: #7f1d1d; color: #fff; }
     dialog#alarmRing[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; animation: alarmFlash 1s infinite; }
     @keyframes alarmFlash { 0%,100% { background: #7f1d1d; } 50% { background: #b91c1c; } }
+    /* V18.12: 7-day forecast panel (shown instead of the zmanim grid when appSettings.mainPanel === 'forecast') */
+    #forecastPanel { display: none; width: 100%; }
+    body.panel-forecast #forecastPanel { display: block; }
+    body.panel-forecast #zmanimGrid { display: none !important; }
+    .fc-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.85vw; font-weight: 800; color: var(--gold); margin-bottom: 0.3vh; padding: 0 0.3vw; }
+    .fc-head span:last-child { font-weight: 600; font-size: 0.75vw; color: var(--muted-text); }
+    .fc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5vw; }
+    .fc-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0.9vw; padding: 0.5vh 0.2vw 0.6vh; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.1vh; position: relative; overflow: hidden; }
+    .fc-card.today { border-color: var(--cyan); box-shadow: 0 0 1vw rgba(0,229,255,0.25); }
+    .fc-card.shabbat { border-color: var(--gold); background: linear-gradient(180deg, rgba(242,201,76,0.13), var(--card-bg)); }
+    .fc-day { font-size: 0.9vw; font-weight: 800; line-height: 1.15; }
+    .fc-date { font-size: 0.62vw; color: var(--muted-text); line-height: 1.1; }
+    .fc-icon svg { width: min(3vw, 5.2vh); height: min(3vw, 5.2vh); filter: drop-shadow(0 0.3vh 0.4vh rgba(0,0,0,0.35)); }
+    .fc-desc { font-size: 0.68vw; color: var(--muted-text); min-height: 1.6em; line-height: 1.15; }
+    .fc-temps { font-size: 1.1vw; font-weight: 900; direction: ltr; line-height: 1.1; }
+    .fc-temps .lo { font-size: 0.85vw; font-weight: 700; color: var(--muted-text); margin-inline-start: 0.3vw; }
+    .fc-bar { width: 80%; height: 0.5vh; margin: 0.2vh 0; background: rgba(148,163,184,0.25); border-radius: 1vw; position: relative; }
+    .fc-bar i { position: absolute; top: 0; bottom: 0; border-radius: 1vw; background: linear-gradient(90deg, #38bdf8, #fbbf24, #f87171); }
+    .fc-row { font-size: 0.68vw; line-height: 1.25; color: var(--text-color); white-space: nowrap; }
+    .fc-row.muted { color: var(--muted-text); font-size: 0.66vw; }
+    .fc-uv { display: inline-block; border-radius: 1vw; padding: 0 0.4vw; font-weight: 800; color: #000; font-size: 0.66vw; }
+    .fc-shab { position: absolute; top: 0.3vh; inset-inline-start: 0.3vw; font-size: 0.56vw; font-weight: 800; color: var(--gold); line-height: 1.1; text-align: start; }
+    .fc-summary { margin-top: 0.5vh; font-size: 0.75vw; line-height: 1.45; background: rgba(0,0,0,0.2); border-radius: 0.7vw; padding: 0.6vh 1vw; }
+    .wx-rays { transform-box: fill-box; transform-origin: center; animation: wxSpin 24s linear infinite; }
+    .wx-drop { animation: wxDrop 1.1s linear infinite; }
+    .wx-drop:nth-of-type(2n) { animation-delay: 0.35s; }
+    .wx-drop:nth-of-type(3n) { animation-delay: 0.7s; }
+    .wx-flake { animation: wxDrop 2.2s linear infinite; }
+    .wx-bolt { animation: wxFlash 2.6s ease-in-out infinite; }
+    @keyframes wxSpin { to { transform: rotate(360deg); } }
+    @keyframes wxDrop { 0% { transform: translateY(-3px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(7px); opacity: 0; } }
+    @keyframes wxFlash { 0%, 80%, 100% { opacity: 1; } 85% { opacity: 0.25; } 90% { opacity: 1; } 94% { opacity: 0.4; } }
     #upcomingEventChip { background: rgba(242,201,76,0.12); border: 1px solid var(--gold); border-radius: 1vw; padding: 0.2vh 0.7vw; }
     dialog#tableMode { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-radius: 0; background: #fdf6e3; color: #2b2118; overflow: hidden; }
     dialog#tableMode[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2vh; text-align: center; }
@@ -720,6 +752,7 @@
         </div>
 
         <div class="zmanim-grid" id="zmanimGrid"></div>
+        <div id="forecastPanel"></div>
       </div>
     </div>
   </div>
@@ -1028,6 +1061,27 @@
     <div id="psPreview" style="max-height:60vh; overflow:auto; background:#fff; color:#000; border-radius:0.6vw; padding:1vh 1vw; font-size:0.85vw;">בחר טווח ולחץ "הצג".</div>
   </dialog>
 
+  <!-- V18.12: shared SVG gradients for the weather icons -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <radialGradient id="gSun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6a8"/><stop offset="0.6" stop-color="#ffc83d"/><stop offset="1" stop-color="#ff9f1a"/></radialGradient>
+    <linearGradient id="gCloud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d4e2"/></linearGradient>
+    <linearGradient id="gCloudDark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a3afc0"/><stop offset="1" stop-color="#5d6879"/></linearGradient>
+    <linearGradient id="gBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff176"/><stop offset="1" stop-color="#ffb300"/></linearGradient>
+  </defs></svg>
+
+  <!-- V18.12: LOCATION PICKER -->
+  <dialog id="locationModal" style="width:46vw; max-width:700px; min-width:320px;">
+    <div class="modal-header"><h2>📍 בחירת מיקום</h2><button class="close-btn" onclick="document.getElementById('locationModal').close()">✖</button></div>
+    <div id="locationMsg" style="display:none; background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:0.6vw; padding:1vh 1vw; margin-bottom:1vh; font-size:1vw;"></div>
+    <div style="display:flex; gap:1vw; flex-wrap:wrap; margin-bottom:1vh;">
+      <button class="btn" style="background:var(--cyan); color:#000; font-weight:800;" onclick="document.getElementById('locationModal').close(); detectDeviceLocation()">📍 מיקום המכשיר (GPS)</button>
+      <button class="btn" onclick="detectIpLocation()">🌐 לפי כתובת IP (משוער)</button>
+    </div>
+    <input type="text" id="locationSearch" placeholder="חיפוש עיר..." oninput="renderLocationList()" style="width:100%; box-sizing:border-box; padding:0.8vh 0.8vw; margin-bottom:1vh; font-size:1vw;">
+    <div id="locationList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(9vw,1fr)); gap:0.5vw; max-height:42vh; overflow-y:auto;"></div>
+    <div class="settings-hint" style="margin-top:1vh;">הזמנים מחושבים לפי הקואורדינטות של מרכז העיר. "לפי IP" שולח את כתובת ה-IP לשירות חיצוני ונותן הערכה גסה בלבד.</div>
+  </dialog>
+
   <!-- V18.11: WHATSAPP SENDER (daily zmanim + Shabbat times, editable preview, optional saved recipient) -->
   <dialog id="waModal" style="width:46vw; max-width:700px; min-width:320px;">
     <div class="modal-header"><h2>💬 שליחה בוואטסאפ</h2><button class="close-btn" onclick="document.getElementById('waModal').close()">✖</button></div>
@@ -1298,6 +1352,11 @@
           <div class="settings-hint">מגדיל את תוכן הדשבורד (לא את פס הכותרת, שנשאר תמיד נגיש) ומעלה ניגודיות בכל ערך מעל 100%.</div>
           <div class="toggle-switch" style="margin-top:1vh;"><input type="checkbox" id="densityCompactToggle" onchange="appSettings.densityCompact=this.checked; document.body.classList.toggle('density-compact', this.checked); saveSettings();"><span>תצוגה צפופה בסיידבר (יותר שורות במסך אחד)</span></div>
         </div>
+        <div class="setting-group"><label>מה להציג בלוח הראשי (במקום שבו מוצגת טבלת הזמנים)</label>
+          <label style="display:flex; gap:0.6vw; align-items:center; margin-top:0.5vh;"><input type="radio" name="mainPanel" value="zmanim" onchange="setMainPanel('zmanim')"> 🕒 זמני היום (ברירת מחדל)</label>
+          <label style="display:flex; gap:0.6vw; align-items:center;"><input type="radio" name="mainPanel" value="forecast" onchange="setMainPanel('forecast')"> 🌤️ תחזית מזג אוויר ל-7 ימים (אייקונים, טמפרטורות, גשם, רוח, UV, כניסת/יציאת שבת)</label>
+          <div class="settings-hint">אפשר לעבור בכל רגע. התחזית מתעדכנת אוטומטית כל חצי שעה ולפי המיקום שנבחר.</div>
+        </div>
         <div class="setting-group"><label>אנימציית רקע בימים ללא חג</label>
           <div class="settings-hint" style="margin-bottom:0.5vh;">עונה (עלים/שלג/פריחה/שמש) תמיד פעילה כשאין חג. אפשר להוסיף גם:</div>
           <div class="toggle-switch"><input type="checkbox" id="ambientTimeOfDayToggle" onchange="appSettings.ambientTimeOfDay=this.checked; saveSettings(); applyHolidayBgIcon();"><span>סמל יום/לילה (⭐ בלילה, ☀️ ביום)</span></div>
@@ -1539,7 +1598,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-10-25.4';
+    const APP_VERSION = '2026-11-10.1';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -2314,6 +2373,7 @@
       document.getElementById('chimeMorningSelect').value = appSettings.chimeMorning || 'bell';
       document.getElementById('chimeAfternoonSelect').value = appSettings.chimeAfternoon || 'gentle';
       document.getElementById('chimeEveningSelect').value = appSettings.chimeEvening || 'double';
+      document.querySelectorAll('input[name="mainPanel"]').forEach(r => r.checked = r.value === (appSettings.mainPanel || 'zmanim'));
       document.getElementById('densityCompactToggle').checked = appSettings.densityCompact;
       document.getElementById('ambientTimeOfDayToggle').checked = appSettings.ambientTimeOfDay;
       document.getElementById('ambientShabbatMotifToggle').checked = appSettings.ambientShabbatMotif;
@@ -3827,6 +3887,7 @@
       if(zOk && eOk) { lastFetchOk = Date.now(); }
       updateDataFreshness();
       fetchWeather(lat, lng);
+      if(appSettings.mainPanel === 'forecast') fetchForecast7();
       if(loader) loader.style.display = 'none';
     }
 
@@ -4225,26 +4286,17 @@
     // V3: real GPS error handling - a timeout/denied-permission no longer fails silently, and coordinates
     // are passed straight through to both the zmanim (Hebcal) and weather (Open-Meteo) APIs, so both are
     // always computed for the exact chosen location (Ashkelon by default, real device GPS on "מיקום שלי").
+    // V18.12 rewrite: the old version ran ONE high-accuracy GPS attempt with a 10s timeout and, on any failure,
+    // showed a raw English browser message and silently fell back to Ashkelon - so on a tablet/desktop without
+    // a GPS chip (or with location services off) the button just "failed". Now: fast network location first,
+    // GPS second, specific Hebrew reason on failure, plus a manual city list and an approximate IP lookup, and
+    // the chosen location is remembered across restarts (no permission prompt at startup).
     function setLocation(type) {
-      document.getElementById('btnAshkelon').classList.remove('active'); document.getElementById('btnDevice').classList.remove('active');
-      if (type === 'ashkelon') { document.getElementById('btnAshkelon').classList.add('active'); fetchAllData(31.6688, 34.5744); }
-      else {
-        document.getElementById('btnDevice').classList.add('active');
-        if(!navigator.geolocation) {
-          alert('הדפדפן שלך לא תומך באיתור מיקום. חוזרים לאשקלון.');
-          document.getElementById('btnDevice').classList.remove('active'); document.getElementById('btnAshkelon').classList.add('active');
-          fetchAllData(31.6688, 34.5744); return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          p => fetchAllData(p.coords.latitude, p.coords.longitude),
-          e => {
-            alert('לא הצלחנו לאתר את המיקום שלך (' + e.message + '). חוזרים לאשקלון.');
-            document.getElementById('btnDevice').classList.remove('active'); document.getElementById('btnAshkelon').classList.add('active');
-            fetchAllData(31.6688, 34.5744);
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-        );
-      }
+      if(type === 'device') { detectDeviceLocation(); return; }
+      const cur = appSettings.location || {};
+      if(cur.type === 'city') { openLocationModal(); return; } // already on the city: the button opens the picker
+      const home = appSettings.homeCity || { name: 'אשקלון', lat: 31.6688, lng: 34.5744 };
+      applyLocation({ type: 'city', name: home.name, lat: home.lat, lng: home.lng });
     }
 
     // V10: manual next-vacation countdown - no free reliable Ministry of Education API exists for this,
@@ -4384,6 +4436,146 @@
     }
     function toggleHeaderBar() { applyHeaderHidden(!document.body.classList.contains('header-auto-hidden'), true); }
     setTimeout(() => applyHeaderHidden(!!appSettings.headerHidden, false), 400);
+    // ================= V18.12: location picker + 7-day forecast =================
+    // City-centre coordinates (not exact to the street: a few km move the zmanim by seconds, not minutes).
+    const IL_CITIES = [['אשקלון', 31.6688, 34.5744], ['ירושלים', 31.7683, 35.2137], ['תל אביב', 32.0853, 34.7818], ['חיפה', 32.7940, 34.9896], ['באר שבע', 31.2530, 34.7915],
+      ['בני ברק', 32.0807, 34.8338], ['אשדוד', 31.8014, 34.6435], ['נתניה', 32.3215, 34.8532], ['פתח תקווה', 32.0840, 34.8878], ['ראשון לציון', 31.9730, 34.7925],
+      ['רחובות', 31.8928, 34.8113], ['בית שמש', 31.7306, 34.9896], ['מודיעין עילית', 31.9317, 35.0410], ['ביתר עילית', 31.6989, 35.1137], ['מעלה אדומים', 31.7770, 35.2990],
+      ['אילת', 29.5577, 34.9519], ['טבריה', 32.7959, 35.5311], ['צפת', 32.9646, 35.4960], ['נתיבות', 31.4220, 34.5890], ['שדרות', 31.5252, 34.5961],
+      ['אופקים', 31.3140, 34.6200], ['קריית גת', 31.6100, 34.7642], ['ערד', 31.2588, 35.2128], ['חדרה', 32.4340, 34.9196], ['כפר סבא', 32.1750, 34.9066],
+      ['רמת גן', 32.0684, 34.8248], ['חולון', 32.0158, 34.7874], ['בת ים', 32.0231, 34.7503], ['קריית שמונה', 33.2075, 35.5707], ['כרמיאל', 32.9190, 35.2950],
+      ['עפולה', 32.6078, 35.2897], ['דימונה', 31.0700, 35.0300], ['מצפה רמון', 30.6100, 34.8010]];
+    function updateLocationButtons() {
+      const loc = appSettings.location || { type: 'city', name: 'אשקלון' }, home = appSettings.homeCity || { name: 'אשקלון' };
+      const b1 = document.getElementById('btnAshkelon'), b2 = document.getElementById('btnDevice'); if(!b1 || !b2) return;
+      b1.textContent = home.name + ' ▾'; b1.title = 'בחירת עיר'; b1.classList.toggle('active', loc.type === 'city');
+      b2.classList.toggle('active', loc.type !== 'city');
+      b2.textContent = loc.type === 'device' ? '📍 מיקום שלי' : loc.type === 'ip' ? '🌐 ' + (loc.name || 'לפי IP') : 'מיקום שלי';
+      b2.title = loc.type === 'device' ? `מיקום המכשיר (דיוק ~${loc.acc || '?'} מ')` : loc.type === 'ip' ? 'מיקום משוער לפי כתובת IP' : 'איתור מיקום המכשיר';
+    }
+    function applyLocation(loc) {
+      appSettings.location = loc; if(loc.type === 'city') appSettings.homeCity = { name: loc.name, lat: loc.lat, lng: loc.lng };
+      saveSettings(); updateLocationButtons();
+      tomorrowCache = { date: '', times: null, offline: false }; shabWeatherCache = { at: 0, text: '', key: '' }; forecastData = null;
+      fetchAllData(loc.lat, loc.lng);
+    }
+    function openLocationModal(msg) {
+      const m = document.getElementById('locationMsg'); m.style.display = msg ? 'block' : 'none'; m.textContent = msg || '';
+      document.getElementById('locationSearch').value = ''; renderLocationList();
+      const dlg = document.getElementById('locationModal'); if(!dlg.open) dlg.showModal();
+    }
+    function renderLocationList() {
+      const q = document.getElementById('locationSearch').value.trim(), cur = appSettings.location || {};
+      document.getElementById('locationList').innerHTML = IL_CITIES.filter(c => !q || c[0].includes(q)).map(c =>
+        `<button class="btn" style="${cur.type === 'city' && cur.name === c[0] ? 'background:var(--cyan); color:#000; font-weight:800;' : ''}" onclick="pickCity('${c[0]}')">${c[0]}</button>`).join('') || '<div style="color:var(--muted-text);">לא נמצאה עיר</div>';
+    }
+    function pickCity(name) { const c = IL_CITIES.find(x => x[0] === name); if(!c) return; document.getElementById('locationModal').close(); applyLocation({ type: 'city', name: c[0], lat: c[1], lng: c[2] }); }
+    function locationFailed(why) { updateLocationButtons(); openLocationModal('האיתור נכשל: ' + why + '. אפשר לבחור עיר מהרשימה, או לנסות איתור לפי IP.'); }
+    function detectDeviceLocation() {
+      if(!navigator.geolocation) { locationFailed('המכשיר/הדפדפן לא תומכים באיתור מיקום'); return; }
+      const b2 = document.getElementById('btnDevice'); b2.textContent = '⏳ מאתר...';
+      const ok = p => applyLocation({ type: 'device', name: 'המיקום שלי', lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) });
+      const fail = e => locationFailed(e && e.code === 1 ? 'ההרשאה למיקום נדחתה (אפשר אותה בהגדרות המכשיר/האתר)' : e && e.code === 2 ? 'שירותי המיקום כבויים או שאין קליטה' : 'פג הזמן לאיתור');
+      // stage 1: quick network-based fix; stage 2: real GPS (only if stage 1 timed out / had no position)
+      navigator.geolocation.getCurrentPosition(ok, e => { if(e && e.code === 1) { fail(e); return; } navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+    }
+    async function detectIpLocation() {
+      const m = document.getElementById('locationMsg'); m.style.display = 'block'; m.textContent = '⏳ מאתר לפי IP...';
+      const tries = [async () => { const j = await (await fetch('https://ipwho.is/')).json(); if(!j.success) throw new Error('x'); return { lat: j.latitude, lng: j.longitude, city: j.city, cc: j.country_code }; },
+        async () => { const j = await (await fetch('https://get.geojs.io/v1/ip/geo.json')).json(); return { lat: parseFloat(j.latitude), lng: parseFloat(j.longitude), city: j.city, cc: j.country_code }; }];
+      for(const t of tries) {
+        try {
+          const r = await t();
+          if(r.cc !== 'IL' || !(r.lat > 29 && r.lat < 33.6 && r.lng > 34 && r.lng < 36)) { m.textContent = 'כתובת ה-IP מחוץ לישראל - בחר עיר ידנית מהרשימה.'; return; }
+          document.getElementById('locationModal').close(); applyLocation({ type: 'ip', name: 'מיקום משוער (IP)', lat: r.lat, lng: r.lng, acc: 5000 }); return;
+        } catch(e) { /* try the next service */ }
+      }
+      m.textContent = 'לא הצלחתי לאתר לפי IP (אין חיבור?). בחר עיר ידנית.';
+    }
+    if(appSettings.location && appSettings.location.lat) { currentLat = appSettings.location.lat; currentLng = appSettings.location.lng; }
+    updateLocationButtons();
+
+    // ---- 7-day forecast ----
+    var forecastData = null;
+    const WX_ICON_SUN = (cx, cy, s) => `<g transform="translate(${cx} ${cy}) scale(${s})"><g class="wx-rays" stroke="#ffb703" stroke-width="3" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<line x1="0" y1="-17" x2="0" y2="-22" transform="rotate(${a})"/>`).join('')}</g><circle r="12" fill="url(#gSun)"/></g>`;
+    const WX_ICON_CLOUD = (tx, ty, s, dark) => `<g transform="translate(${tx} ${ty}) scale(${s})" fill="url(#${dark ? 'gCloudDark' : 'gCloud'})"><rect x="12" y="36" width="42" height="12" rx="6"/><circle cx="25" cy="36" r="9"/><circle cx="37" cy="29" r="12"/><circle cx="47" cy="37" r="8"/></g>`;
+    const WX_DROPS = n => Array.from({ length: n }, (_, i) => { const x = n === 1 ? 32 : 20 + i * (26 / (n - 1)); return `<line class="wx-drop" x1="${x}" y1="50" x2="${x - 2}" y2="56" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>`; }).join('');
+    const WX_FLAKES = n => Array.from({ length: n }, (_, i) => `<circle class="wx-flake" cx="${22 + i * (22 / Math.max(1, n - 1))}" cy="53" r="2.4" fill="#fff" stroke="#bae6fd" stroke-width="0.8"/>`).join('');
+    function wxIcon(code) {
+      let g;
+      if(code === 0) g = WX_ICON_SUN(32, 32, 1.25);
+      else if(code === 1) g = WX_ICON_SUN(25, 25, 0.9) + WX_ICON_CLOUD(10, 14, 0.62, false);
+      else if(code === 2) g = WX_ICON_SUN(24, 24, 0.95) + WX_ICON_CLOUD(2, 6, 0.95, false);
+      else if(code === 3) g = WX_ICON_CLOUD(-2, -4, 0.85, true) + WX_ICON_CLOUD(6, 6, 0.95, false);
+      else if(code === 45 || code === 48) g = WX_ICON_CLOUD(0, -6, 1, false) + '<g stroke="#94a3b8" stroke-width="3" stroke-linecap="round"><line x1="16" y1="46" x2="50" y2="46"/><line x1="22" y1="53" x2="56" y2="53"/><line x1="14" y1="60" x2="44" y2="60"/></g>';
+      else if(code >= 51 && code <= 57) g = WX_ICON_CLOUD(0, -6, 1, false) + WX_DROPS(2);
+      else if(code >= 61 && code <= 67) g = WX_ICON_CLOUD(0, -6, 1, true) + WX_DROPS(code >= 65 ? 4 : 3);
+      else if((code >= 71 && code <= 77) || code === 85 || code === 86) g = WX_ICON_CLOUD(0, -6, 1, false) + WX_FLAKES(3);
+      else if(code >= 80 && code <= 82) g = WX_ICON_SUN(22, 20, 0.75) + WX_ICON_CLOUD(4, -4, 1, code === 82) + WX_DROPS(code === 82 ? 4 : 3);
+      else if(code >= 95) g = WX_ICON_CLOUD(0, -8, 1, true) + '<polygon class="wx-bolt" points="35,40 26,54 33,54 29,64 42,48 35,48 39,40" fill="url(#gBolt)"/>';
+      else g = WX_ICON_CLOUD(0, 0, 1, false);
+      return `<svg viewBox="0 0 64 64" aria-hidden="true">${g}</svg>`;
+    }
+    const uvInfo = u => u < 3 ? ['נמוך', '#4ade80'] : u < 6 ? ['בינוני', '#facc15'] : u < 8 ? ['גבוה', '#fb923c'] : u < 11 ? ['גבוה מאוד', '#f87171'] : ['קיצוני', '#c084fc'];
+    function setMainPanel(mode) {
+      appSettings.mainPanel = mode; saveSettings(); applyMainPanel();
+    }
+    function applyMainPanel() {
+      const fc = appSettings.mainPanel === 'forecast';
+      document.body.classList.toggle('panel-forecast', fc);
+      if(fc) { renderForecast(); fetchForecast7(); }
+      clockBaseline = null; scaleClockToFit();
+    }
+    async function fetchForecast7() {
+      try {
+        const q = 'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset';
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLng}&daily=${q}&timezone=Asia%2FJerusalem&forecast_days=7`);
+        const j = await r.json(); if(!j.daily) throw new Error('no daily');
+        forecastData = { d: j.daily, at: Date.now(), lat: currentLat, lng: currentLng };
+      } catch(e) { console.warn('forecast failed', e); }
+      renderForecast();
+    }
+    setInterval(() => { if(appSettings.mainPanel === 'forecast') fetchForecast7(); }, 30 * 60 * 1000);
+    function renderForecast() {
+      const box = document.getElementById('forecastPanel'); if(!box || appSettings.mainPanel !== 'forecast') return;
+      if(!forecastData) { box.innerHTML = '<div class="fc-head"><span>🌤️ תחזית 7 ימים</span><span>טוען...</span></div>'; return; }
+      const D = forecastData.d, n = D.time.length, today = localDateStr();
+      const minAll = Math.min(...D.temperature_2m_min), maxAll = Math.max(...D.temperature_2m_max), span = Math.max(1, maxAll - minAll);
+      const day = k => new Date(k + 'T12:00:00');
+      const cards = [], notes = { rain: [], hot: null, cold: null, uv: null, wind: null, shab: [] };
+      for(let i = 0; i < n; i++) {
+        const k = D.time[i], dt = day(k), dow = dt.getDay(), lo = Math.round(D.temperature_2m_min[i]), hi = Math.round(D.temperature_2m_max[i]);
+        const code = D.weather_code[i], desc = (WEATHER_CODES[code] || ['', ''])[1], prob = D.precipitation_probability_max[i], mm = D.precipitation_sum[i] || 0;
+        const wind = Math.round(D.wind_speed_10m_max[i]), wdir = Math.round(D.wind_direction_10m_dominant[i] || 0), uv = Math.round(D.uv_index_max[i] || 0), ui = uvInfo(uv);
+        const label = k === today ? 'היום' : (i === 1 && localDateStr(new Date(Date.now() + 86400000)) === k) ? 'מחר' : dt.toLocaleDateString('he-IL', { weekday: 'long' }).replace('יום ', 'יום ');
+        const iv = (shabbatIntervals || []).find(v => (v.start && localDateStr(v.start) === k)), ivEnd = (shabbatIntervals || []).find(v => localDateStr(v.end) === k);
+        const shabLine = iv ? `<div class="fc-shab">🕯️${fmtHM(iv.start)}</div>` : ivEnd ? `<div class="fc-shab">✨${fmtHM(ivEnd.end)}</div>` : '';
+        const isShab = dow === 6 || dow === 5 || iv || ivEnd;
+        const left = ((D.temperature_2m_min[i] - minAll) / span) * 100, width = Math.max(8, ((D.temperature_2m_max[i] - D.temperature_2m_min[i]) / span) * 100);
+        cards.push(`<div class="fc-card${k === today ? ' today' : ''}${isShab ? ' shabbat' : ''}" title="${desc} • הרגשה עד ${Math.round(D.apparent_temperature_max[i])}° • זריחה ${D.sunrise[i].slice(11, 16)} • שקיעה ${D.sunset[i].slice(11, 16)}">
+          ${shabLine}<div class="fc-day">${label}</div><div class="fc-date">${hebDateStr(dt)} • ${dt.getDate()}/${dt.getMonth() + 1}</div>
+          <div class="fc-icon">${wxIcon(code)}</div>
+          <div class="fc-temps">${hi}°<span class="lo">${lo}°</span></div>
+          <div class="fc-bar"><i style="left:${left.toFixed(0)}%; width:${width.toFixed(0)}%"></i></div>
+          <div class="fc-row">💧${prob == null ? '--' : prob}%${mm >= 0.1 ? ' ' + mm.toFixed(mm < 10 ? 1 : 0) + 'מ״מ' : ''} 💨${wind}<span style="display:inline-block; transform:rotate(${wdir}deg);">⬇</span></div>
+          <div class="fc-row">UV <span class="fc-uv" style="background:${ui[1]}">${uv} ${ui[0]}</span></div></div>`);
+        const nm = label;
+        if((prob != null && prob >= 50) || mm >= 1) notes.rain.push(`${nm} (${prob == null ? '' : prob + '%'}${mm >= 0.1 ? ', ' + mm.toFixed(1) + ' מ״מ' : ''})`);
+        if(!notes.hot || hi > notes.hot.v) notes.hot = { v: hi, d: nm }; if(!notes.cold || lo < notes.cold.v) notes.cold = { v: lo, d: nm };
+        if(uv >= 8 && (!notes.uv || uv > notes.uv.v)) notes.uv = { v: uv, d: nm }; if(wind >= 40 && (!notes.wind || wind > notes.wind.v)) notes.wind = { v: wind, d: nm };
+        if(dow === 6) notes.shab.push(`${(WEATHER_CODES[code] || ['', ''])[0]} ${desc}, ${lo}°-${hi}°`);
+      }
+      const l1 = [notes.rain.length ? `☔ גשם צפוי: ${notes.rain.join(' • ')}` : '☀️ אין גשם צפוי ב-7 הימים', `🌡️ הכי חם: ${notes.hot.d} (${notes.hot.v}°) • הכי קר: ${notes.cold.d} (${notes.cold.v}°)`];
+      const l2 = [];
+      if(notes.shab.length) l2.push(`🕯️ שבת: ${notes.shab[0]}`);
+      if(notes.uv) l2.push(`🧴 UV גבוה מאוד ב${notes.uv.d} (${notes.uv.v})`);
+      if(notes.wind) l2.push(`💨 רוחות חזקות ב${notes.wind.d} (עד ${notes.wind.v} קמ״ש)`);
+      const lines = [l1.join(' &nbsp;|&nbsp; ')]; if(l2.length) lines.push(l2.join(' &nbsp;|&nbsp; '));
+      const where = (appSettings.location && appSettings.location.name) || 'אשקלון';
+      box.innerHTML = `<div class="fc-head"><span>🌤️ תחזית 7 ימים - ${where}</span><span>עודכן ${fmtHM(new Date(forecastData.at))}</span></div><div class="fc-grid">${cards.join('')}</div><div class="fc-summary">${lines.join('<br>')}</div>`;
+    }
+    setTimeout(() => { if(appSettings.mainPanel === 'forecast') applyMainPanel(); }, 600);
+
     // ================= V18.10: ten more additions =================
     const isYahrzeitType = t => /אזכרה|יארצייט|יאהרצייט|נשמה/.test(t || '');
 
@@ -4580,7 +4772,7 @@
     function shareShabbatWhatsApp() { openWaModal('shabbat'); } // the Shabbat-times modal and table-mode buttons open the sender with only Shabbat ticked
 
     // ================= V18.11: WhatsApp sender + Tachanun rule table + self-verification =================
-    const cityLabel = () => (document.getElementById('btnAshkelon') && document.getElementById('btnAshkelon').classList.contains('active')) ? 'אשקלון' : 'המיקום הנוכחי';
+    const cityLabel = () => (appSettings.location && appSettings.location.name) || 'אשקלון';
     const cleanTxt = id => { const t = ((document.getElementById(id) || {}).textContent || '').trim(); return /טוען|שגיאה|אין פרשה|^--$/.test(t) ? '' : t; };
 
     // The Hebrew date -> "is Tachanun said" rule table (Eretz Yisrael, Sephardic practice per Shulchan Aruch 131).
@@ -5410,7 +5602,7 @@
         psLastRows.push([wd, hebDateStr(d) + ' (' + greg + ')', [names, cdl].filter(Boolean).join(' | ')].concat(timesRow));
       });
       html += '</tbody></table>';
-      const cityName = (document.getElementById('btnAshkelon') && document.getElementById('btnAshkelon').classList.contains('active')) ? 'אשקלון' : 'המיקום הנוכחי';
+      const cityName = cityLabel();
       const head = `<div style="font-weight:800; font-size:1.2em; margin-bottom:4px;">לוח זמנים - ${cityName} (${currentLat.toFixed(2)}, ${currentLng.toFixed(2)})</div>`;
       const foot = `<div style="font-size:0.85em; margin-top:4px;">${anyOffline ? '* חלק מהזמנים מחושבים מקומית (ללא חיבור). ' : ''}סוזק"ש לפי הגר"א (שיטת עדות המזרח); צאת = 7.083°. נוצר ב-${new Date().toLocaleDateString('he-IL')}.</div>`;
       psLastHtml = head + html + foot; prev.innerHTML = psLastHtml;
