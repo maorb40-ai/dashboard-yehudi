@@ -1356,7 +1356,7 @@
         <div class="setting-group"><label>מה להציג בלוח הראשי (במקום שבו מוצגת טבלת הזמנים)</label>
           <label style="display:flex; gap:0.6vw; align-items:center; margin-top:0.5vh;"><input type="radio" name="mainPanel" value="zmanim" onchange="setMainPanel('zmanim')"> 🕒 זמני היום + סרגל המידע (תחנון, פרשה, דף יומי...) - ברירת מחדל</label>
           <label style="display:flex; gap:0.6vw; align-items:center;"><input type="radio" name="mainPanel" value="forecast" onchange="setMainPanel('forecast')"> 🌤️ שעון + תחזית ל-7 ימים בלבד (טבלת הזמנים וסרגל המידע מוסתרים)</label>
-          <div class="settings-hint">אפשר לעבור בכל רגע. התחזית מתעדכנת אוטומטית כל חצי שעה ולפי המיקום שנבחר.</div>
+          <div class="settings-hint">אפשר לעבור בכל רגע, וגם בלחיצה כפולה על שטח ריק במסך. התחזית מתעדכנת אוטומטית כל חצי שעה ולפי המיקום שנבחר.</div>
         </div>
         <div class="setting-group"><label>אנימציית רקע בימים ללא חג</label>
           <div class="settings-hint" style="margin-bottom:0.5vh;">עונה (עלים/שלג/פריחה/שמש) תמיד פעילה כשאין חג. אפשר להוסיף גם:</div>
@@ -1599,7 +1599,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-11-10.2';
+    const APP_VERSION = '2026-11-10.3';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -4527,6 +4527,16 @@
       if(fc) { renderForecast(); fetchForecast7(); }
       clockBaseline = null; scaleClockToFit();
     }
+    // Double-click / double-tap on an EMPTY background area flips between "zmanim + info ribbon" and "clock + 7-day forecast".
+    // Only the plain container elements count as empty (a click that lands on a button, card, text or input is ignored).
+    document.addEventListener('dblclick', e => {
+      const t = e.target;
+      const empty = t === document.body || t === document.documentElement || ['bg-texture', 'app-layout', 'dashboard-area', 'main-content'].includes(t.className);
+      if(!empty || document.querySelector('dialog[open]')) return;
+      if(document.body.classList.contains('clock-focus-mode') || document.body.classList.contains('shabbat-advanced')) return;
+      setMainPanel(appSettings.mainPanel === 'forecast' ? 'zmanim' : 'forecast');
+    });
+    document.body.style.touchAction = 'manipulation'; // keeps a double-tap from zooming the page on touch screens
     async function fetchForecast7() {
       try {
         const q = 'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset';
@@ -4906,9 +4916,18 @@
       // 1. clock / timezone / data age
       const offDev = -now.getTimezoneOffset(), offJer = jerusalemOffsetMin(now);
       add('שעון ואזור זמן', 'אזור הזמן של המכשיר', offDev === offJer ? 'ok' : 'bad', offDev === offJer ? `תואם לשעון ירושלים (GMT${offJer >= 0 ? '+' : ''}${offJer / 60})` : `המכשיר על GMT${offDev / 60} וירושלים על GMT${offJer / 60} - הגדר תאריך ושעה אוטומטיים`);
-      let srv = null;
-      try { srv = await getJson(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${todayKey}&end=${todayKey}&s=off`); } catch(e) { add('שעון ואזור זמן', 'שעון המכשיר מול שרת', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
-      if(srv && srv.date) { const skew = Math.abs(Date.now() - new Date(srv.date).getTime()) / 1000; add('שעון ואזור זמן', 'דיוק שעון המכשיר', skew < 60 ? 'ok' : skew < 180 ? 'warn' : 'bad', skew < 60 ? `סטייה של ${Math.round(skew)} שניות מול שרת Hebcal` : `השעון סוטה ב-${Math.round(skew)} שניות מהשעון האמיתי - כל הזמנים/התראות מושפעים`); }
+      // Clock check. V18.13: the first version compared Date.now() to the "date" field of an identical, cacheable Hebcal URL,
+      // which can be served from an edge cache minutes old and then reports a phantom "your clock is 35 minutes off".
+      // Now: Cloudflare's /cdn-cgi/trace "ts" (never cached, CORS-open), request-unique, with the round trip split in half;
+      // Hebcal's own timestamp is used only as a cache-busted fallback.
+      let skew = null, skewSrc = '';
+      try {
+        const t0 = Date.now(), tr = await (await fetch('https://www.cloudflare.com/cdn-cgi/trace?_=' + t0, { cache: 'no-store' })).text(), t1 = Date.now();
+        const m = tr.match(/^ts=([\d.]+)/m); if(m) { skew = Math.abs((t0 + t1) / 2 - parseFloat(m[1]) * 1000) / 1000; skewSrc = 'Cloudflare'; }
+      } catch(e) {}
+      if(skew === null) { try { const t0 = Date.now(), j = await getJson(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${todayKey}&end=${todayKey}&s=off&_=${t0}`); if(j.date) { skew = Math.abs(Date.now() - new Date(j.date).getTime()) / 1000; skewSrc = 'Hebcal'; } } catch(e) {} }
+      if(skew === null) add('שעון ואזור זמן', 'שעון המכשיר מול שרת', 'warn', 'לא ניתן לבדוק (אין חיבור?)');
+      else add('שעון ואזור זמן', 'דיוק שעון המכשיר', skew < 60 ? 'ok' : skew < 180 ? 'warn' : 'bad', skew < 60 ? `סטייה של ${Math.round(skew)} שניות מול שרת ${skewSrc}` : `השעון סוטה ב-${skew >= 120 ? Math.round(skew / 60) + ' דקות' : Math.round(skew) + ' שניות'} מהשעון האמיתי (נמדד מול ${skewSrc}; שעון המכשיר ${now.toLocaleTimeString('he-IL')}) - הגדר במכשיר תאריך ושעה אוטומטיים`);
       const ageMin = lastFetchOk ? Math.round((Date.now() - lastFetchOk) / 60000) : null;
       add('שעון ואזור זמן', 'עדכון הנתונים החיים', offlineMode ? 'warn' : ageMin === null ? 'warn' : ageMin < 180 ? 'ok' : 'warn', offlineMode ? 'מצב אופליין - מוצג חישוב מקומי' : ageMin === null ? 'עוד לא נטען' : `עודכן לפני ${ageMin} דקות`);
       add('שעון ואזור זמן', 'מיקום', 'info', `${cityLabel()} (${lat.toFixed(4)}, ${lng.toFixed(4)}), אזור זמן Asia/Jerusalem`);
