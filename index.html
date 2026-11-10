@@ -380,26 +380,27 @@
     /* V18.12: 7-day forecast panel (shown instead of the zmanim grid when appSettings.mainPanel === 'forecast') */
     #forecastPanel { display: none; width: 100%; }
     body.panel-forecast #forecastPanel { display: block; }
-    body.panel-forecast #zmanimGrid { display: none !important; }
-    .fc-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.85vw; font-weight: 800; color: var(--gold); margin-bottom: 0.3vh; padding: 0 0.3vw; }
+    body.panel-forecast #zmanimGrid, body.panel-forecast .info-ribbon { display: none !important; } /* forecast mode = clock + forecast only */
+    .fc-head { display: flex; justify-content: space-between; align-items: center; font-size: 1vw; font-weight: 800; color: var(--gold); margin-bottom: 0.3vh; padding: 0 0.3vw; }
     .fc-head span:last-child { font-weight: 600; font-size: 0.75vw; color: var(--muted-text); }
     .fc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5vw; }
     .fc-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0.9vw; padding: 0.5vh 0.2vw 0.6vh; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.1vh; position: relative; overflow: hidden; }
     .fc-card.today { border-color: var(--cyan); box-shadow: 0 0 1vw rgba(0,229,255,0.25); }
     .fc-card.shabbat { border-color: var(--gold); background: linear-gradient(180deg, rgba(242,201,76,0.13), var(--card-bg)); }
-    .fc-day { font-size: 0.9vw; font-weight: 800; line-height: 1.15; }
-    .fc-date { font-size: 0.62vw; color: var(--muted-text); line-height: 1.1; }
-    .fc-icon svg { width: min(3vw, 5.2vh); height: min(3vw, 5.2vh); filter: drop-shadow(0 0.3vh 0.4vh rgba(0,0,0,0.35)); }
+    .fc-day { font-size: 1vw; font-weight: 800; line-height: 1.15; }
+    .fc-date { font-size: 0.7vw; color: var(--muted-text); line-height: 1.1; }
+    .fc-icon svg { width: min(3.9vw, 7.2vh); height: min(3.9vw, 7.2vh); filter: drop-shadow(0 0.3vh 0.4vh rgba(0,0,0,0.35)); }
     .fc-desc { font-size: 0.68vw; color: var(--muted-text); min-height: 1.6em; line-height: 1.15; }
-    .fc-temps { font-size: 1.1vw; font-weight: 900; direction: ltr; line-height: 1.1; }
-    .fc-temps .lo { font-size: 0.85vw; font-weight: 700; color: var(--muted-text); margin-inline-start: 0.3vw; }
+    .fc-temps { font-size: 1.35vw; font-weight: 900; direction: ltr; line-height: 1.1; }
+    .fc-temps .lo { font-size: 1vw; font-weight: 700; color: var(--muted-text); margin-inline-start: 0.3vw; }
     .fc-bar { width: 80%; height: 0.5vh; margin: 0.2vh 0; background: rgba(148,163,184,0.25); border-radius: 1vw; position: relative; }
     .fc-bar i { position: absolute; top: 0; bottom: 0; border-radius: 1vw; background: linear-gradient(90deg, #38bdf8, #fbbf24, #f87171); }
-    .fc-row { font-size: 0.68vw; line-height: 1.25; color: var(--text-color); white-space: nowrap; }
+    .fc-desc { font-size: 0.72vw; color: var(--muted-text); line-height: 1.15; min-height: 1.15em; }
+    .fc-row { font-size: 0.78vw; line-height: 1.3; color: var(--text-color); white-space: nowrap; }
     .fc-row.muted { color: var(--muted-text); font-size: 0.66vw; }
-    .fc-uv { display: inline-block; border-radius: 1vw; padding: 0 0.4vw; font-weight: 800; color: #000; font-size: 0.66vw; }
-    .fc-shab { position: absolute; top: 0.3vh; inset-inline-start: 0.3vw; font-size: 0.56vw; font-weight: 800; color: var(--gold); line-height: 1.1; text-align: start; }
-    .fc-summary { margin-top: 0.5vh; font-size: 0.75vw; line-height: 1.45; background: rgba(0,0,0,0.2); border-radius: 0.7vw; padding: 0.6vh 1vw; }
+    .fc-uv { display: inline-block; border-radius: 1vw; padding: 0 0.45vw; font-weight: 800; color: #000; font-size: 0.72vw; }
+    .fc-shab { position: absolute; top: 0.3vh; inset-inline-start: 0.3vw; font-size: 0.66vw; font-weight: 800; color: var(--gold); line-height: 1.1; text-align: start; }
+    .fc-summary { margin-top: 0.6vh; font-size: 0.85vw; line-height: 1.55; background: rgba(0,0,0,0.2); border-radius: 0.7vw; padding: 0.6vh 1vw; }
     .wx-rays { transform-box: fill-box; transform-origin: center; animation: wxSpin 24s linear infinite; }
     .wx-drop { animation: wxDrop 1.1s linear infinite; }
     .wx-drop:nth-of-type(2n) { animation-delay: 0.35s; }
@@ -1353,8 +1354,8 @@
           <div class="toggle-switch" style="margin-top:1vh;"><input type="checkbox" id="densityCompactToggle" onchange="appSettings.densityCompact=this.checked; document.body.classList.toggle('density-compact', this.checked); saveSettings();"><span>תצוגה צפופה בסיידבר (יותר שורות במסך אחד)</span></div>
         </div>
         <div class="setting-group"><label>מה להציג בלוח הראשי (במקום שבו מוצגת טבלת הזמנים)</label>
-          <label style="display:flex; gap:0.6vw; align-items:center; margin-top:0.5vh;"><input type="radio" name="mainPanel" value="zmanim" onchange="setMainPanel('zmanim')"> 🕒 זמני היום (ברירת מחדל)</label>
-          <label style="display:flex; gap:0.6vw; align-items:center;"><input type="radio" name="mainPanel" value="forecast" onchange="setMainPanel('forecast')"> 🌤️ תחזית מזג אוויר ל-7 ימים (אייקונים, טמפרטורות, גשם, רוח, UV, כניסת/יציאת שבת)</label>
+          <label style="display:flex; gap:0.6vw; align-items:center; margin-top:0.5vh;"><input type="radio" name="mainPanel" value="zmanim" onchange="setMainPanel('zmanim')"> 🕒 זמני היום + סרגל המידע (תחנון, פרשה, דף יומי...) - ברירת מחדל</label>
+          <label style="display:flex; gap:0.6vw; align-items:center;"><input type="radio" name="mainPanel" value="forecast" onchange="setMainPanel('forecast')"> 🌤️ שעון + תחזית ל-7 ימים בלבד (טבלת הזמנים וסרגל המידע מוסתרים)</label>
           <div class="settings-hint">אפשר לעבור בכל רגע. התחזית מתעדכנת אוטומטית כל חצי שעה ולפי המיקום שנבחר.</div>
         </div>
         <div class="setting-group"><label>אנימציית רקע בימים ללא חג</label>
@@ -1598,7 +1599,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-11-10.1';
+    const APP_VERSION = '2026-11-10.2';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -2108,7 +2109,7 @@
     function scaleClockToFit() {
       if(document.body.classList.contains('shabbat-advanced')) return;
       if(!document.body.classList.contains('clock-measuring')) { withClockMeasure(scaleClockToFit); return; } // that mode has its own dedicated zoom
-      if(document.body.classList.contains('header-auto-hidden') && !document.body.classList.contains('clock-focus-mode')) { scaleClockToFill(); return; }
+      if((document.body.classList.contains('header-auto-hidden') || document.body.classList.contains('panel-forecast')) && !document.body.classList.contains('clock-focus-mode')) { scaleClockToFill(); return; }
       const root = document.documentElement;
       const dashArea = document.querySelector('.dashboard-area');
       const clockWrap = document.querySelector('.flip-clock-container');
@@ -4554,11 +4555,12 @@
         const left = ((D.temperature_2m_min[i] - minAll) / span) * 100, width = Math.max(8, ((D.temperature_2m_max[i] - D.temperature_2m_min[i]) / span) * 100);
         cards.push(`<div class="fc-card${k === today ? ' today' : ''}${isShab ? ' shabbat' : ''}" title="${desc} • הרגשה עד ${Math.round(D.apparent_temperature_max[i])}° • זריחה ${D.sunrise[i].slice(11, 16)} • שקיעה ${D.sunset[i].slice(11, 16)}">
           ${shabLine}<div class="fc-day">${label}</div><div class="fc-date">${hebDateStr(dt)} • ${dt.getDate()}/${dt.getMonth() + 1}</div>
-          <div class="fc-icon">${wxIcon(code)}</div>
+          <div class="fc-icon">${wxIcon(code)}</div><div class="fc-desc">${desc}</div>
           <div class="fc-temps">${hi}°<span class="lo">${lo}°</span></div>
           <div class="fc-bar"><i style="left:${left.toFixed(0)}%; width:${width.toFixed(0)}%"></i></div>
           <div class="fc-row">💧${prob == null ? '--' : prob}%${mm >= 0.1 ? ' ' + mm.toFixed(mm < 10 ? 1 : 0) + 'מ״מ' : ''} 💨${wind}<span style="display:inline-block; transform:rotate(${wdir}deg);">⬇</span></div>
-          <div class="fc-row">UV <span class="fc-uv" style="background:${ui[1]}">${uv} ${ui[0]}</span></div></div>`);
+          <div class="fc-row">UV <span class="fc-uv" style="background:${ui[1]}">${uv} ${ui[0]}</span></div>
+          <div class="fc-row" style="color:var(--muted-text);">🌅${D.sunrise[i].slice(11, 16)} 🌇${D.sunset[i].slice(11, 16)}</div></div>`);
         const nm = label;
         if((prob != null && prob >= 50) || mm >= 1) notes.rain.push(`${nm} (${prob == null ? '' : prob + '%'}${mm >= 0.1 ? ', ' + mm.toFixed(1) + ' מ״מ' : ''})`);
         if(!notes.hot || hi > notes.hot.v) notes.hot = { v: hi, d: nm }; if(!notes.cold || lo < notes.cold.v) notes.cold = { v: lo, d: nm };
@@ -4572,7 +4574,7 @@
       if(notes.wind) l2.push(`💨 רוחות חזקות ב${notes.wind.d} (עד ${notes.wind.v} קמ״ש)`);
       const lines = [l1.join(' &nbsp;|&nbsp; ')]; if(l2.length) lines.push(l2.join(' &nbsp;|&nbsp; '));
       const where = (appSettings.location && appSettings.location.name) || 'אשקלון';
-      box.innerHTML = `<div class="fc-head"><span>🌤️ תחזית 7 ימים - ${where}</span><span>עודכן ${fmtHM(new Date(forecastData.at))}</span></div><div class="fc-grid">${cards.join('')}</div><div class="fc-summary">${lines.join('<br>')}</div>`;
+      box.innerHTML = `<div class="fc-head"><span>🌤️ תחזית 7 ימים - ${where}</span><span title="הנתונים מ-Open-Meteo (שילוב מודלים ECMWF/DWD/NOAA), נבדקים מול MET Norway בלחיצה על בדיקת נכונות">מקור: Open-Meteo • עודכן ${fmtHM(new Date(forecastData.at))}</span></div><div class="fc-grid">${cards.join('')}</div><div class="fc-summary">${lines.join('<br>')}</div>`;
     }
     setTimeout(() => { if(appSettings.mainPanel === 'forecast') applyMainPanel(); }, 600);
 
@@ -4992,6 +4994,24 @@
         if(daf) { const expD = normHeb(daf.displayValue.he); add('לימוד', 'דף יומי מול Sefaria', shownDaf === expD || shownDaf.includes(expD) || expD.includes(shownDaf) ? 'ok' : 'bad', `מוצג: ${cleanTxt('dafYomiVal') || '--'} • Sefaria: ${daf.displayValue.he}`); }
         if(par) { const sp = normHeb(par.displayValue.he), shownP = normHeb(cleanTxt('parashaVal').replace(/\s*\(.*\)\s*$/, '')); add('לימוד', 'פרשת השבוע מול Sefaria (מקור שני)', shownP.includes(sp) || sp.includes(shownP) ? 'ok' : 'warn', `מוצג: ${cleanTxt('parashaVal') || '--'} • Sefaria: ${par.displayValue.he}`); }
       } catch(e) { add('לימוד', 'דף יומי/פרשה מול Sefaria', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+
+      // 6b. forecast: are the numbers real? compare against a second, independent forecaster (MET Norway)
+      try {
+        const om = (await getJson(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=7`)).daily;
+        const shownMax = [...document.querySelectorAll('.fc-temps')].map(e => parseInt(e.textContent, 10));
+        if(appSettings.mainPanel === 'forecast' && shownMax.length) {
+          const bad = shownMax.map((v, i) => Math.abs(v - Math.round(om.temperature_2m_max[i])) > 1 ? `יום ${i + 1}: מוצג ${v}° מול ${Math.round(om.temperature_2m_max[i])}°` : '').filter(Boolean);
+          add('תחזית', 'התחזית המוצגת מול קריאה חדשה (Open-Meteo)', bad.length ? 'bad' : 'ok', bad.length ? bad.join(' • ') : `כל ${shownMax.length} הימים זהים לנתונים העדכניים`);
+        }
+        let mn = null; try { mn = await getJson(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}`); } catch(e) {}
+        if(mn) {
+          const byDay = {}; mn.properties.timeseries.forEach(t => { const loc = new Date(new Date(t.time).getTime() + offJer * 60000), k = loc.toISOString().slice(0, 10); (byDay[k] = byDay[k] || []).push(t.data.instant.details.air_temperature); });
+          const diffs = []; om.time.forEach((k, i) => { const a = byDay[k]; if(a && a.length >= 18) diffs.push({ k, dmax: Math.abs(om.temperature_2m_max[i] - Math.max(...a)), dmin: Math.abs(om.temperature_2m_min[i] - Math.min(...a)) }); });
+          if(diffs.length) { const wm = Math.max(...diffs.map(d => d.dmax)), wn = Math.max(...diffs.map(d => d.dmin)); add('תחזית', 'Open-Meteo מול MET Norway (מקור עצמאי)', wm <= 4 && wn <= 5 ? 'ok' : 'warn', `${diffs.length} ימים השוו • פער מקסימום עד ${wm.toFixed(1)}° • פער מינימום עד ${wn.toFixed(1)}° (מקור שני הוא רשת גסה יותר, פער של 2-3 מעלות בלילה צפוי)`); }
+        } else add('תחזית', 'Open-Meteo מול MET Norway', 'warn', 'מקור ההשוואה לא זמין כרגע');
+        const t0 = om.time[0], okDates = t0 === todayKey, plausible = om.temperature_2m_max.every((v, i) => v >= om.temperature_2m_min[i] && v > -10 && v < 55);
+        add('תחזית', 'תקינות הנתונים', okDates && plausible ? 'ok' : 'bad', `התחזית מתחילה ב-${t0} (היום ${todayKey}) • מקסימום ≥ מינימום בכל הימים ובטווח הגיוני: ${plausible ? 'כן' : 'לא'}`);
+      } catch(e) { add('תחזית', 'בדיקת התחזית', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
 
       // 7. next holiday: confirm its date really carries that event in Hebcal's converter
       try {
