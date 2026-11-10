@@ -401,6 +401,23 @@
     .fc-uv { display: inline-block; border-radius: 1vw; padding: 0 0.45vw; font-weight: 800; color: #000; font-size: 0.72vw; }
     .fc-shab { position: absolute; top: 0.3vh; inset-inline-start: 0.3vw; font-size: 0.66vw; font-weight: 800; color: var(--gold); line-height: 1.1; text-align: start; }
     .fc-summary { margin-top: 0.6vh; font-size: 0.85vw; line-height: 1.55; background: rgba(0,0,0,0.2); border-radius: 0.7vw; padding: 0.6vh 1vw; }
+    /* V18.13: optional forecast add-on modules. Font/graphic sizes follow --fx-scale, set by fitForecastLayout() so the
+       modules shrink to fit instead of squeezing the clock. */
+    #fcExtras { display: none; width: 100%; --fx-scale: 1; }
+    body.panel-forecast #fcExtras.has-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(13vw * var(--fx-scale)), 1fr)); gap: 0.5vw; }
+    .fx-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0.8vw; padding: calc(0.6vh * var(--fx-scale)) calc(0.6vw * var(--fx-scale)); font-size: calc(0.8vw * var(--fx-scale)); line-height: 1.35; min-width: 0; }
+    .fx-card.wide { grid-column: span 2; }
+    .fx-card.alert { border-color: #f59e0b; background: rgba(245,158,11,0.10); }
+    .fx-title { font-weight: 800; color: var(--gold); font-size: calc(0.85vw * var(--fx-scale)); margin-bottom: 0.2vh; }
+    .fx-big { font-size: calc(1.6vw * var(--fx-scale)); font-weight: 900; line-height: 1.1; }
+    .fx-muted { color: var(--muted-text); font-size: calc(0.7vw * var(--fx-scale)); }
+    .fx-pill { display: inline-block; border-radius: 1vw; padding: 0 0.5vw; font-weight: 800; color: #000; }
+    .fx-row2 { display: flex; justify-content: space-between; gap: 0.5vw; flex-wrap: wrap; }
+    .fx-hourly svg { width: 100%; height: calc(6.5vh * var(--fx-scale)); display: block; }
+    .fx-moon { display: flex; gap: 0.6vw; align-items: center; }
+    .fx-moon svg { width: calc(3.2vw * var(--fx-scale)); height: calc(3.2vw * var(--fx-scale)); flex: none; }
+    body.panel-forecast.fc-compact .fc-desc, body.panel-forecast.fc-compact .fc-card .fc-row:last-child { display: none; }
+    body.panel-forecast.fc-compact .fc-icon svg { width: min(2.6vw, 4.2vh); height: min(2.6vw, 4.2vh); }
     .wx-rays { transform-box: fill-box; transform-origin: center; animation: wxSpin 24s linear infinite; }
     .wx-drop { animation: wxDrop 1.1s linear infinite; }
     .wx-drop:nth-of-type(2n) { animation-delay: 0.35s; }
@@ -754,6 +771,7 @@
 
         <div class="zmanim-grid" id="zmanimGrid"></div>
         <div id="forecastPanel"></div>
+        <div id="fcExtras"></div>
       </div>
     </div>
   </div>
@@ -1357,6 +1375,9 @@
           <label style="display:flex; gap:0.6vw; align-items:center; margin-top:0.5vh;"><input type="radio" name="mainPanel" value="zmanim" onchange="setMainPanel('zmanim')"> 🕒 זמני היום + סרגל המידע (תחנון, פרשה, דף יומי...) - ברירת מחדל</label>
           <label style="display:flex; gap:0.6vw; align-items:center;"><input type="radio" name="mainPanel" value="forecast" onchange="setMainPanel('forecast')"> 🌤️ שעון + תחזית ל-7 ימים בלבד (טבלת הזמנים וסרגל המידע מוסתרים)</label>
           <div class="settings-hint">אפשר לעבור בכל רגע, וגם בלחיצה כפולה על שטח ריק במסך. התחזית מתעדכנת אוטומטית כל חצי שעה ולפי המיקום שנבחר.</div>
+          <div style="margin-top:1vh; font-weight:700;">תוספות לתצוגת התחזית (כל אחת אופציונלית):</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.3vh 1vw; font-size:0.95vw;" id="fcExtrasChecks"></div>
+          <div class="settings-hint">כשמוסיפים תוספות, התצוגה מסתדרת לבד: קודם התוספות והכרטיסים מצטמצמים, השעון נשאר גדול (לא יורד מ-85% מגודלו בלעדיהן), ואם עדיין אין מקום - התוספת הכי פחות חשובה מוסתרת. במסך גדול הכול מוצג במלואו.</div>
         </div>
         <div class="setting-group"><label>אנימציית רקע בימים ללא חג</label>
           <div class="settings-hint" style="margin-bottom:0.5vh;">עונה (עלים/שלג/פריחה/שמש) תמיד פעילה כשאין חג. אפשר להוסיף גם:</div>
@@ -1599,7 +1620,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-11-10.3';
+    const APP_VERSION = '2026-11-10.4';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -2109,7 +2130,8 @@
     function scaleClockToFit() {
       if(document.body.classList.contains('shabbat-advanced')) return;
       if(!document.body.classList.contains('clock-measuring')) { withClockMeasure(scaleClockToFit); return; } // that mode has its own dedicated zoom
-      if((document.body.classList.contains('header-auto-hidden') || document.body.classList.contains('panel-forecast')) && !document.body.classList.contains('clock-focus-mode')) { scaleClockToFill(); return; }
+      if(document.body.classList.contains('panel-forecast') && !document.body.classList.contains('clock-focus-mode')) { fitForecastLayout(); return; }
+      if(document.body.classList.contains('header-auto-hidden') && !document.body.classList.contains('clock-focus-mode')) { scaleClockToFill(); return; }
       const root = document.documentElement;
       const dashArea = document.querySelector('.dashboard-area');
       const clockWrap = document.querySelector('.flip-clock-container');
@@ -2375,6 +2397,7 @@
       document.getElementById('chimeAfternoonSelect').value = appSettings.chimeAfternoon || 'gentle';
       document.getElementById('chimeEveningSelect').value = appSettings.chimeEvening || 'double';
       document.querySelectorAll('input[name="mainPanel"]').forEach(r => r.checked = r.value === (appSettings.mainPanel || 'zmanim'));
+      fillFcExtrasChecks();
       document.getElementById('densityCompactToggle').checked = appSettings.densityCompact;
       document.getElementById('ambientTimeOfDayToggle').checked = appSettings.ambientTimeOfDay;
       document.getElementById('ambientShabbatMotifToggle').checked = appSettings.ambientShabbatMotif;
@@ -4432,7 +4455,7 @@
       document.body.classList.toggle('header-auto-hidden', hidden);
       const btn = document.getElementById('headerToggleBtn');
       if(btn) { btn.textContent = hidden ? '▼' : '▲'; btn.title = hidden ? 'הצג את סרגל הכפתורים' : 'הסתר את סרגל הכפתורים'; }
-      if(save) { appSettings.headerHidden = hidden; saveSettings(); }
+      if(save) { appSettings.headerHidden = hidden; saveSettings(); fcAutoHeader = false; fcHeaderPinned = !hidden; }
       scaleClockToFit();
     }
     function toggleHeaderBar() { applyHeaderHidden(!document.body.classList.contains('header-auto-hidden'), true); }
@@ -4524,7 +4547,9 @@
     function applyMainPanel() {
       const fc = appSettings.mainPanel === 'forecast';
       document.body.classList.toggle('panel-forecast', fc);
+      if(!fc && fcAutoHeader) { fcAutoHeader = false; if(!appSettings.headerHidden) document.body.classList.remove('header-auto-hidden'); document.body.classList.remove('fc-compact'); }
       if(fc) { renderForecast(); fetchForecast7(); }
+      renderExtras();
       clockBaseline = null; scaleClockToFit();
     }
     // Double-click / double-tap on an EMPTY background area flips between "zmanim + info ribbon" and "clock + 7-day forecast".
@@ -4540,11 +4565,12 @@
     async function fetchForecast7() {
       try {
         const q = 'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset';
-        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLng}&daily=${q}&timezone=Asia%2FJerusalem&forecast_days=7`);
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLng}&daily=${q}&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_gusts_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Asia%2FJerusalem&forecast_days=7`);
         const j = await r.json(); if(!j.daily) throw new Error('no daily');
-        forecastData = { d: j.daily, at: Date.now(), lat: currentLat, lng: currentLng };
+        forecastData = { d: j.daily, cur: j.current || null, h: j.hourly || null, at: Date.now(), lat: currentLat, lng: currentLng };
       } catch(e) { console.warn('forecast failed', e); }
       renderForecast();
+      fetchExtrasExtra();
     }
     setInterval(() => { if(appSettings.mainPanel === 'forecast') fetchForecast7(); }, 30 * 60 * 1000);
     function renderForecast() {
@@ -4584,9 +4610,155 @@
       if(notes.wind) l2.push(`💨 רוחות חזקות ב${notes.wind.d} (עד ${notes.wind.v} קמ״ש)`);
       const lines = [l1.join(' &nbsp;|&nbsp; ')]; if(l2.length) lines.push(l2.join(' &nbsp;|&nbsp; '));
       const where = (appSettings.location && appSettings.location.name) || 'אשקלון';
+      setTimeout(renderExtras, 0);
       box.innerHTML = `<div class="fc-head"><span>🌤️ תחזית 7 ימים - ${where}</span><span title="הנתונים מ-Open-Meteo (שילוב מודלים ECMWF/DWD/NOAA), נבדקים מול MET Norway בלחיצה על בדיקת נכונות">מקור: Open-Meteo • עודכן ${fmtHM(new Date(forecastData.at))}</span></div><div class="fc-grid">${cards.join('')}</div><div class="fc-summary">${lines.join('<br>')}</div>`;
     }
-    setTimeout(() => { if(appSettings.mainPanel === 'forecast') applyMainPanel(); }, 600);
+
+    // ================= V18.13: optional add-on modules for the forecast view =================
+    // Order = importance (the last ones are dropped first when the screen is too small).
+    const FX_MODULES = [['alerts', '⚠️ התראות מזג אוויר'], ['hourly', '🕒 רצועת 24 שעות'], ['air', '🌫️ איכות אוויר ואבק'], ['comfort', '💧 לחות, הרגשה ולחץ'], ['moon', '🌙 שלב הירח'], ['sea', '🌊 מצב הים'], ['rain', '☔ סיכום גשם שבועי']];
+    var fxExtra = { air: null, marine: null, at: 0, key: '' };
+    function fxEnabled() { const o = appSettings.fcExtras || {}; return FX_MODULES.map(m => m[0]).filter(k => o[k]); }
+    function fillFcExtrasChecks() {
+      const o = appSettings.fcExtras || {}, box = document.getElementById('fcExtrasChecks'); if(!box) return;
+      box.innerHTML = FX_MODULES.map(m => `<label style="display:flex; gap:0.4vw; align-items:center;"><input type="checkbox" ${o[m[0]] ? 'checked' : ''} onchange="toggleFcExtra('${m[0]}', this.checked)"> ${m[1]}</label>`).join('');
+    }
+    function toggleFcExtra(k, on) { appSettings.fcExtras = Object.assign({}, appSettings.fcExtras || {}, { [k]: on }); saveSettings(); fetchExtrasExtra(); renderExtras(); clockBaseline = null; scaleClockToFit(); }
+    async function fetchExtrasExtra() {
+      const en = fxEnabled(); if(appSettings.mainPanel !== 'forecast') return;
+      const key = currentLat.toFixed(2) + ',' + currentLng.toFixed(2);
+      if(fxExtra.key === key && Date.now() - fxExtra.at < 25 * 60000 && !(en.includes('air') && !fxExtra.air) && !(en.includes('sea') && fxExtra.marine === null)) { return; }
+      const next = { air: null, marine: null, at: Date.now(), key };
+      if(en.includes('air')) { try { const j = await (await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${currentLat}&longitude=${currentLng}&current=us_aqi,pm10,pm2_5,dust&timezone=Asia%2FJerusalem`)).json(); if(j.current && j.current.us_aqi != null) next.air = j.current; } catch(e) {} }
+      if(en.includes('sea')) {
+        next.marine = false;
+        try {
+          const j = await (await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${currentLat}&longitude=${currentLng}&current=wave_height,wave_period,sea_surface_temperature&timezone=Asia%2FJerusalem`)).json();
+          const c = j.current, km = j.latitude != null ? Math.hypot((j.latitude - currentLat) * 111, (j.longitude - currentLng) * 111 * Math.cos(currentLat * Math.PI / 180)) : 999;
+          if(c && c.wave_height != null && c.sea_surface_temperature != null && km <= 30) next.marine = Object.assign({ km: Math.round(km) }, c);
+        } catch(e) {}
+      }
+      fxExtra = next; renderExtras(); clockBaseline = null; scaleClockToFit();
+    }
+    // --- moon phase: mean synodic month from a known new moon (2000-01-06 18:14 UTC). Accurate to about +-0.5 day,
+    // which is plenty for "waxing/waning, ~N% lit"; the exact halachic molad comes from Hebcal elsewhere in the app.
+    function moonInfo(d) {
+      const T = 29.530588853, jd = d.getTime() / 86400000 + 2440587.5, age = (((jd - 2451550.26) % T) + T) % T, p = age / T;
+      const lit = (1 - Math.cos(2 * Math.PI * p)) / 2;
+      const name = age < 1.0 ? 'מולד (ירח חדש)' : age < 6.4 ? 'ירח מתמלא (סהר)' : age < 8.4 ? 'רבע ראשון' : age < 13.8 ? 'ירח מתמלא (כמעט מלא)' : age < 15.8 ? 'ירח מלא' : age < 21.0 ? 'ירח חוסר (כמעט מלא)' : age < 23.0 ? 'רבע אחרון' : age < 28.5 ? 'ירח חוסר (סהר)' : 'מולד (ירח חדש)';
+      const toFull = ((T / 2 - age) + T) % T, toNew = ((T - age) % T);
+      return { age, p, lit, name, toFull, toNew };
+    }
+    function moonSvg(p) {
+      const r = 20, k = Math.cos(2 * Math.PI * p), rx = Math.max(0.01, Math.abs(k) * r), waxing = p < 0.5;
+      const sweepOuter = waxing ? 1 : 0, sweepInner = waxing ? (k > 0 ? 0 : 1) : (k > 0 ? 1 : 0);
+      const lit = `M 0 ${-r} A ${r} ${r} 0 0 ${sweepOuter} 0 ${r} A ${rx.toFixed(2)} ${r} 0 0 ${sweepInner} 0 ${-r} Z`;
+      return `<svg viewBox="-24 -24 48 48"><circle r="${r}" fill="#1e293b" stroke="#475569" stroke-width="1"/><path d="${lit}" fill="#f1f5f9"/></svg>`;
+    }
+    const aqiInfo = a => a <= 50 ? ['טוב', '#4ade80'] : a <= 100 ? ['בינוני', '#facc15'] : a <= 150 ? ['לא בריא לרגישים', '#fb923c'] : a <= 200 ? ['לא בריא', '#f87171'] : ['גרוע מאוד', '#c084fc'];
+    function fxAlerts() {
+      const out = [], D = forecastData.d, n = D.time.length, nm = i => i === 0 ? 'היום' : i === 1 ? 'מחר' : new Date(D.time[i] + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long' });
+      const firstOf = (fn) => { for(let i = 0; i < n; i++) if(fn(i)) return i; return -1; };
+      let i;
+      if((i = firstOf(j => D.temperature_2m_max[j] >= 38)) >= 0) out.push(`🔥 חום קיצוני ${nm(i)} (${Math.round(D.temperature_2m_max[i])}°) - שתייה מרובה, הימנעות משמש בצהריים`);
+      else if((i = firstOf(j => D.temperature_2m_max[j] >= 35)) >= 0) out.push(`🌡️ יום חם מאוד ${nm(i)} (${Math.round(D.temperature_2m_max[i])}°)`);
+      if((i = firstOf(j => D.temperature_2m_min[j] <= 5)) >= 0) out.push(`🥶 קור ${nm(i)} (מינימום ${Math.round(D.temperature_2m_min[i])}°)`);
+      if((i = firstOf(j => (D.precipitation_sum[j] || 0) >= 10 || (D.precipitation_probability_max[j] || 0) >= 80)) >= 0) out.push(`🌧️ גשם משמעותי ${nm(i)} (${D.precipitation_probability_max[i]}%${D.precipitation_sum[i] >= 0.1 ? ', ' + D.precipitation_sum[i].toFixed(1) + ' מ״מ' : ''})`);
+      if((i = firstOf(j => D.wind_speed_10m_max[j] >= 50)) >= 0) out.push(`💨 רוחות חזקות ${nm(i)} (עד ${Math.round(D.wind_speed_10m_max[i])} קמ״ש)`);
+      if((i = firstOf(j => (D.uv_index_max[j] || 0) >= 8)) >= 0) out.push(`🧴 קרינת UV גבוהה מאוד ${nm(i)} (${Math.round(D.uv_index_max[i])})`);
+      if(fxExtra.air && fxExtra.air.us_aqi > 100) out.push(`🌫️ איכות אוויר ירודה עכשיו (AQI ${fxExtra.air.us_aqi}${fxExtra.air.dust >= 50 ? ', אבק ' + Math.round(fxExtra.air.dust) : ''}) - רגישים: להימנע ממאמץ בחוץ`);
+      return out;
+    }
+    function fxHourly() {
+      const h = forecastData.h; if(!h) return '';
+      const now = new Date(), nowKey = localDateStr(now) + 'T' + pad2(now.getHours()), idx0 = Math.max(0, h.time.findIndex(t => t >= nowKey));
+      const idx = Array.from({ length: 25 }, (_, i) => idx0 + i).filter(i => i < h.time.length);
+      if(idx.length < 6) return '';
+      const T = idx.map(i => h.temperature_2m[i]), mn = Math.min(...T), mx = Math.max(...T), sp = Math.max(1, mx - mn), W = 600, H = 70, pl = 8, pr = 8;
+      const x = k => pl + (k / (idx.length - 1)) * (W - pl - pr), y = v => 8 + (1 - (v - mn) / sp) * (H - 28);
+      const line = T.map((v, k) => `${k ? 'L' : 'M'} ${x(k).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+      const area = line + ` L ${x(T.length - 1)} ${H - 12} L ${x(0)} ${H - 12} Z`;
+      const bars = idx.map((i, k) => { const pr_ = h.precipitation_probability[i] || 0; const bh = (pr_ / 100) * 26; return pr_ >= 20 ? `<rect x="${(x(k) - 3).toFixed(1)}" y="${(H - 12 - bh).toFixed(1)}" width="6" height="${bh.toFixed(1)}" rx="1.5" fill="#38bdf8" opacity="0.65"/>` : ''; }).join('');
+      const labels = idx.map((i, k) => (parseInt(h.time[i].slice(11, 13), 10) % 3 === 0) ? `<text x="${x(k).toFixed(1)}" y="${H - 1}" text-anchor="middle" font-size="9" fill="#94a3b8">${h.time[i].slice(11, 13)}</text><text x="${x(k).toFixed(1)}" y="${(y(T[k]) - 3).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#e2e8f0">${Math.round(T[k])}°</text>` : '').join('');
+      return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${area}" fill="rgba(251,191,36,0.14)"/>${bars}<path d="${line}" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round"/>${labels}</svg>`;
+    }
+    function renderExtras() {
+      const box = document.getElementById('fcExtras'); if(!box) return;
+      const en = fxEnabled();
+      if(appSettings.mainPanel !== 'forecast' || !en.length || !forecastData) { box.className = ''; box.innerHTML = ''; if(appSettings.mainPanel === 'forecast') { clockBaseline = null; scaleClockToFit(); } return; }
+      const D = forecastData.d, cur = forecastData.cur, cards = {};
+      const al = fxAlerts();
+      cards.alerts = `<div class="fx-card${al.length ? ' alert' : ''}" data-fx="alerts"><div class="fx-title">⚠️ התראות מזג אוויר</div>${al.length ? al.map(t => `<div>${t}</div>`).join('') : '<div>✅ אין תנאים חריגים ב-7 הימים</div>'}<div class="fx-muted">לפי נתוני התחזית - לא התראה רשמית של השירות המטאורולוגי</div></div>`;
+      const hs = fxHourly();
+      cards.hourly = `<div class="fx-card wide fx-hourly" data-fx="hourly"><div class="fx-title">🕒 24 השעות הקרובות <span class="fx-muted">(קו = טמפרטורה, עמודות כחולות = סיכוי גשם)</span></div>${hs || '<div class="fx-muted">אין נתונים שעתיים</div>'}</div>`;
+      const a = fxExtra.air;
+      if(a) { const ai = aqiInfo(a.us_aqi); cards.air = `<div class="fx-card" data-fx="air"><div class="fx-title">🌫️ איכות אוויר</div><div class="fx-row2"><span class="fx-big">${a.us_aqi}</span><span class="fx-pill" style="background:${ai[1]}">${ai[0]}</span></div><div class="fx-muted">PM10 ${Math.round(a.pm10)} • PM2.5 ${Math.round(a.pm2_5)} • אבק ${Math.round(a.dust)} µg/m³ (US AQI)</div></div>`; }
+      else cards.air = `<div class="fx-card" data-fx="air"><div class="fx-title">🌫️ איכות אוויר</div><div class="fx-muted">${fxExtra.at ? 'לא זמין כרגע' : 'טוען...'}</div></div>`;
+      if(cur) cards.comfort = `<div class="fx-card" data-fx="comfort"><div class="fx-title">💧 לחות והרגשה</div><div class="fx-row2"><span><span class="fx-big">${Math.round(cur.apparent_temperature)}°</span> <span class="fx-muted">מורגש (בפועל ${Math.round(cur.temperature_2m)}°)</span></span></div><div class="fx-muted">לחות ${Math.round(cur.relative_humidity_2m)}% • לחץ ${Math.round(cur.surface_pressure)} hPa • משבי רוח ${Math.round(cur.wind_gusts_10m)} קמ״ש</div></div>`;
+      const mo = moonInfo(new Date()), mo2 = mo.toFull < mo.toNew ? `ירח מלא בעוד ${Math.round(mo.toFull)} ימים` : `מולד בעוד ${Math.round(mo.toNew)} ימים`;
+      cards.moon = `<div class="fx-card" data-fx="moon"><div class="fx-title">🌙 הירח</div><div class="fx-moon">${moonSvg(mo.p)}<div><b>${mo.name}</b><div class="fx-muted">בערך ${Math.round(mo.lit * 100)}% מואר • ${mo2}</div></div></div></div>`;
+      const m = fxExtra.marine;
+      if(m) cards.sea = `<div class="fx-card" data-fx="sea"><div class="fx-title">🌊 מצב הים</div><div class="fx-row2"><span class="fx-big">${m.wave_height.toFixed(1)} מ׳</span><span>🌡️ ${Math.round(m.sea_surface_temperature)}°</span></div><div class="fx-muted">גובה גל${m.wave_period ? ' • מחזור ' + Math.round(m.wave_period) + ' שנ׳' : ''} • נקודת ים ~${m.km} ק״מ מהמיקום</div></div>`;
+      else if(m === false) cards.sea = '';
+      else cards.sea = `<div class="fx-card" data-fx="sea"><div class="fx-title">🌊 מצב הים</div><div class="fx-muted">טוען...</div></div>`;
+      const tot = D.precipitation_sum.reduce((x, v) => x + (v || 0), 0), wetDays = D.precipitation_sum.filter(v => (v || 0) >= 0.5).length;
+      const wi = D.precipitation_sum.indexOf(Math.max(...D.precipitation_sum));
+      cards.rain = `<div class="fx-card" data-fx="rain"><div class="fx-title">☔ גשם ב-7 ימים</div><div class="fx-big">${tot.toFixed(tot < 10 ? 1 : 0)} מ״מ</div><div class="fx-muted">${wetDays ? `${wetDays} ימים עם גשם • הרטוב ביותר: ${wi === 0 ? 'היום' : new Date(D.time[wi] + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long' })} (${D.precipitation_sum[wi].toFixed(1)} מ״מ)` : 'ללא גשם צפוי'}</div></div>`;
+      box.className = 'has-items'; box.innerHTML = en.map(k => cards[k] || '').join('');
+      clockBaseline = null; scaleClockToFit();
+    }
+    // Adaptive layout for forecast mode: first shrink the add-ons/cards, then the clock (down to a floor of 85% of its
+    // size WITHOUT add-ons), then - if modules still don't fit - collapse the header button bar automatically (restored
+    // when you leave forecast mode; a manual "show header" click pins it open), and only then hide the least important add-on.
+    var fcAutoHeader = false, fcHeaderPinned = false;
+    function fitForecastLayout() {
+      const root = document.documentElement, dash = document.querySelector('.dashboard-area'), clock = document.querySelector('.flip-clock-container'), box = document.getElementById('fcExtras');
+      if(!dash || !clock) return;
+      const clockScaleNow = () => {
+        root.style.setProperty('--clock-scale', '1');
+        const r = clock.getBoundingClientRect(); if(!r.width || !r.height) return 1;
+        const sib = [...dash.children].filter(e => e !== clock && getComputedStyle(e).display !== 'none');
+        const sh = sib.reduce((a, e) => a + e.getBoundingClientRect().height, 0), gap = parseFloat(getComputedStyle(dash).rowGap) || 0;
+        const availH = Math.max(50, dash.clientHeight - sh - gap * sib.length - dash.clientHeight * 0.03), availW = dash.clientWidth * 0.94;
+        return Math.min(Math.min(availW / r.width, availH / r.height), 3);
+      };
+      const LEVELS = [[1, false], [0.88, false], [0.76, false], [0.76, true]]; // never below 0.76: smaller text is unreadable, so drop a module instead
+      const runFit = () => {
+        const mods = box ? [...box.children] : [];
+        document.body.classList.remove('fc-compact'); if(box) box.style.setProperty('--fx-scale', '1');
+        mods.forEach(m => { m.style.display = ''; });
+        if(!mods.length) { const sc = Math.max(1, clockScaleNow()); root.style.setProperty('--clock-scale', sc.toFixed(3)); return { drop: 0, sc, n: 0 }; }
+        box.style.display = 'none'; const s0 = clockScaleNow(); box.style.display = '';
+        const floor = Math.max(1, s0 * 0.85);
+        let chosen = null;
+        for(let drop = 0; drop <= mods.length && !chosen; drop++) {
+          const keep = mods.length - drop;
+          mods.forEach((m, i) => { m.style.display = i < keep ? '' : 'none'; });
+          if(keep === 0) { box.style.display = 'none'; chosen = { sc: s0, drop, n: mods.length }; break; }
+          for(const [fx, compact] of LEVELS) {
+            box.style.setProperty('--fx-scale', String(fx)); document.body.classList.toggle('fc-compact', compact);
+            const sc = clockScaleNow(); if(sc >= floor - 0.001 || (keep === 1 && compact)) { chosen = { sc, drop, n: mods.length }; break; }
+          }
+        }
+        root.style.setProperty('--clock-scale', Math.max(1, clockScaleNow()).toFixed(3));
+        return chosen || { drop: mods.length, sc: s0, n: mods.length };
+      };
+      const hdr = () => document.body.classList.contains('header-auto-hidden');
+      if(fcAutoHeader && !appSettings.headerHidden) document.body.classList.remove('header-auto-hidden'); // re-evaluate from the restored header
+      fcAutoHeader = false;
+      let chosen = runFit();
+      if(chosen.drop > 0 && !hdr() && !fcHeaderPinned) {
+        const before = chosen;
+        document.body.classList.add('header-auto-hidden');
+        const c2 = runFit();
+        if(c2.drop < before.drop) { chosen = c2; fcAutoHeader = true; } else { document.body.classList.remove('header-auto-hidden'); chosen = runFit(); }
+      }
+      const tb = document.getElementById('headerToggleBtn'); if(tb) { tb.textContent = hdr() ? '▼' : '▲'; tb.title = hdr() ? 'הצג את סרגל הכפתורים' : 'הסתר את סרגל הכפתורים'; }
+      root.style.setProperty('--fx-dropped', String(chosen.drop));
+      const hs = document.querySelector('.fc-head span:last-child');
+      if(hs && chosen.drop > 0 && !hs.dataset.dropNote) { hs.dataset.dropNote = '1'; hs.textContent += ` • ${chosen.drop} תוספות מוסתרות מחוסר מקום`; }
+    }
+    setTimeout(() => { fillFcExtrasChecks(); if(appSettings.mainPanel === 'forecast') applyMainPanel(); }, 600);
 
     // ================= V18.10: ten more additions =================
     const isYahrzeitType = t => /אזכרה|יארצייט|יאהרצייט|נשמה/.test(t || '');
@@ -5031,6 +5203,21 @@
         const t0 = om.time[0], okDates = t0 === todayKey, plausible = om.temperature_2m_max.every((v, i) => v >= om.temperature_2m_min[i] && v > -10 && v < 55);
         add('תחזית', 'תקינות הנתונים', okDates && plausible ? 'ok' : 'bad', `התחזית מתחילה ב-${t0} (היום ${todayKey}) • מקסימום ≥ מינימום בכל הימים ובטווח הגיוני: ${plausible ? 'כן' : 'לא'}`);
       } catch(e) { add('תחזית', 'בדיקת התחזית', 'warn', 'לא ניתן לבדוק (אין חיבור?)'); }
+
+      // 6c. forecast add-ons: air quality vs a fresh call, moon model vs Hebcal's molad
+      try {
+        const en = fxEnabled();
+        if(appSettings.mainPanel === 'forecast' && en.includes('air') && fxExtra.air) {
+          const fresh = (await getJson(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=us_aqi&timezone=Asia%2FJerusalem`)).current;
+          const shownAqi = parseInt((document.querySelector('[data-fx=air] .fx-big') || {}).textContent, 10);
+          add('תחזית', 'איכות אוויר מול קריאה חדשה', fresh && Math.abs(shownAqi - fresh.us_aqi) <= 15 ? 'ok' : 'warn', `מוצג AQI ${shownAqi} • עכשיו ${fresh ? fresh.us_aqi : '--'} (משתנה משעה לשעה)`);
+        }
+        if(en.includes('moon') && moladItems.length) {
+          const info = moonInfo(now), modelNew = new Date(now.getTime() + (29.530588853 - info.age) * 86400000); // next new moon by the model
+          const nearest = moladItems.map(i => new Date(i.molad.instant)).sort((a, b) => Math.abs(a - modelNew) - Math.abs(b - modelNew))[0], hrs = Math.abs(nearest - modelNew) / 3600000;
+          add('תחזית', 'שלב הירח מול המולד של Hebcal', hrs <= 36 ? 'ok' : 'warn', `המולד הקרוב ${nearest.toLocaleString('he-IL')} • הפער מהמודל ${Math.round(hrs)} שעות (המולד הוא ממוצע, הירח האמיתי סוטה עד כ-14 שעות)`);
+        }
+      } catch(e) {}
 
       // 7. next holiday: confirm its date really carries that event in Hebcal's converter
       try {
