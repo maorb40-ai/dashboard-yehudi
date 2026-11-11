@@ -1620,7 +1620,7 @@
         return origAnchorClick.call(this);
       };
     }
-    const APP_VERSION = '2026-11-10.4';
+    const APP_VERSION = '2026-11-11.1';
     async function checkForUpdate() {
       const btn = document.getElementById('btnCheckVersion');
       const original = btn.textContent; btn.textContent = '⏳ בודק...'; btn.disabled = true;
@@ -2163,10 +2163,28 @@
 
       root.style.setProperty('--clock-scale', scale.toFixed(3));
     }
-    window.addEventListener('resize', () => {
+    function refitNow() {
       if(document.body.classList.contains('clock-focus-mode')) { fitClockToFullScreen(); return; }
       clockBaseline = null; scaleClockToFit();
-    });
+    }
+    // Tablets (iPad/Android) report the final viewport late after rotation, the address-bar collapsing or
+    // split-screen changes, and fire several resize events on the way - so we fit immediately (cheap, feels
+    // instant) and then re-fit once the size has stopped changing, plus a safety net a bit later.
+    let refitTimers = [];
+    function refitSoon() {
+      refitNow(); refitTimers.forEach(clearTimeout);
+      refitTimers = [setTimeout(refitNow, 200), setTimeout(refitNow, 800), setTimeout(refitNow, 2000)];
+    }
+    window.addEventListener('resize', refitSoon);
+    window.addEventListener('orientationchange', refitSoon);
+    window.addEventListener('pageshow', refitSoon);
+    window.addEventListener('load', refitSoon);
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) refitSoon(); });
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', refitSoon);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(refitSoon);
+    // last safety net: if the real viewport differs from what the last fit measured (missed event), fix it
+    let lastFitKey = '';
+    setInterval(() => { const k = innerWidth + 'x' + innerHeight; if(lastFitKey && k !== lastFitKey) refitSoon(); lastFitKey = k; }, 3000);
 
     let currentHebrewDay = '', currentHebrewDayNum = 0, currentHebrewMonth = '', audioContext = null, alertedZmanim = {}, idleTimer;
     let currentLat = 31.6688, currentLng = 34.5744;
@@ -4468,13 +4486,20 @@
       ['אילת', 29.5577, 34.9519], ['טבריה', 32.7959, 35.5311], ['צפת', 32.9646, 35.4960], ['נתיבות', 31.4220, 34.5890], ['שדרות', 31.5252, 34.5961],
       ['אופקים', 31.3140, 34.6200], ['קריית גת', 31.6100, 34.7642], ['ערד', 31.2588, 35.2128], ['חדרה', 32.4340, 34.9196], ['כפר סבא', 32.1750, 34.9066],
       ['רמת גן', 32.0684, 34.8248], ['חולון', 32.0158, 34.7874], ['בת ים', 32.0231, 34.7503], ['קריית שמונה', 33.2075, 35.5707], ['כרמיאל', 32.9190, 35.2950],
-      ['עפולה', 32.6078, 35.2897], ['דימונה', 31.0700, 35.0300], ['מצפה רמון', 30.6100, 34.8010]];
+      ['עפולה', 32.6078, 35.2897], ['דימונה', 31.0700, 35.0300], ['מצפה רמון', 30.6100, 34.8010],
+      ['כרם שלום', 31.2262, 34.2828], ['רהט', 31.3925, 34.7544], ['להבים', 31.3722, 34.8128], ['עומר', 31.2650, 34.8450], ['ירוחם', 30.9877, 34.9310],
+      ['שדה בוקר', 30.8700, 34.7900], ['נצרת', 32.6996, 35.3035], ['עכו', 32.9281, 35.0820], ['נהריה', 33.0050, 35.0940], ['קריית אתא', 32.8112, 35.1052],
+      ['קריית ים', 32.8500, 35.0700], ['קריית מוצקין', 32.8370, 35.0770], ['קריית ביאליק', 32.8330, 35.0850], ['יבנה', 31.8780, 34.7390], ['גדרה', 31.8140, 34.7800],
+      ['לוד', 31.9515, 34.8950], ['רמלה', 31.9290, 34.8730], ['הרצליה', 32.1663, 34.8436], ['רעננה', 32.1840, 34.8710], ['הוד השרון', 32.1500, 34.8880],
+      ['רמת השרון', 32.1460, 34.8390], ['גבעתיים', 32.0710, 34.8120], ['אלעד', 32.0520, 34.9510], ['מודיעין-מכבים-רעות', 31.8969, 35.0070],
+      ['קריית מלאכי', 31.7290, 34.7450], ['קריית עקרון', 31.8580, 34.8190], ['נס ציונה', 31.9300, 34.7980], ['אריאל', 32.1060, 35.1670], ['בית שאן', 32.4970, 35.4980],
+      ['קצרין', 32.9930, 35.6910], ['יקנעם', 32.6590, 35.1090], ['מגדל העמק', 32.6740, 35.2400], ['ראש פינה', 32.9690, 35.5420]];
     function updateLocationButtons() {
       const loc = appSettings.location || { type: 'city', name: 'אשקלון' }, home = appSettings.homeCity || { name: 'אשקלון' };
       const b1 = document.getElementById('btnAshkelon'), b2 = document.getElementById('btnDevice'); if(!b1 || !b2) return;
       b1.textContent = home.name + ' ▾'; b1.title = 'בחירת עיר'; b1.classList.toggle('active', loc.type === 'city');
       b2.classList.toggle('active', loc.type !== 'city');
-      b2.textContent = loc.type === 'device' ? '📍 מיקום שלי' : loc.type === 'ip' ? '🌐 ' + (loc.name || 'לפי IP') : 'מיקום שלי';
+      b2.textContent = loc.type === 'device' ? '📍 ' + (loc.name || 'מיקום שלי') : loc.type === 'ip' ? '🌐 ' + (loc.name || 'לפי IP') + ' (משוער)' : 'מיקום שלי';
       b2.title = loc.type === 'device' ? `מיקום המכשיר (דיוק ~${loc.acc || '?'} מ')` : loc.type === 'ip' ? 'מיקום משוער לפי כתובת IP' : 'איתור מיקום המכשיר';
     }
     function applyLocation(loc) {
@@ -4495,26 +4520,55 @@
     }
     function pickCity(name) { const c = IL_CITIES.find(x => x[0] === name); if(!c) return; document.getElementById('locationModal').close(); applyLocation({ type: 'city', name: c[0], lat: c[1], lng: c[2] }); }
     function locationFailed(why) { updateLocationButtons(); openLocationModal('האיתור נכשל: ' + why + '. אפשר לבחור עיר מהרשימה, או לנסות איתור לפי IP.'); }
-    function detectDeviceLocation() {
-      if(!navigator.geolocation) { locationFailed('המכשיר/הדפדפן לא תומכים באיתור מיקום'); return; }
-      const b2 = document.getElementById('btnDevice'); b2.textContent = '⏳ מאתר...';
-      const ok = p => applyLocation({ type: 'device', name: 'המיקום שלי', lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) });
-      const fail = e => locationFailed(e && e.code === 1 ? 'ההרשאה למיקום נדחתה (אפשר אותה בהגדרות המכשיר/האתר)' : e && e.code === 2 ? 'שירותי המיקום כבויים או שאין קליטה' : 'פג הזמן לאיתור');
-      // stage 1: quick network-based fix; stage 2: real GPS (only if stage 1 timed out / had no position)
-      navigator.geolocation.getCurrentPosition(ok, e => { if(e && e.code === 1) { fail(e); return; } navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+    // Human-readable place name for coordinates: online reverse-geocode first, nearest list city as offline fallback.
+    function nearestCityName(lat, lng) {
+      let best = null, bd = 1e9;
+      for(const c of IL_CITIES) { const dy = (c[1] - lat) * 111.2, dx = (c[2] - lng) * 111.2 * Math.cos(lat * Math.PI / 180), d = Math.hypot(dx, dy); if(d < bd) { bd = d; best = c[0]; } }
+      return bd < 3 ? best : 'ליד ' + best;
     }
-    async function detectIpLocation() {
-      const m = document.getElementById('locationMsg'); m.style.display = 'block'; m.textContent = '⏳ מאתר לפי IP...';
-      const tries = [async () => { const j = await (await fetch('https://ipwho.is/')).json(); if(!j.success) throw new Error('x'); return { lat: j.latitude, lng: j.longitude, city: j.city, cc: j.country_code }; },
-        async () => { const j = await (await fetch('https://get.geojs.io/v1/ip/geo.json')).json(); return { lat: parseFloat(j.latitude), lng: parseFloat(j.longitude), city: j.city, cc: j.country_code }; }];
+    async function placeNameFor(lat, lng) {
+      try {
+        const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 5000);
+        const j = await (await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=he`, { signal: ctl.signal })).json(); clearTimeout(t);
+        const n = (j.locality || j.city || '').trim();
+        if(n && /[\u0590-\u05FF]/.test(n)) return n;
+      } catch(e) { /* offline - use the list */ }
+      return nearestCityName(lat, lng);
+    }
+    async function setDeviceLocation(c, type) {
+      const lat = c.latitude, lng = c.longitude, acc = Math.round(c.accuracy || 0);
+      applyLocation({ type, name: nearestCityName(lat, lng), lat, lng, acc }); // instant, then refine with the real place name
+      const real = await placeNameFor(lat, lng), cur = appSettings.location;
+      if(cur && cur.lat === lat && cur.lng === lng) { cur.name = real; saveSettings(); updateLocationButtons(); }
+    }
+    function detectDeviceLocation() {
+      if(!navigator.geolocation) { detectIpLocation('המכשיר/הדפדפן לא תומכים באיתור מיקום'); return; }
+      const b2 = document.getElementById('btnDevice'); b2.textContent = '⏳ מאתר...';
+      let done = false;
+      const ok = p => { if(done) return; done = true; setDeviceLocation(p.coords, 'device'); };
+      const denied = e => e && e.code === 1;
+      const fail = e => { if(done) return; done = true;
+        const why = denied(e) ? 'ההרשאה למיקום נדחתה. באייפד: הגדרות ← פרטיות ← שירותי מיקום ← Safari ← "בזמן השימוש"'
+          : e && e.code === 2 ? 'שירותי המיקום כבויים או שאין קליטה' : 'פג הזמן לאיתור';
+        detectIpLocation(why); };
+      // stage 1: quick network/Wi-Fi fix; stage 2: real GPS; stage 3 (in fail): automatic IP-based fallback so it never ends empty-handed
+      navigator.geolocation.getCurrentPosition(ok, e => { if(denied(e)) { fail(e); return; } navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+    }
+    async function detectIpLocation(why) {
+      const m = document.getElementById('locationMsg');
+      if(!document.getElementById('locationModal').open) openLocationModal();
+      m.style.display = 'block'; m.textContent = (why ? 'איתור GPS נכשל: ' + why + '. ' : '') + '⏳ מאתר לפי IP...';
+      const tries = [async () => { const j = await (await fetch('https://ipwho.is/')).json(); if(!j.success) throw new Error('x'); return { lat: j.latitude, lng: j.longitude, cc: j.country_code }; },
+        async () => { const j = await (await fetch('https://get.geojs.io/v1/ip/geo.json')).json(); return { lat: parseFloat(j.latitude), lng: parseFloat(j.longitude), cc: j.country_code }; }];
       for(const t of tries) {
         try {
           const r = await t();
-          if(r.cc !== 'IL' || !(r.lat > 29 && r.lat < 33.6 && r.lng > 34 && r.lng < 36)) { m.textContent = 'כתובת ה-IP מחוץ לישראל - בחר עיר ידנית מהרשימה.'; return; }
-          document.getElementById('locationModal').close(); applyLocation({ type: 'ip', name: 'מיקום משוער (IP)', lat: r.lat, lng: r.lng, acc: 5000 }); return;
+          if(r.cc !== 'IL' || !(r.lat > 29 && r.lat < 33.6 && r.lng > 34 && r.lng < 36)) { m.textContent = (why ? why + '. ' : '') + 'כתובת ה-IP מחוץ לישראל - בחר עיר ידנית מהרשימה.'; return; }
+          document.getElementById('locationModal').close();
+          await setDeviceLocation({ latitude: r.lat, longitude: r.lng, accuracy: 5000 }, 'ip'); return;
         } catch(e) { /* try the next service */ }
       }
-      m.textContent = 'לא הצלחתי לאתר לפי IP (אין חיבור?). בחר עיר ידנית.';
+      updateLocationButtons(); m.textContent = (why ? why + '. ' : '') + 'גם איתור לפי IP נכשל (אין חיבור?). בחר עיר ידנית.';
     }
     if(appSettings.location && appSettings.location.lat) { currentLat = appSettings.location.lat; currentLng = appSettings.location.lng; }
     updateLocationButtons();
